@@ -1,0 +1,25 @@
+{
+  "name": "vida-plena-backend",
+  "version": "1.0.0",
+  "main": "server.ts",
+  "repository": "https://github.com/ront-ront/VidaPlena",
+  "author": "Yan-CarlosIF",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/shared/infra/http/server.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^7.10.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "tsx": "^4.23.15"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.2",
+    "prisma": "^8.0.0-rc.17",
+    "typescript": "^7.0.2"
+  }
+}
