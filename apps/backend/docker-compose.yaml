@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: vp-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vp123}
+      POSTGRES_DB: vida-plena
+    ports:
+      - "15435:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - vp-network
+
+  redis:
+    image: redis:7.2
+    container_name: vp-redis
+    restart: always
+    ports:
+      - "16379:6379"
+    volumes:
+      - redisdata:/data
+    command: redis-server --appendonly yes
+    networks:
+      - vp-network
+
+networks:
+  vp-network:
+    driver: bridge
+    name: vp-network
+
+volumes:
+  pgdata:
+    driver: local
+  redisdata:
+    driver: local

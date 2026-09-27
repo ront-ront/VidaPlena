@@ -5,7 +5,6 @@
   "exports": {
     "./base": "./biome/base.json",
     "./backend": "./biome/backend.json",
-    "./frontend": "./biome/frontend.json",
-    "./mobile": "./biome/mobile.json"
+    "./frontend": "./biome/frontend.json"
   }
 }
