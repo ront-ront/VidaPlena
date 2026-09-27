@@ -307,12 +307,7 @@
   --input: #334b59;
   --ring: #91c0d8;
 
-  --gradient-highlight: linear-gradient(
-    110deg,
-    #91c0d8,
-    #6aa7c8 48%,
-    #7cdec4
-  );
+  --gradient-highlight: linear-gradient(110deg, #91c0d8, #6aa7c8 48%, #7cdec4);
 
   --chart-1: var(--brand-blue-300);
   --chart-2: var(--brand-mint-300);

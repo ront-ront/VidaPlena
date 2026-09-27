@@ -7,7 +7,10 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "dev": "tsx watch src/shared/infra/http/server.ts"
+    "dev": "tsx watch src/shared/infra/http/server.ts",
+    "lint": "biome check",
+    "lint:fix": "biome check --write",
+    "format": "biome format --write"
   },
   "dependencies": {
     "@prisma/client": "^7.10.0",
@@ -17,6 +20,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.14",
+    "@vida-plena/biome-config": "1.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.2",

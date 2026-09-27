@@ -1,4 +1,6 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
-  "extends": ["@vida-plena/biome-config/base"]
+  "extends": [
+    "./base.json"
+  ]
 }

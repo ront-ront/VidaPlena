@@ -1,0 +1,11 @@
+{
+  "name": "@vida-plena/biome-config",
+  "version": "1.0.0",
+  "private": true,
+  "exports": {
+    "./base": "./biome/base.json",
+    "./backend": "./biome/backend.json",
+    "./frontend": "./biome/frontend.json",
+    "./mobile": "./biome/mobile.json"
+  }
+}

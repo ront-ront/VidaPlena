@@ -1,25 +1,25 @@
-import type { Metadata } from "next";
-import { Inter, Poppins } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from 'next'
+import { Inter, Poppins } from 'next/font/google'
+import './globals.css'
 
 const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
+  variable: '--font-inter',
+  subsets: ['latin'],
+})
 
 const poppins = Poppins({
-  variable: "--font-poppins",
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
-});
+  variable: '--font-poppins',
+  subsets: ['latin'],
+  weight: ['400', '600', '700'],
+})
 
 export const metadata: Metadata = {
-  title: "Vida Plena",
-  description: "Vida Plena application",
-  keywords: ["Vida Plena", "application", "well-being"],
-};
+  title: 'Vida Plena',
+  description: 'Vida Plena application',
+  keywords: ['Vida Plena', 'application', 'well-being'],
+}
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html
       lang="en"
@@ -27,5 +27,5 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
-  );
+  )
 }

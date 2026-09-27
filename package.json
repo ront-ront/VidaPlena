@@ -12,8 +12,11 @@
   "private": true,
   "scripts": {
     "dev": "turbo run dev --filter=vida-plena-backend --filter=vida-plena-frontend",
-    "dev:backend": "npm run dev --workspace vida-plena-backend",
-    "dev:frontend": "npm run dev --workspace vida-plena-frontend"
+    "dev:backend": "yarn workspace vida-plena-backend dev",
+    "dev:frontend": "yarn workspace vida-plena-frontend dev",
+    "lint": "yarn workspace vida-plena-backend lint && yarn workspace vida-plena-frontend lint",
+    "lint:fix": "yarn workspace vida-plena-backend lint:fix && yarn workspace vida-plena-frontend lint:fix",
+    "format": "yarn workspace vida-plena-backend format && yarn workspace vida-plena-frontend format"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.14",

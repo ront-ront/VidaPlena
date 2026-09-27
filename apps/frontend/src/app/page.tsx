@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   ArrowRight,
@@ -8,65 +8,64 @@ import {
   EyeOff,
   LoaderCircle,
   ShieldCheck,
-} from "lucide-react";
-import { type FormEvent, useState } from "react";
-
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import Image from "next/image";
+} from 'lucide-react'
+import Image from 'next/image'
+import { type FormEvent, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 type FieldErrors = {
-  email?: string;
-  password?: string;
-};
+  email?: string
+  password?: string
+}
 
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export default function Home() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formMessage, setFormMessage] = useState("");
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formMessage, setFormMessage] = useState('')
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+    event.preventDefault()
 
-    const errors: FieldErrors = {};
-    const normalizedEmail = email.trim();
+    const errors: FieldErrors = {}
+    const normalizedEmail = email.trim()
 
     if (!normalizedEmail) {
-      errors.email = "Informe seu e-mail.";
+      errors.email = 'Informe seu e-mail.'
     } else if (!emailPattern.test(normalizedEmail)) {
-      errors.email = "Digite um e-mail válido.";
+      errors.email = 'Digite um e-mail válido.'
     }
 
     if (!password) {
-      errors.password = "Informe sua senha.";
+      errors.password = 'Informe sua senha.'
     }
 
-    setFieldErrors(errors);
-    setFormMessage("");
+    setFieldErrors(errors)
+    setFormMessage('')
 
     if (Object.keys(errors).length > 0) {
-      return;
+      return
     }
 
-    setIsSubmitting(true);
+    setIsSubmitting(true)
 
     window.setTimeout(() => {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
       setFormMessage(
-        "Formulário validado. A autenticação será conectada em seguida.",
-      );
-    }, 650);
+        'Formulário validado. A autenticação será conectada em seguida.',
+      )
+    }, 650)
   }
 
   function handleForgotPassword() {
     setFormMessage(
-      "A recuperação de senha ficará disponível após a integração do fluxo de autenticação.",
-    );
+      'A recuperação de senha ficará disponível após a integração do fluxo de autenticação.',
+    )
   }
 
   return (
@@ -79,7 +78,12 @@ export default function Home() {
           <div className="mx-auto w-full max-w-xl lg:mx-0">
             <div className="mb-16 flex items-center gap-3 lg:mb-24">
               {/* <div className="relative flex size-10.5 shrink-0 items-center justify-center rounded-[14px] bg-[linear-gradient(135deg,var(--vida-mint),var(--vida-blue)_52%,var(--vida-blue-deep))] shadow-(--shadow-2)"> */}
-                <Image src="/logo.png" alt="Vida Plena Logo" width={58} height={58} />
+              <Image
+                src="/logo.png"
+                alt="Vida Plena Logo"
+                width={58}
+                height={58}
+              />
               {/* </div> */}
               <span className="font-heading text-2xl font-bold tracking-tight">
                 <span className="text-vida-blue">Vida</span>
@@ -134,24 +138,24 @@ export default function Home() {
                 </label>
                 <input
                   aria-describedby={
-                    fieldErrors.email ? "email-error" : undefined
+                    fieldErrors.email ? 'email-error' : undefined
                   }
                   aria-invalid={Boolean(fieldErrors.email)}
                   autoComplete="email"
                   className={cn(
-                    "h-11 w-full rounded-[10px] border border-input bg-background px-3 text-sm text-foreground outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground/70 focus:border-ring focus:ring-3 focus:ring-ring/20",
+                    'h-11 w-full rounded-[10px] border border-input bg-background px-3 text-sm text-foreground outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground/70 focus:border-ring focus:ring-3 focus:ring-ring/20',
                     fieldErrors.email &&
-                      "border-destructive focus:border-destructive focus:ring-destructive/20",
+                      'border-destructive focus:border-destructive focus:ring-destructive/20',
                   )}
                   id="email"
                   name="email"
                   onChange={(event) => {
-                    setEmail(event.target.value);
+                    setEmail(event.target.value)
                     if (fieldErrors.email) {
                       setFieldErrors((current) => ({
                         ...current,
                         email: undefined,
-                      }));
+                      }))
                     }
                   }}
                   placeholder="seu@email.com"
@@ -188,33 +192,33 @@ export default function Home() {
                 <div className="relative">
                   <input
                     aria-describedby={
-                      fieldErrors.password ? "password-error" : undefined
+                      fieldErrors.password ? 'password-error' : undefined
                     }
                     aria-invalid={Boolean(fieldErrors.password)}
                     autoComplete="current-password"
                     className={cn(
-                      "h-11 w-full rounded-[10px] border border-input bg-background px-3 pr-11 text-sm text-foreground outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground/70 focus:border-ring focus:ring-3 focus:ring-ring/20",
+                      'h-11 w-full rounded-[10px] border border-input bg-background px-3 pr-11 text-sm text-foreground outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground/70 focus:border-ring focus:ring-3 focus:ring-ring/20',
                       fieldErrors.password &&
-                        "border-destructive focus:border-destructive focus:ring-destructive/20",
+                        'border-destructive focus:border-destructive focus:ring-destructive/20',
                     )}
                     id="password"
                     name="password"
                     onChange={(event) => {
-                      setPassword(event.target.value);
+                      setPassword(event.target.value)
                       if (fieldErrors.password) {
                         setFieldErrors((current) => ({
                           ...current,
                           password: undefined,
-                        }));
+                        }))
                       }
                     }}
                     placeholder="Digite sua senha"
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? 'text' : 'password'}
                     value={password}
                   />
                   <button
                     aria-label={
-                      showPassword ? "Ocultar senha" : "Mostrar senha"
+                      showPassword ? 'Ocultar senha' : 'Mostrar senha'
                     }
                     className="absolute cursor-pointer right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
                     onClick={() => setShowPassword((current) => !current)}
@@ -282,5 +286,5 @@ export default function Home() {
         </section>
       </div>
     </main>
-  );
+  )
 }
