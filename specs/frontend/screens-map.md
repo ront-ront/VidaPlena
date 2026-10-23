@@ -39,6 +39,8 @@
 | `/meu-historico` | Linha do tempo e filtros, documentos/resultados/orientações liberados. | Paciente/dependente vê projeção própria; vazio e erro sem vazamento. | RF-022, Q-03; FE-027 |
 | `/prontuarios/acesso-urgente` | Justificativa, prazo, aviso de auditoria e encerramento. | Solicitar → acesso limitado → expirar/revisar. | RF-023; FE-028 |
 | `/importacoes/historico` | Origem, data, autor anterior, arquivo e conferência. | Lançar histórico → identificar como importado → profissional confere. | Q-19; FE-029; política de acesso pendente P-11 |
+| `/meu-historico/exames/enviar`, `/recepcao/exames/enviar` | Identificação do exame, paciente/pedido, arquivo e recibo, sem leitura clínica pela recepção. | Selecionar → validar conteúdo/tamanho → enviar → profissional recebe aviso. | RF-020, Q-17; FE-040 |
+| `/admin/documentos/tipos` | Catálogo de tipos, nível de assinatura exigido e estado da configuração. | Admin ajusta nível → salva com auditoria; validação jurídica pré-produção. | RN-009, Q-10; FE-041 |
 
 ## M3/M4 — teleconsulta e gestão
 

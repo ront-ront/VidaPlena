@@ -43,6 +43,7 @@ Todos os defaults deste quadro foram autorizados como **provisórios e aguardand
 | `account.inactivity_review_days` | 90 | RF-029 | Admin/gestor; revisão, nunca exclusão automática |
 | `report.sync_max_rows` | 5000 | RF-031 | Equipe técnica; excedente assíncrono |
 | `report.sync_timeout_seconds` | 10 | RF-031 | Equipe técnica; timeout assíncrono |
+| `report.aggregation_min_subjects` | — | RF-030, RNF-016 | Clínica/DPO; pendente P-14; sem valor, suprimir células pequenas e não exibir filtros que permitam reidentificação |
 | `migration.cutoff_date` | — | Q-19 | Clínica/gestor; pendente P-07 |
 
 ## Arquivos, gravação e acesso clínico

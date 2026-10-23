@@ -1,6 +1,6 @@
 # Fase 2 — Plano de organização das specs
 
-**Estado:** aprovado pelo usuário para iniciar a Fase 3; lote M0 em elaboração. Base: inventário da Fase 1, DRS, arquitetura, documentos de front e decisões Q-01 a Q-23 em `specs/04-open-questions.md`.
+**Estado:** Fase 3 concluída documentalmente; lotes M0–M4 redigidos após autorização expressa do usuário em 23/10/2026. Base: inventário da Fase 1, DRS, arquitetura, documentos de front e decisões Q-01 a Q-23 em `specs/04-open-questions.md`.
 
 ## 1. Critérios de organização
 
@@ -160,6 +160,8 @@ Convenção: `—` = sem dependência de outra spec executável; documentos SH s
 | FE-027 | Histórico e documentos do paciente | front | FE-008, BE-043 | RF-022, RNF-003, RNF-019 |
 | FE-028 | Solicitação de acesso de urgência | front | FE-021, BE-031 | RF-023, RNF-015 |
 | FE-029 | Entrada e conferência de histórico importado | front | FE-021, BE-033 | RF-016, RF-022, RNF-005 |
+| FE-040 | Envio de resultados pelo paciente e recepção | front | FE-003, FE-004, FE-027, BE-041 | RF-020, RNF-021 |
+| FE-041 | Configuração de tipos documentais | front | FE-003, FE-004, BE-038 | RN-009, RNF-017 |
 
 ### M3 — Teleconsulta integrada
 
@@ -170,12 +172,14 @@ Convenção: `—` = sem dependência de outra spec executável; documentos SH s
 | BE-044 | Consentimento específico de teleconsulta | back | BE-011, BE-021, BE-004 | RF-024, RN-010 |
 | BE-045 | Sessão, autorização e sinalização WebSocket | back | BE-044, BE-030, BE-006 | RF-025, RN-010, RNF-011, RNF-014 |
 | BE-046 | Compartilhamento de arquivos na sessão | back | BE-045, BE-013, BE-041 | RF-026, RN-012 |
-| BE-047 | Consentimento, guarda e expurgo de gravação | back | BE-045, BE-013, BE-004 | RF-027, RN-011, RNF-014 |
+| BE-047 | Consentimento específico de gravação | back | BE-045, BE-004 | RF-027, RN-011 |
+| BE-053 | Recebimento e guarda de gravação auxiliar | back | BE-047, BE-013 | RF-027, RN-011, RNF-014 |
+| BE-054 | Revogação e expurgo de gravação | back | BE-053, BE-004 | RF-027, RN-011, RNF-014 |
 | FE-030 | Termo, preparo e teste de dispositivos | front | FE-014, BE-044, BE-045 | RF-024, RF-025, RNF-025 |
 | FE-031 | Sala de espera e vídeo do paciente | front | FE-030, BE-045 | RF-025, RNF-008, RNF-018, RNF-019, RNF-023 |
 | FE-032 | Sala de vídeo e prontuário do profissional | front | FE-021, FE-030, BE-045 | RF-025, RN-007, RNF-011, RNF-023 |
 | FE-033 | Compartilhamento de arquivos em teleconsulta | front | FE-031, FE-032, BE-046 | RF-026, RNF-014 |
-| FE-034 | Controles e aviso de gravação/revogação | front | FE-031, FE-032, BE-047 | RF-027, RN-011 |
+| FE-034 | Controles e aviso de gravação/revogação | front | FE-031, FE-032, BE-054 | RF-027, RN-011 |
 
 ### M4 — Gestão, governança e medição final
 
@@ -187,15 +191,15 @@ Convenção: `—` = sem dependência de outra spec executável; documentos SH s
 | BE-049 | Relatórios e exportação síncrona/assíncrona | back | BE-048, BE-006, BE-004 | RF-031, RNF-015 |
 | BE-050 | Consulta/exportação auditada da trilha | back | BE-004, BE-005, BE-031 | RF-032, RNF-015 |
 | BE-051 | Massa reprodutível e ensaios de carga/concorrência da API | back | BE-020, BE-032, BE-048, BE-049 | RNF-009, RNF-010, RF-008 |
-| BE-052 | Ensaios de qualidade/capacidade da teleconsulta | back | BE-045, BE-047 | RNF-010, RNF-011, RNF-014 |
+| BE-052 | Ensaios de qualidade/capacidade da teleconsulta | back | BE-045, BE-054 | RNF-010, RNF-011, RNF-014 |
 | FE-035 | Painel gerencial de indicadores | front | FE-003, BE-048 | RF-030, RNF-016, UI-002 |
 | FE-036 | Relatórios e exportação | front | FE-035, BE-049 | RF-031, RNF-021 |
 | FE-037 | Pesquisa e exportação de auditoria | front | FE-003, BE-050 | RF-032, RNF-015 |
 | FE-038 | Fila do DPO e revisão de consentimentos | front | FE-008, FE-037, BE-012, BE-050 | RF-004, RF-005, RF-032, RNF-016 |
 
-**Total revisado no lote M0:** 12 documentos SH de referência, **52 specs BE** e **39 specs FE** (91 specs executáveis). FE-039 separa o cadastro presencial da recepção de FE-007 para manter os fluxos atômicos e cobrir o termo assinado de Q-05. Índices, matriz, perguntas e `AGENTS.md` são documentos de governança adicionais. A Fase 3 pode subdividir outra linha que se mostre excessiva, sem perder rastreabilidade.
+**Total final após M4:** 12 documentos SH de referência, **54 specs BE** e **41 specs FE** (95 specs executáveis). FE-039 separa o cadastro presencial; FE-040 separa upload de resultado por paciente/recepção; FE-041 separa a configuração do nível de assinatura; BE-047/053/054 separam consentimento, armazenamento e expurgo da gravação. Índices, matriz, perguntas e `AGENTS.md` são documentos de governança adicionais.
 
-**Conferência do plano:** os 32 RF, 25 RNF, 12 RN e 16 UI do inventário aparecem em pelo menos uma linha BE/FE (85/85). Os 91 IDs são únicos e todas as dependências declaradas apontam para linhas anteriores. A Agenda tem FE-015 e o Prontuário tem FE-021/022; a Fase 3 detalhará a publicação do resumo clínico em BE-043/FE-021 e a visualização restrita em FE-027, conforme Q-03.
+**Conferência do plano:** os 32 RF, 25 RNF, 12 RN e 16 UI do inventário aparecem em pelo menos uma linha BE/FE (85/85). Os 95 IDs são únicos e todas as dependências declaradas apontam para linhas anteriores. A Agenda tem FE-015 e o Prontuário tem FE-021/022; BE-043/FE-027 detalham a projeção do portal, conforme Q-03.
 
 ## 4. Marcos, critérios de saída e lotes da Fase 3
 
@@ -207,7 +211,7 @@ Convenção: `—` = sem dependência de outra spec executável; documentos SH s
 | M3 Teleconsulta | Contrato WebSocket, mídia, arquivos e gravação em SH-004/007 | Termo, teste, sala P2P, reconexão, compartilhamento e revogação de gravação. Cobertura parcial RNF-014 e bloqueios de produção explícitos. |
 | M4 Gestão | SH-009 e parâmetros de medição | Painel, relatórios, auditoria/DPO, carga/concorrência/vídeo; revisão de matriz e pendências. |
 
-Ao fim de **cada lote**, atualizar `02-traceability-matrix.md` com requisito → spec, estado de cobertura (total/parcial/pendente) e decisão de desvio; atualizar `03-implementation-order.md`, conferir todas as telas e ausência de ciclos, e **parar para confirmação** antes do lote seguinte. Na Fase 3, o primeiro lote inclui a constituição, visão, contratos de fundação, arquitetura, design system, mapa de telas, matriz inicial, ordem e `AGENTS.md` da raiz.
+Ao fim de **cada lote**, atualizar `02-traceability-matrix.md` com requisito → spec, estado de cobertura (total/parcial/pendente) e decisão de desvio; atualizar `03-implementation-order.md`, conferir todas as telas e ausência de ciclos. Os lotes restantes foram autorizados expressamente pelo usuário em 23/10/2026. Na Fase 3, o primeiro lote inclui a constituição, visão, contratos de fundação, arquitetura, design system, mapa de telas, matriz inicial, ordem e `AGENTS.md` da raiz.
 
 ## 5. Dependências críticas e ausência de ciclos
 
@@ -240,4 +244,4 @@ flowchart LR
 
 ## 7. Decisão solicitada para encerrar a Fase 2
 
-Plano aprovado para iniciar a Fase 3. Ao concluir cada lote, atualizar matriz/ordem e aguardar confirmação do usuário antes do próximo lote.
+Plano aprovado e executado documentalmente na Fase 3. Matriz e ordem foram atualizadas ao fim de cada lote; a autorização expressa do usuário permitiu concluir M1–M4.

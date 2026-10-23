@@ -35,11 +35,11 @@
 
 ## 5. Contratos e convenções de spec
 
-- IDs: RF-001…032; RNF-001…025; RN-001…012; UI-001…016; BE-001…052; FE-001…039. FE-039 foi adicionado no lote M0 para o cadastro presencial. A matriz mapeia requisito → spec e estado total/parcial/pendente.
+- IDs: RF-001…032; RNF-001…025; RN-001…012; UI-001…016; BE-001…054; FE-001…041. FE-039 cobre cadastro presencial; FE-040, upload de resultado; FE-041, tipos documentais. A matriz mapeia requisito → spec e estado total/parcial/pendente.
 - Cada arquivo BE/FE usa as oito seções do template do pedido: Objetivo, Escopo, Contexto necessário, Detalhamento, Critérios de aceite, Testes esperados, Definition of Done, Suposições e pontos em aberto; metadados de software, milestone, status, dependências e requisitos.
 - Critérios: Dado/Quando/Então ou checklist objetivo com atores, dados, erro e persistência observável. Um valor sem fonte deve vir de parâmetro identificado ou ficar pendente.
 - “Status: pendente” significa que a spec não foi implementada. “Cobertura planejada” na matriz não deve ser confundida com código entregue. Requisitos parciais explicitam a parte faltante.
-- A cada lote de M0–M4, atualizar `02-traceability-matrix.md` e `03-implementation-order.md`, conferir dependências e parar para confirmação do usuário.
+- A cada lote de M0–M4, atualizar `02-traceability-matrix.md` e `03-implementation-order.md`, conferir dependências. Os lotes restantes foram autorizados expressamente pelo usuário em 23/10/2026.
 
 ## 6. Verificação e comandos
 
