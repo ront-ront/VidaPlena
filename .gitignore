@@ -32,3 +32,8 @@ Thumbs.db
 !.vscode/extensions.json
 !.vscode/settings.json
 .idea/
+
+# Generated Prisma client
+apps/backend/src/generated/
+# Local development artifacts
+apps/backend/var/

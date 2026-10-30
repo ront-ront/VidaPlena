@@ -1,13 +1,363 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum UserStatus {
+  invited
+  active
+  locked
+  inactive
+}
+
+model User {
+  id                 String                @id @default(uuid()) @db.Uuid
+  email              String                @unique
+  fullName           String
+  phone              String?
+  passwordHash       String?
+  status             UserStatus            @default(invited)
+  emailVerifiedAt    DateTime?             @db.Timestamptz(3)
+  mfaSecretEncrypted String?
+  mfaLastUsedStep Int?
+  lastLoginAt DateTime? @db.Timestamptz(3)
+  reviewRequiredAt DateTime? @db.Timestamptz(3)
+  failedLoginCount   Int                   @default(0)
+  lockUntil          DateTime?             @db.Timestamptz(3)
+  credentialVersion  Int                   @default(0)
+  createdAt          DateTime              @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime              @updatedAt @db.Timestamptz(3)
+  patient            PatientProfile?
+  dependents         GuardianLink[]
+  roles              UserRoleAssignment[]  @relation("AssignedRoles")
+  grantedRoles       UserRoleAssignment[]  @relation("RoleGrantor")
+  permissions        UserPermissionGrant[] @relation("AssignedPermissions")
+  grantedPermissions UserPermissionGrant[] @relation("PermissionGrantor")
+  invitations        Invitation[]          @relation("InvitedUser")
+  sentInvitations    Invitation[]          @relation("Inviter")
+  tokens             OneTimeToken[]
+  sessions           Session[]
+  passwordHistory    PasswordHistory[]
+  notifications Notification[]
+  notificationPreference NotificationPreference?
+  uploadedFiles FileObject[]
+  publishedConsentDocuments ConsentDocumentVersion[] @relation("ConsentPublisher")
+  recordedConsentEvents ConsentEvent[] @relation("ConsentActor")
+  submittedSubjectRequests DataSubjectRequest[] @relation("SubjectRequester")
+  handledSubjectRequests DataSubjectRequest[] @relation("SubjectHandler")
+  maintenanceWindows MaintenanceWindow[]
+
+  @@index([status])
+  auditEvents AuditEvent[]
+
+}
+
+model Role {
+  code        String               @id
+  assignments UserRoleAssignment[]
+}
+
+model Permission {
+  code   String                @id
+  grants UserPermissionGrant[]
+}
+
+model UserRoleAssignment {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  roleCode  String
+  grantedBy String?   @db.Uuid
+  grantedAt DateTime  @default(now()) @db.Timestamptz(3)
+  revokedAt DateTime? @db.Timestamptz(3)
+  user      User      @relation("AssignedRoles", fields: [userId], references: [id], onDelete: Restrict)
+  role      Role      @relation(fields: [roleCode], references: [code], onDelete: Restrict)
+  grantor   User?     @relation("RoleGrantor", fields: [grantedBy], references: [id], onDelete: Restrict)
+
+  @@index([userId, revokedAt])
+}
+
+model UserPermissionGrant {
+  id             String     @id @default(uuid()) @db.Uuid
+  userId         String     @db.Uuid
+  permissionCode String
+  grantedBy      String?    @db.Uuid
+  grantedAt      DateTime   @default(now()) @db.Timestamptz(3)
+  revokedAt      DateTime?  @db.Timestamptz(3)
+  user           User       @relation("AssignedPermissions", fields: [userId], references: [id], onDelete: Restrict)
+  permission     Permission @relation(fields: [permissionCode], references: [code], onDelete: Restrict)
+  grantor        User?      @relation("PermissionGrantor", fields: [grantedBy], references: [id], onDelete: Restrict)
+
+  @@index([userId, revokedAt])
+}
+
+model PatientProfile {
+  id        String         @id @default(uuid()) @db.Uuid
+  userId    String?        @unique @db.Uuid
+  fullName  String
+  birthDate DateTime       @db.Date
+  cpf       String         @unique @db.VarChar(11)
+  phone     String?
+  email     String?
+  status    String         @default("active")
+  createdAt DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime       @updatedAt @db.Timestamptz(3)
+  user      User?          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  guardians GuardianLink[]
+  notifications Notification[]
+  files FileObject[]
+  consentEvents ConsentEvent[]
+  subjectRequests DataSubjectRequest[]
+
+  @@index([status])
+  auditEvents AuditEvent[]
+
+}
+
+model GuardianLink {
+  id             String         @id @default(uuid()) @db.Uuid
+  guardianUserId String         @db.Uuid
+  patientId      String         @db.Uuid
+  relationship   String
+  startedAt      DateTime       @default(now()) @db.Timestamptz(3)
+  endedAt        DateTime?      @db.Timestamptz(3)
+  status         String         @default("active")
+  evidenceFileId String?        @db.Uuid
+  guardian       User           @relation(fields: [guardianUserId], references: [id], onDelete: Restrict)
+  patient        PatientProfile @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  consentEvents ConsentEvent[]
+
+  @@index([guardianUserId, status])
+  @@index([patientId])
+}
+
+model Invitation {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @db.Uuid
+  invitedBy  String    @db.Uuid
+  tokenHash  String    @unique
+  issuedAt   DateTime  @default(now()) @db.Timestamptz(3)
+  expiresAt  DateTime  @db.Timestamptz(3)
+  consumedAt DateTime? @db.Timestamptz(3)
+  user       User      @relation("InvitedUser", fields: [userId], references: [id], onDelete: Restrict)
+  inviter    User      @relation("Inviter", fields: [invitedBy], references: [id], onDelete: Restrict)
+
+  @@index([userId, expiresAt])
+}
+
+model OneTimeToken {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @db.Uuid
+  purpose      String
+  tokenHash    String    @unique
+  payload      Json?
+  issuedAt     DateTime  @default(now()) @db.Timestamptz(3)
+  expiresAt    DateTime  @db.Timestamptz(3)
+  consumedAt   DateTime? @db.Timestamptz(3)
+  attemptCount Int       @default(0)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, purpose, issuedAt])
+}
+
+model Session {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @db.Uuid
+  csrfTokenHash String?
+  refreshTokens RefreshToken[]
+  refreshTokenHash String    @unique
+  issuedAt         DateTime  @default(now()) @db.Timestamptz(3)
+  lastActivityAt   DateTime  @default(now()) @db.Timestamptz(3)
+  expiresAt        DateTime  @db.Timestamptz(3)
+  revokedAt        DateTime? @db.Timestamptz(3)
+  user             User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, revokedAt])
+  mfaVerifiedAt DateTime? @db.Timestamptz(3)
+}
+
+model PasswordHistory {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @db.Uuid
+  passwordHash String
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, createdAt])
+}
+
+model AuditEvent {
+  id String @id @default(uuid()) @db.Uuid
+  occurredAt DateTime @default(now()) @db.Timestamptz(3)
+  actorUserId String? @db.Uuid
+  actorRoles String[]
+  action String
+  subjectPatientId String? @db.Uuid
+  resourceType String
+  resourceId String
+  originIp String?
+  originClient String?
+  requestId String @db.Uuid
+  authorizationBasis String
+  metadataSafe Json
+  actor User? @relation(fields:[actorUserId],references:[id],onDelete:Restrict)
+  patient PatientProfile? @relation(fields:[subjectPatientId],references:[id],onDelete:Restrict)
+  @@index([occurredAt])
+  @@index([actorUserId,occurredAt])
+  @@index([subjectPatientId,occurredAt])
+}
+
+model NotificationPreference {
+  userId String @id @db.Uuid
+  channels String[] @default(["email", "portal"])
+  nonEssentialOptOut Boolean @default(true)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  user User @relation(fields:[userId],references:[id],onDelete:Restrict)
+}
+
+model Notification {
+  id String @id @default(uuid()) @db.Uuid
+  idempotencyKey String @unique
+  userId String @db.Uuid
+  patientId String? @db.Uuid
+  category String
+  templateKey String
+  payloadEncrypted String?
+  destinationEncrypted String?
+  deliveryStatus String @default("queued")
+  channel String?
+  preferenceSnapshot Json?
+  attempts Int @default(0)
+  scheduledAt DateTime @default(now()) @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  sentAt DateTime? @db.Timestamptz(3)
+  failureReasonSafe String?
+  needsReceptionAttention Boolean @default(false)
+  requestId String @db.Uuid
+  user User @relation(fields:[userId],references:[id],onDelete:Restrict)
+  patient PatientProfile? @relation(fields:[patientId],references:[id],onDelete:Restrict)
+  @@index([deliveryStatus,scheduledAt])
+  @@index([userId,id])
+  @@index([needsReceptionAttention])
+}
+
+model RefreshToken {
+  id String @id @default(uuid()) @db.Uuid
+  sessionId String @db.Uuid
+  tokenHash String @unique
+  csrfTokenHash String
+  issuedAt DateTime @default(now()) @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+  usedAt DateTime? @db.Timestamptz(3)
+  session Session @relation(fields:[sessionId],references:[id],onDelete:Restrict)
+  @@index([sessionId])
+}
+
+model RateLimitBucket {
+  key String @id
+  count Int @default(1)
+  expiresAt DateTime @db.Timestamptz(3)
+  @@index([expiresAt])
+}
+
+model FileObject {
+  id String @id @default(uuid()) @db.Uuid
+  category String
+  ownerPatientId String? @db.Uuid
+  linkedResourceType String
+  linkedResourceId String
+  storageKey String @unique
+  contentTypeDetected String
+  size BigInt
+  sha256 String
+  encryptionKeyRef String
+  scanStatus String
+  uploadedBy String? @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  revokedAt DateTime? @db.Timestamptz(3)
+  ownerPatient PatientProfile? @relation(fields:[ownerPatientId],references:[id],onDelete:Restrict)
+  uploader User? @relation(fields:[uploadedBy],references:[id],onDelete:Restrict)
+  consentEvidence ConsentEvent?
+  @@index([ownerPatientId,createdAt])
+  @@index([linkedResourceType,linkedResourceId,revokedAt])
+}
+
+model ConsentDocumentVersion {
+  id String @id @default(uuid()) @db.Uuid
+  kind String
+  version String
+  bodyReference String
+  effectiveAt DateTime @db.Timestamptz(3)
+  publishedBy String @db.Uuid
+  publishedAt DateTime @default(now()) @db.Timestamptz(3)
+  publisher User @relation("ConsentPublisher",fields:[publishedBy],references:[id],onDelete:Restrict)
+  events ConsentEvent[]
+  @@unique([kind,version])
+  @@index([kind,effectiveAt,publishedAt])
+}
+
+model ConsentEvent {
+  id String @id @default(uuid()) @db.Uuid
+  sequence BigInt @unique @default(autoincrement())
+  patientId String @db.Uuid
+  documentVersionId String @db.Uuid
+  action String
+  actorUserId String @db.Uuid
+  source String
+  occurredAt DateTime @default(now()) @db.Timestamptz(3)
+  guardianLinkId String? @db.Uuid
+  consentingPersonName String
+  consentingRelationship String?
+  signedFileId String? @unique @db.Uuid
+  patient PatientProfile @relation(fields:[patientId],references:[id],onDelete:Restrict)
+  documentVersion ConsentDocumentVersion @relation(fields:[documentVersionId],references:[id],onDelete:Restrict)
+  actor User @relation("ConsentActor",fields:[actorUserId],references:[id],onDelete:Restrict)
+  guardianLink GuardianLink? @relation(fields:[guardianLinkId],references:[id],onDelete:Restrict)
+  signedFile FileObject? @relation(fields:[signedFileId],references:[id],onDelete:Restrict)
+  @@index([patientId,sequence])
+  @@index([documentVersionId,action])
+}
+
+model DataSubjectRequest {
+  id String @id @default(uuid()) @db.Uuid
+  subjectPatientId String @db.Uuid
+  requesterUserId String @db.Uuid
+  kind String
+  status String @default("open")
+  description String?
+  submittedAt DateTime @default(now()) @db.Timestamptz(3)
+  dueAt DateTime @db.Timestamptz(3)
+  handledBy String? @db.Uuid
+  resolution Json?
+  completedAt DateTime? @db.Timestamptz(3)
+  subject PatientProfile @relation(fields:[subjectPatientId],references:[id],onDelete:Restrict)
+  requester User @relation("SubjectRequester",fields:[requesterUserId],references:[id],onDelete:Restrict)
+  handler User? @relation("SubjectHandler",fields:[handledBy],references:[id],onDelete:Restrict)
+  export DataSubjectExport?
+  @@index([subjectPatientId,submittedAt,id])
+  @@index([status,dueAt,id])
+  @@index([requesterUserId,submittedAt,id])
+}
+
+model DataSubjectExport {
+  requestId String @id @db.Uuid
+  payloadEncrypted String
+  sha256 String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  request DataSubjectRequest @relation(fields:[requestId],references:[id],onDelete:Restrict)
+}
+
+model MaintenanceWindow {
+  id String @id @default(uuid()) @db.Uuid
+  startsAt DateTime @db.Timestamptz(3)
+  endsAt DateTime @db.Timestamptz(3)
+  noticeReference String
+  registeredAt DateTime @default(now()) @db.Timestamptz(3)
+  createdBy String @db.Uuid
+  creator User @relation(fields:[createdBy],references:[id],onDelete:Restrict)
+  @@index([startsAt,endsAt])
 }
