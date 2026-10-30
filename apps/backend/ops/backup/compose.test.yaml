@@ -1,0 +1,50 @@
+services:
+  postgres:
+    build: .
+    image: vidaplena-pgbackrest-local:17
+    container_name: vidaplena-backup-test
+    environment:
+      POSTGRES_PASSWORD: local-backup-test-only
+      POSTGRES_DB: vidaplena_backup_test
+      PGBACKREST_STANZA: vidaplena
+      PGBACKREST_PG1_PATH: /var/lib/postgresql/data
+      PGBACKREST_REPO1_PATH: /var/lib/postgresql/backup-repo
+      PGBACKREST_REPO1_CIPHER_TYPE: aes-256-cbc
+      PGBACKREST_REPO1_CIPHER_PASS: ${BACKUP_REPO_PASSPHRASE:?defina chave de backup distinta}
+      PGBACKREST_REPO1_RETENTION_FULL: "2"
+    command:
+      - postgres
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=pgbackrest --stanza=vidaplena archive-push %p
+      - -c
+      - archive_timeout=${WAL_ARCHIVE_TIMEOUT_SECONDS:-300}s
+      - -c
+      - wal_level=replica
+    ports:
+      - "15437:5432"
+    volumes:
+      - backup_pgdata:/var/lib/postgresql/data
+      - backup_repo:/var/lib/postgresql/backup-repo
+  restore:
+    image: vidaplena-pgbackrest-local:17
+    container_name: vidaplena-restore-test
+    profiles: [restore]
+    entrypoint: ["sleep", "infinity"]
+    environment:
+      PGBACKREST_STANZA: vidaplena
+      PGBACKREST_PG1_PATH: /var/lib/postgresql/data
+      PGBACKREST_REPO1_PATH: /var/lib/postgresql/backup-repo
+      PGBACKREST_REPO1_CIPHER_TYPE: aes-256-cbc
+      PGBACKREST_REPO1_CIPHER_PASS: ${BACKUP_REPO_PASSPHRASE:?defina chave de backup distinta}
+    ports:
+      - "15438:5432"
+    volumes:
+      - restore_pgdata:/var/lib/postgresql/data
+      - backup_repo:/var/lib/postgresql/backup-repo
+
+volumes:
+  backup_pgdata: {}
+  backup_repo: {}
+  restore_pgdata: {}

@@ -1,0 +1,4 @@
+# Instalar no agendador de operação com ambiente/segredos carregados de cofre protegido.
+# Ajustar janela à operação da clínica. WAL é arquivado continuamente pelo PostgreSQL.
+0 2 * * * /caminho/vida-plena/apps/backend/ops/backup/run-cycle.sh full
+*/10 * * * * /caminho/vida-plena/apps/backend/ops/backup/run-cycle.sh incremental
