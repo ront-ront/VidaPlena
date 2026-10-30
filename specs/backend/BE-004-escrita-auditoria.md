@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M0 Fundação
-- **Status:** pendente
+- **Status:** implementada (verificação local de imutabilidade e rollback)
 - **Depende de:** BE-002, BE-003
 - **Requisitos cobertos:** RF-032, RNF-015
 

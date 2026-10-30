@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M0 Fundação
-- **Status:** pendente
+- **Status:** implementada localmente
 - **Depende de:** BE-002, BE-004
 - **Requisitos cobertos:** RF-029, RNF-012, RN-007
 
@@ -22,18 +22,22 @@ Ler `specs/shared/access-policy.md` inteiro, `specs/shared/data-model.md` (atrib
 - Mudança de papel, DPO ou status invalida autorização imediatamente, inclusive sessão ativa. Impedir remover/desativar última conta admin ativa.
 
 ## 5. Critérios de aceite
-- [ ] Dado usuário com ID de outro paciente, quando chamar recurso pessoal, então servidor nega mesmo que URL seja manipulada.
-- [ ] Dado DPO gestor, quando pedir auditoria/consentimentos, então autoriza metadados; quando pedir evolução/anexo clínico, então nega.
-- [ ] Dado admin que revoga permissão, quando usuário ainda usa sessão antiga, então próxima requisição já é negada e ato é auditado.
-- [ ] Dada única conta admin ativa, quando tentar inativar/remover papel admin, então 409 e nenhuma alteração.
+- [x] Dado usuário com ID de outro paciente, quando chamar recurso pessoal, então servidor nega mesmo que URL seja manipulada.
+- [x] Dado DPO gestor, quando pedir auditoria/consentimentos, então autoriza metadados; quando pedir evolução/anexo clínico, então nega.
+- [x] Dado admin que revoga permissão, quando usuário ainda usa sessão antiga, então próxima requisição já é negada e ato é auditado.
+- [x] Dada única conta admin ativa, quando tentar inativar/remover papel admin, então 409 e nenhuma alteração.
 
 ## 6. Testes esperados
 Matriz de permissão por papel, IDOR por paciente, grant/revoke DPO e último admin; auditoria de mudança/negação. Lint do backend.
 
 ## 7. Definition of Done
-- [ ] Guards no servidor e portas reutilizáveis; nenhuma política somente visual.
-- [ ] Testes de isolamento e auditoria passam; contrato compartilhado respeitado.
-- [ ] Lint passa, sem `tsc`; vínculo clínico específico continua BE-030.
+- [x] Guards no servidor e portas reutilizáveis; nenhuma política somente visual.
+- [x] Testes de isolamento e auditoria passam; contrato compartilhado respeitado.
+- [x] Lint passa, sem `tsc`; vínculo clínico específico continua BE-030.
 
 ## 8. Suposições e pontos em aberto
 Designação formal de quem detém `privacy.dpo` é P-08. Campos clínicos entre especialidades/janelas do vínculo permanecem P-06; o guard deve falhar fechado até existir política aprovada.
+
+## Evidência de implementação
+
+Guard HTTP, política de domínio e alteração transacional com advisory lock; 6 testes Node e 7 testes PostgreSQL/HTTP aprovados, lint aprovado. A composição do autenticador criptográfico ocorre em BE-008; até lá o router exige uma porta verificadora injetada e não é exposto sem autenticação. Vínculo clínico permanece bloqueado até BE-030.

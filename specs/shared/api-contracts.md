@@ -6,25 +6,32 @@
 
 - Prefixo `/v1`; JSON UTF-8; IDs UUID opacos; timestamps ISO 8601 UTC; datas civis `YYYY-MM-DD`; valores monetários ausentes da V1. Resposta de coleção: `{ items: [...], nextCursor: string | null }`; limites de paginação vêm do contrato do recurso.
 - Erro: `{ error: { code: string, message: string, details?: [{ field, reason }], requestId: string } }`. `message` em pt-BR compreensível; `details` não inclui dado clínico/segredo. `requestId` correlaciona log e auditoria.
-- Códigos: `VALIDATION_ERROR` 400; `UNAUTHENTICATED` 401; `MFA_REQUIRED` 202 (desafio); `FORBIDDEN` 403; `NOT_FOUND_OR_FORBIDDEN` 404 para recurso clínico alheio; `CONFLICT` 409; `CONSENT_REQUIRED` 409; `RATE_LIMITED` 429; `SERVICE_UNAVAILABLE` 503. 422 pode representar arquivo inválido com campos detalhados. Sem enumeração de conta em recuperação/login.
+- Códigos: `VALIDATION_ERROR` 400; `UNAUTHENTICATED` 401; `MFA_REQUIRED` 202 (desafio); `FORBIDDEN` 403; `NOT_FOUND_OR_FORBIDDEN` 404 para recurso clínico alheio; `CONFLICT` 409; `CONSENT_REQUIRED` 409; `RATE_LIMITED` 429; `SERVICE_UNAVAILABLE` 503; `TOKEN_EXPIRED` 410 para link inválido/usado/expirado. 422 pode representar arquivo inválido com campos detalhados. Sem enumeração de conta em recuperação/login.
 - Listas sensíveis são filtradas no servidor. Toda alteração/consulta pessoal ou clínica relevante usa ator, escopo, requestId e evento de auditoria. Status de revogação/conta se aplica imediatamente; cache não pode servir dados revogados.
-- JWT access token em memória do cliente, nunca `localStorage`; refresh token rotativo em cookie HttpOnly/Secure. Esta é decisão técnica de contrato para a V1. O domínio de implantação e a política SameSite/Origin/CSRF serão definidos em BE-001/BE-008 e validados antes da implementação, pois front/back são apps separados. Server Components podem buscar dados públicos; dados protegidos usam serviço autenticado seguro, sem token exposto em HTML.
+- JWT access token em memória do cliente, nunca `localStorage`; refresh token rotativo em cookie HttpOnly/Secure. Esta é decisão técnica de contrato para a V1. P-12 aprova mesmo site para front/API, cookie SameSite=Lax, HttpOnly/Secure, allowlist exata de Origin e CSRF vinculado à sessão; domínio real vem da configuração e deve ser verificado na implantação. Server Components podem buscar dados públicos; dados protegidos usam serviço autenticado seguro, sem token exposto em HTML.
 - As rotas abaixo são contrato de alto nível; exemplos mostram campos essenciais e respostas. `shared/data-model.md`, `access-policy.md` e `parameters.md` definem semântica única. Arquivos binários usam upload/download separado e nunca base64 em JSON.
 
 ## M0 — autenticação e conta
 
+### Operação e observabilidade (BE-014)
+
+`GET /health/live` responde `200 {status:"alive"}` enquanto o processo HTTP está vivo. `GET /health/ready` testa o PostgreSQL essencial com timeout `ops.readiness_timeout_ms` e responde `200 {status:"ready"}` ou `503 {status:"unavailable"}`, sem detalhes da dependência. Ambos ficam fora do prefixo `/v1` para sondas de infraestrutura. `GET /v1/admin/ops/metrics` requer sessão admin com MFA e devolve texto Prometheus agregado por rota template, método e status; não usa URL concreta, query ou identificadores como rótulo. `POST /v1/admin/ops/maintenance-windows` requer admin `{startsAt,endsAt,noticeReference}` e responde 201 `{id,startsAt,endsAt,registeredAt,noticeReference}`; só registra se a antecedência cumprir `ops.maintenance_notice_hours` e o total de janelas no mês UTC não ultrapassar `ops.maintenance_max_hours_month`. `GET /v1/admin/ops/maintenance-windows` lista as 100 janelas recentes com `createdBy`. A referência do aviso é evidência informada pelo operador, sem envio automatizado nesta spec. A coleta, o destino de alertas e a prova de entrega do aviso produtivos dependem de P-07.
+
 | Método e rota | Requisição essencial | Sucesso | Erros específicos / autorização | Origem |
 | --- | --- | --- | --- | --- |
-| `POST /v1/auth/login` | `{ identifier: emailOuCpf, password }` | Paciente: 200 `{ status: "authenticated", accessToken, expiresAt, user }` + refresh cookie; interno: 202 `{ status: "mfa_required", challengeId, expiresAt }`. | 401 genérico; 423 conta temporariamente bloqueada; 429 limite; auditar toda tentativa. | RF-002, RNF-013 |
-| `POST /v1/auth/mfa/verify` | `{ challengeId, code }` | 200 sessão/tokens como acima. | 401 código inválido/expirado, sem sessão; auditoria. Método/canal pendente P-05. | RF-002 |
+| `POST /v1/auth/login` | `{ identifier: emailOuCpf, password }` | Paciente: 200 `{ status: "authenticated", accessToken, expiresAt, user }` + refresh cookie; interno: 202 `{ status: "mfa_required", challengeId, expiresAt, enrollmentRequired }`. | 401 genérico; 423 conta temporariamente bloqueada; 429 limite; auditar toda tentativa. | RF-002, RNF-013 |
+| `POST /v1/auth/mfa/enroll` | `{ challengeId }` recebido após senha válida; somente ainda não matriculado | 200 `{secret,otpauthUri}` para cadastrar aplicativo; não concede sessão. | 401 desafio inválido/expirado/conta bloqueada; `Cache-Control: no-store`; nunca logar segredo. | P-05, BE-008 |
+| `POST /v1/auth/mfa/verify` | `{ challengeId, code }` | 200 sessão/tokens como acima. | 401 código inválido/expirado, sem sessão; auditoria. TOTP por aplicativo aprovado em P-05. | RF-002 |
 | `POST /v1/auth/refresh` | Refresh cookie válido | 200 `{ accessToken, expiresAt }` + novo refresh cookie; token anterior revogado. | 401 expirado/reutilizado; reutilização revoga família de sessão. | Q-15, RNF-013 |
 | `POST /v1/auth/logout` | Refresh cookie/sessão | 204; revoga sessão e limpa cookie. | 401 se não autenticado; idempotência sem expor existência. | RF-002 |
 | `POST /v1/auth/recovery/request` | `{ identifier }` | 202 mensagem genérica idêntica para conta existente/inexistente. | 429 por `auth.reset_requests_per_hour`; envio via EmailSender e auditoria. | RF-003 |
 | `POST /v1/auth/recovery/complete` | `{ token, newPassword }` | 204; revoga todas as sessões e token. | 400 senha inválida/reutilizada; 410 token usado/expirado. | RF-003 |
+| `POST /v1/auth/invitations/inspect` | `{ token }` | 200 `{fullName,roles,expiresAt}`; identidade mínima do convite. | 410 inválido/usado/expirado; não consome. | RF-029, BE-007 |
 | `POST /v1/auth/invitations/accept` | `{ token, password }` | 200 `{ status: "active" }`; token consumido. | 400 política de senha; 410 convite expirado/usado. | RF-001/029, Q-05 |
-| `POST /v1/auth/contact-verifications/complete` | `{ token }` | 204; novo e-mail/telefone torna-se oficial. | 410 token inválido; alteração/auditoria. | RF-005 |
+| `POST /v1/auth/contact-verifications/complete` | `{ token }` | 204; novo e-mail torna-se oficial após prova no endereço novo. | 410 token inválido; alteração/auditoria. | RF-005 |
 | `GET /v1/me` | Sessão | 200 `{ id, roles, permissions, profile, consentState }` filtrado. | 401; sem conteúdo clínico. | RF-002/005 |
-| `PATCH /v1/me/contact` | `{ email?, phone? }` | 202 confirmação pendente no novo canal; contato antigo continua oficial até prova. | 400 formato; 409 contato em uso. | RF-005 |
+| `PATCH /v1/me/contact` | `{ email }` | 202 confirmação pendente no e-mail novo; contato antigo continua oficial até prova. | 400 formato; 409 contato em uso. | RF-005, P-12 |
+| `POST /v1/onsite-contact/phone` | Recepção/admin `{ userId, phone }` após confirmação presencial da pessoa. | 200 `{ status: "confirmed" }`; novo telefone fica oficial imediatamente, ato auditado. | 403 fora da recepção/admin; 404 usuário não paciente. | RF-005, P-12 |
 
 `identifier` aceita e-mail ou CPF sem revelar qual corresponde a uma conta. Campos de senha não aparecem em resposta/log. Para cadastro pela recepção, “credencial provisória” de RF-001 é implementada como link de uso único para definir senha, nunca senha temporária em texto claro; registrar como interpretação técnica de segurança.
 
@@ -37,28 +44,32 @@
 | `POST /v1/patients/{id}/onsite-consents` | Recepção: `multipart/form-data` com `data` JSON `{ versionId, consentingPersonName, consentingRelationship?, guardianUserId?, accepted: true }` e `signedTerm` obrigatório. | 201 `{ consentEventId, signedFileId, state }`; registra novo aceite presencial para paciente já cadastrado, sem alterar versão anterior. | 403 fora da recepção/admin; 404 sujeito inexistente; 409 versão não vigente; 422 arquivo inválido. | RF-004, Q-05 |
 | `GET /v1/me/dependents` | Sessão do responsável | 200 `{ items: [{ patientId, fullName, relationship, status }] }`. | 401/403; só vínculos ativos. | Q-05 |
 | `GET /v1/consent-documents/current?kind=data` | Sessão ou cadastro | 200 `{ id, version, body, effectiveAt }`. | 404 se não publicado; cadastro fica indisponível. | RF-004 |
-| `POST /v1/admin/consent-documents` | `{ kind: "data", version, bodyReference, effectiveAt }` | 201 versão imutável. | 403 sem admin; publicação por admin é **suposição técnica** pendente de confirmação clínica/DPO. | RF-004 |
+| `POST /v1/admin/consent-documents` | `{ kind: "data", version, bodyReference, effectiveAt }` | 201 versão imutável. | 403 sem admin; publicação por admin aprovada em P-12 e auditada. | RF-004 |
 | `GET /v1/me/consents` | Sessão do paciente/responsável | 200 histórico por paciente autorizado, com versão, ato, data, origem. | 404 para dependente não vinculado. | RF-004 |
 | `POST /v1/me/consents` | `{ patientId, versionId, action: "accept"|"refuse" }` | 201 `{ consentEventId, state }`; preserva histórico. | 409 versão não vigente; 403 sujeito alheio. | RF-004 |
 | `POST /v1/me/consents/revoke` | `{ patientId, versionId, reason? }` | 201 `{ consentEventId, portalState: "restricted" }`; bloqueios imediatos. | 403 sujeito alheio; retenção legal preservada. | RF-004, Q-09 |
 
-Versão publicada após aceite anterior exige novo aceite no próximo acesso antes de operações digitais dependentes. Documento presencial assinado é `FileObject` com autorização restrita e auditoria. A regra jurídica definitiva pós-revogação é P-01.
+Versão publicada após aceite anterior exige novo aceite no próximo acesso antes de operações digitais dependentes. Nos dois endpoints multipart de cadastro/aceite presencial, enviar a parte `data` antes de `signedTerm` para permitir validação e cifragem em streaming; a ordem é detalhe técnico do contrato HTTP. Documento presencial assinado é `FileObject` com autorização restrita e auditoria. A regra jurídica definitiva pós-revogação é P-01.
 
 ## M0 — administração, direitos do titular, notificações e arquivos
 
 | Método e rota | Requisição essencial | Sucesso | Erros / acesso | Origem |
 | --- | --- | --- | --- | --- |
 | `POST /v1/admin/users` | `{ email, fullName, role }` | 201 `{ userId, status: "invited", invitationExpiresAt }`; e-mail de convite. | 403: gestor só recepção/profissional; admin pode gestor/recepção/profissional; 409 conta existente. | RF-029, Q-05 |
-| `GET /v1/admin/users` | Filtros `role,status,cursor` | 200 coleção de metadados, último acesso; sem dados clínicos. | 403; paginação. | RF-029 |
-| `PATCH /v1/admin/users/{id}/status` | `{ status: "active"|"inactive" }` | 200 novo status; desativar revoga sessões. | 409 último admin; 403 fora do perfil; nunca DELETE. | RF-029 |
+| `POST /v1/admin/users/{id}/invitation` | Sessão de admin/gestor autorizado ao papel do alvo | 201 `{userId,status,invitationExpiresAt}`; invalida convite anterior. | 409 alvo já ativo/inativo; 403 acima do ator. | RF-029, BE-007 |
+| `GET /v1/admin/users` | Filtros `role,status,cursor` | 200 `{items,nextCursor,dpoDesignated}` com metadados, `lastLoginAt`, `reviewRequiredAt`; gestor só recepção/profissional; sem dados clínicos. | 403; paginação. | RF-029 |
+| `PATCH /v1/admin/users/{id}/status` | `{ status: "active"|"inactive" }` | 200 novo status; desativar revoga sessões. | 409 último admin ou ativação antes de definir senha por convite; 403 fora do perfil; nunca DELETE. | RF-029 |
 | `PUT /v1/admin/users/{id}/roles` | `{ roles: [...] }` | 200 papéis vigentes imediatamente e auditados. | 409 último admin; 403 concessão acima do ator. | RF-029 |
-| `PUT /v1/admin/users/{id}/permissions/privacy.dpo` | `{ enabled: boolean }` | 200; auditoria e alerta se nenhum DPO. | 403 só admin; 400 se alvo sem papel interno aceito. | Q-20, RF-032 |
+| `PUT /v1/admin/users/{id}/permissions/privacy.dpo` | `{ enabled: boolean }` | 200 `{userId,status,roles,dpoDesignated}`; auditoria e alerta quando `dpoDesignated=false`. | 403 só admin; 400 se alvo sem papel interno aceito. | Q-20, RF-032 |
 | `POST /v1/me/subject-requests` | `{ patientId, kind: "access"|"correction"|"export"|"erasure", description? }` | 201 `{ requestId, status, dueAt }`. | 403 sujeito alheio; 400 tipo inválido. | RF-005, RNF-016 |
 | `GET /v1/me/subject-requests` | Sessão e cursor | 200 coleção dos próprios pedidos/dependentes. | 403/404 fora do escopo. | RF-005 |
 | `GET /v1/privacy/subject-requests` | `privacy.dpo`; admin somente se não houver DPO designado, filtros de status/prazo | 200 fila sem conteúdo clínico. | 403 fora dessas condições. | Q-20 |
 | `GET /v1/privacy/consents` | `privacy.dpo`, filtros `patientId,action,from,to,cursor` | 200 coleção de metadados de versão, ato, ator, data e origem; sem anexo ou conteúdo clínico. | 403 sem `privacy.dpo`, inclusive admin sem grant; consulta auditada. | Q-20, RF-004 |
-| `POST /v1/privacy/subject-requests/{id}/resolve` | `{ decision, explanation, exportFileId? }` | 200 pedido concluído/auditado; eliminação sujeita RN-012. | 403 sem `privacy.dpo` ou admin de fallback; 409 pendências de retenção. | RF-005, RNF-016 |
+| `POST /v1/privacy/subject-requests/{id}/resolve` | `{ decision: "approved"|"denied"|"retained"|"referred", explanation }` | 200 `{requestId,status,resolution:{decision,explanation,deleted,preserved},exportReady}` auditado; para `access`/`export` aprovados o pacote M0 é gerado no servidor; para `correction`, apenas `referred`/`denied` sem alegar alteração; para `erasure`, apenas `retained` enquanto P-01 não for validado. | 403 sem `privacy.dpo` ou admin de fallback; 409 decisão incompatível ou pedido concluído. | RF-005, RNF-016 |
+| `GET /v1/me/subject-requests/{id}/export` | Sessão do solicitante e vínculo próprio/dependente ativo | 200 JSON estruturado, com download auditado; conteúdo cifrado em repouso. Exportação M0 cobre cadastro e consentimentos, ampliada pelos módulos futuros. | 403/404 fora do escopo ou pacote indisponível. | RF-005 |
 | `GET /v1/me/notifications` | Sessão/cursor | 200 categoria, canal, horário, status e texto mínimo seguro. | 403 sujeito alheio. | RF-013, Q-18 |
+| `GET /v1/me/notification-preferences` | Sessão | 200 `{ channels, nonEssentialOptOut }` do próprio usuário. | 401/403. | Q-18, BE-006 |
+| `GET /v1/notifications/attention` | Recepção/gestor/admin, cursor | 200 `{items:[{id,userId,patientId,deliveryStatus,failureReasonSafe,createdAt}],nextCursor}`; alertas de falha/canal externo ausente, sem conteúdo. | 403 demais perfis. | Q-18, BE-006 |
 | `PUT /v1/me/notification-preferences` | `{ channels: ["email","portal"], nonEssentialOptOut: boolean }` | 200 preferência; essenciais não podem ser desligadas por categoria. | 400 canal indisponível; após revogação nenhum envio não legal. | Q-18 |
 | `POST /v1/files` | Multipart com categoria/escopo autorizado | 201 `{ fileId, detectedType, size, scanStatus }`. | 400/422 tipo/tamanho/quantidade; 403 escopo; `skipped_dev` só fora de produção. | Q-17, RNF-014 |
 | `POST /v1/files/{id}/download-link` | Sessão | 200 `{ url, expiresAt }`, TTL `file.signed_url_ttl_seconds`. | 404/403 não autorizado; auditoria de emissão do link. | Q-17 |
@@ -226,3 +237,7 @@ Indicadores são agregados e nunca retornam nomes/CPF, dados clínicos ou listas
 | `GET /v1/admin/audit-exports/{jobId}` | ID | 200 status/token curto se pronto | 404 outro solicitante; sem UPDATE/DELETE dos eventos. | RF-032 |
 
 CSV UTF-8 é proposta técnica P-14; delimitador/cabeçalho são fixados em contrato de relatório versionado. Campos pessoais são minimizados, e cada emissão registra ator, filtros, escopo, formato, quantidade e ciência. O job usa outbox/worker de `backend/architecture.md`, notifica quando pronto via canais ativos Q-18 e produz token de download de `file.signed_url_ttl_seconds`. Timeout síncrono converte a operação em job sem duplicar relatório. AuditEvent nunca armazena arquivo nem conteúdo clínico; a própria consulta/exportação gera evento em trilha append-only, sem recursão infinita de auditoria.
+
+### Política HTTP de sessão M0 aprovada (P-12)
+
+Login, enrollment e verify retornam `Cache-Control: no-store`. `vp_refresh` é cookie HttpOnly, host-only, Secure em staging/produção, SameSite=Lax, Path=/v1/auth. `vp_csrf` é host-only, Secure, SameSite=Lax, Path=/, legível pelo front. Refresh/logout exigem `X-CSRF-Token` igual ao cookie e ao hash ligado à sessão, além de `Origin` permitido. Rotação troca ambos; refresh em paralelo deve ser serializado pelo cliente. Toda mutação de autenticação exige Origin da allowlist; desenvolvimento HTTP localhost admite Secure=false. Access token não contém dados pessoais/papéis; autorização recarrega estado atual do banco.

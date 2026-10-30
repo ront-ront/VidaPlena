@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M0 Fundação
-- **Status:** pendente
+- **Status:** implementada localmente
 - **Depende de:** BE-003, BE-004
 - **Requisitos cobertos:** RF-013, RN-005
 
@@ -22,18 +22,22 @@ Ler `specs/shared/business-rules.md` (notificações), `specs/shared/api-contrac
 - Retry de falha registra tentativa e alerta operacional sem duplicar entrega; política concreta de intervalo é parâmetro ainda não aprovado se necessário, documentar antes de implementar.
 
 ## 5. Critérios de aceite
-- [ ] Dado mesmo evento entregue duas vezes, quando processar, então uma única notificação por chave idempotente é persistida/enviada.
-- [ ] Dado opt-out de marketing, quando evento não essencial ocorrer, então não há envio; lembrete essencial continua elegível com consentimento ativo.
-- [ ] Dado nenhum canal externo, quando evento essencial ocorrer, então portal recebe e recepção é sinalizada.
-- [ ] Dada revogação de consentimento, quando mensagem já enfileirada for processada, então preferência/consentimento é reavaliado e envio não legal é bloqueado.
+- [x] Dado mesmo evento entregue duas vezes, quando processar, então uma única notificação por chave idempotente é persistida/enviada.
+- [x] Dado opt-out de marketing, quando evento não essencial ocorrer, então não há envio; lembrete essencial continua elegível com consentimento ativo.
+- [x] Dado nenhum canal externo, quando evento essencial ocorrer, então portal recebe e recepção é sinalizada.
+- [x] Dada revogação de consentimento, quando mensagem já enfileirada for processada, então preferência/consentimento é reavaliado e envio não legal é bloqueado.
 
 ## 6. Testes esperados
 Unitários de classificação e preferência, integração com outbox/caixa dev, idempotência, retry e revogação antes de entrega. Lint do backend.
 
 ## 7. Definition of Done
-- [ ] Porta e adaptadores dev isolados; produção não usa log/caixa como provedor real.
-- [ ] Status/preferência/auditoria persistidos; testes e lint passam.
-- [ ] BE-025 continua responsável pelo relógio de lembretes.
+- [x] Porta e adaptadores dev isolados; produção não usa log/caixa como provedor real.
+- [x] Status/preferência/auditoria persistidos; testes e lint passam.
+- [x] BE-025 continua responsável pelo relógio de lembretes.
 
 ## 8. Suposições e pontos em aberto
 Lista de essenciais precisa de validação jurídica P-01. Provedor de e-mail real para produção não foi escolhido; Q-18 autoriza apenas implementação dev.
+
+## Evidência de implementação
+
+Outbox PostgreSQL, política de canal/categoria, caixa dev atômica, stubs SMS/WhatsApp, worker com close e routers autenticados reutilizáveis. Testes de concorrência/idempotência, opt-out, fallback, bloqueio antes de envio, retry após falha ambígua e proteção de tokens aprovados; lint aprovado. Autenticador/runtime integrado em BE-008; leitor definitivo de consentimento em BE-011. Até lá, política de pacientes permanece fechada.

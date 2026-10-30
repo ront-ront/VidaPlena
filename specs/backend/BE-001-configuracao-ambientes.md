@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M0 Fundação
-- **Status:** pendente
+- **Status:** implementada (verificação local; RNF-024 depende de implantação)
 - **Depende de:** nenhuma
 - **Requisitos cobertos:** RNF-024
 

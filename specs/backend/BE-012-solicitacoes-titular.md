@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M0 Fundação
-- **Status:** pendente
+- **Status:** implementada localmente com pendências P-01 e ampliação do pacote de exportação após M0
 - **Depende de:** BE-005, BE-011
 - **Requisitos cobertos:** RF-005, RNF-016
 
@@ -39,3 +39,7 @@ Autorização titular/dependente/DPO, prazo, exportação, retenção, auditoria
 
 ## 8. Suposições e pontos em aberto
 Formato exato do pacote de exportação e canal assistido pós-revogação precisam de validação DPO/jurídico. Esta spec define contrato mínimo; não é parecer legal.
+
+### Estado da implementação em 30/10/2026
+
+Migration `202610300014_subject_requests`, abertura, consulta própria/dependente, fila DPO ou admin de fallback, consulta auditada de metadados de consentimento, decisão e exportação JSON cifrada em repouso estão implementadas. O pacote M0 inclui identificação/cadastro e histórico de consentimentos; evoluções, anexos, agenda e dados fiscais só poderão ser agregados quando os módulos correspondentes existirem. Decisão `approved` em correção é bloqueada: o DPO pode encaminhar (`referred`) ou negar com justificativa, sem alegar correção automática. Eliminação fica como `retained` com campos preservados explícitos, sem exclusão, até a validação P-01. O canal assistido após revogação também permanece P-01. Teste de integração dedicado e lint passaram, sem `tsc`.

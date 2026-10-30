@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M0 Fundação
-- **Status:** pendente
+- **Status:** implementada e ensaiada localmente; homologação P-07/P-03/P-01 pendente
 - **Depende de:** BE-002, BE-014
 - **Requisitos cobertos:** RNF-007, RNF-006, RN-012
 
@@ -37,3 +37,7 @@ Simulação documentada de backup/restauração em ambiente isolado, falha/alert
 
 ## 8. Suposições e pontos em aberto
 Infraestrutura nacional e localidade secundária precisam de escolha da clínica/P-07. Política de rotação para gravação revogada é P-03; não declarar recuperação de desastres homologada sem ensaio no alvo.
+
+### Estado da implementação em 30/10/2026
+
+`apps/backend/ops/backup/` contém imagem PostgreSQL 17 + pgBackRest, Compose de ensaio, ciclo `full|incremental`, snapshot incremental cifrado do `FileStorage`, restauração isolada, ledger cifrado de supressão e exemplo de cron. `BACKUP_FILE_KEY` é validada por Zod e deve diferir de `FILE_ENCRYPTION_KEY`; o repositório pgBackRest usa passphrase própria. Falha do ciclo emite `ops.alert/backup_failed`. O ensaio local recuperou backup completo, incremental e escrita posterior pelo WAL; restaurou objeto fictício com SHA-256 idêntico. Evidência detalhada em `_work/06-backup-restore-evidence.md`; procedimento em `apps/backend/ops/backup/README.md`. Retenção de prontuário real só pode ser testada após M2; revogação real de gravação e rotação dependem BE-047/P-03. Repositório nacional secundário, agendador ativo, medição semestral e RPO/RTO de produção dependem P-07.

@@ -45,4 +45,4 @@
 
 - Lint existente: `yarn lint` na raiz, ou workspace específico. Build existente: `yarn workspace vida-plena-frontend build`; não existe build/test script de backend nos manifests examinados.
 - **Nunca executar `tsc` para testes; usar somente lint para verificação estática.** Testes funcionais/integração/e2e pertinentes são descritos nas specs e só usam scripts/ferramentas que forem adicionados pela spec responsável.
-- Esta tarefa de Fase 3 cria documentação em `specs/` e este `AGENTS.md`; não altera código-fonte. Não executar lint sem alteração de código como prova de conformidade das specs.
+- A Fase 3 documental original criou `specs/` e `AGENTS.md` sem código. O usuário autorizou posteriormente a implementação seguindo `03-implementation-order.md` e pediu pausa ao fim do backend M0. Implementação e verificação agora seguem uma spec por vez, com a matriz atualizada para cobertura efetiva; não confundir código local com homologação de produção.

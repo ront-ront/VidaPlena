@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M0 Fundação
-- **Status:** pendente
+- **Status:** implementada localmente; homologação de ambiente P-07 pendente
 - **Depende de:** BE-001, BE-004
 - **Requisitos cobertos:** RNF-006, RNF-024
 
@@ -37,3 +37,7 @@ Health com dependência saudável/indisponível, sanitização de log e correla�
 
 ## 8. Suposições e pontos em aberto
 Fornecedor de nuvem/monitoramento e máquina-alvo não definidos (P-07); RNF-006/024 só podem ser homologados no ambiente real.
+
+### Estado da implementação em 30/10/2026
+
+Pino 10.4.0 emite JSON por allowlist de campos; `@prometheus-io/client` 0.16.1 fornece histogramas, contadores e gauges por instância. Liveness, readiness PostgreSQL com timeout, métricas admin/MFA, alertas de 5xx/lentidão/readiness/job e backlog de notificações estão ligados ao runtime. Registro de janela de manutenção com migration `202610300015_maintenance_windows`, antecedência e teto mensal UTC parametrizados, referência externa do aviso e auditoria. Testes Node 2/2 e integração 1/1 passaram; lint. Destino externo de alertas, comprovação real de entrega do aviso, horário local e disponibilidade mensal permanecem P-07. Evidência e instruções em `_work/05-operational-runbook.md`.

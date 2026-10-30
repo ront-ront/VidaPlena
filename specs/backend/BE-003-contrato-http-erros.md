@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M0 Fundação
-- **Status:** pendente
+- **Status:** implementada (testes HTTP e lint aprovados)
 - **Depende de:** BE-001
 - **Requisitos cobertos:** RNF-021
 

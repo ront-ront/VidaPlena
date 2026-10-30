@@ -1,6 +1,6 @@
 # Matriz de rastreabilidade — requisitos → specs
 
-**Atualização:** lote M4 da Fase 3. **Escopo da matriz:** 32 RF, 25 RNF, 12 RN do DRS e 16 UI extraídos dos documentos de front. Nenhum código de produção foi implementado nesta tarefa; o estado abaixo mede **documentação de spec**, não funcionalidade entregue.
+**Atualização:** lote M4 da Fase 3. **Escopo da matriz:** 32 RF, 25 RNF, 12 RN do DRS e 16 UI extraídos dos documentos de front. A tabela principal mede **documentação de spec**; implementação M0 autorizada posteriormente está registrada separadamente ao fim deste arquivo.
 
 ## Legenda
 
@@ -105,7 +105,7 @@
 - **Telas explicitamente desenhadas nos docs de front:** Agenda → FE-015/016/018 (M1 redigida); Prontuário → FE-021/022/023 (M2 redigida). Layouts das demais telas são propostas Q-14.
 - **Desvios registrados:** RN-008 adendo sempre; RNF-013 inatividade interna 30 min; RNF-009 metas Q-22; RNF-022 compatibilidade estrutural; RN-005 segundo lembrete; RN-009/RNF-017 assinatura simulada parcial; RNF-014 mídia parcial.
 - **Operação pendente:** RNF-006/007/024 dependem de infraestrutura real e medições; RNF-004 requer teste com usuários após treinamento; RNF-003/019/020/021/023 exigem verificação transversal quando as telas forem implementadas.
-- **Implementação:** pendente para todos os IDs. Esta tarefa cria especificações, não altera código-fonte.
+- **Implementação:** M0 em andamento conforme autorização posterior do usuário. Evidências por spec em `_work/03-implementation-progress.md`; cobertura documental não equivale à implementação.
 - **Fechamento documental:** 32 RF, 25 RNF, 12 RN e 16 UI cobertos por 95 specs (54 BE, 41 FE); **sem requisito sem cobertura**. Agenda → FE-015/016/018; Prontuário → FE-021/022/023. Os 95 IDs são únicos, as dependências seguem a ordem topológica sem ciclo e todos os arquivos BE/FE têm as oito seções do template e critérios de aceite Dado/Quando/Então. Este resultado mede redação e não execução dos testes.
 
 ## Riscos arquiteturais aprovados A-01–A-10
@@ -122,3 +122,23 @@
 | A-10 | `shared/performance-scenario.md`, BE-014/015/051/052 |
 
 A cobertura documental está completa. Ao implementar, atualizar por requisito somente a cobertura efetivamente entregue e revisar os estados de limitação. “Total” documental nunca substitui a verificação de implantação/segurança.
+
+## Cobertura implementada de M0
+
+| Spec | Requisitos | Evidência | Limite |
+| --- | --- | --- | --- |
+| BE-001 | RNF-024 parcial | Configuração, composição e bootstrap; 3 testes Node aprovados e lint | Hospedagem nacional real ainda não comprovada |
+| BE-002 | RF-001/RF-029/RNF-012 parcial | Migration e 3 testes PostgreSQL, lint | Casos de uso e autorização em specs posteriores |
+| BE-003 | RNF-021 parcial | Testes HTTP de validação/404/409/500 sanitizado e lint | Mensagens dos módulos ainda serão integradas |
+| BE-004 | RF-032/RNF-015 parcial | Testes de rollback, metadados e imutabilidade no PostgreSQL | Consulta/exportação BE-050; operação produtiva pendente |
+| BE-005 | RF-029/RNF-012/RN-007 parcial | Guard HTTP, IDOR, DPO, revogação imediata e último admin sob concorrência; lint | Autenticador BE-008; vínculo clínico BE-030 permanece fechado |
+| BE-006 | RF-013/RN-005 parcial | Outbox concorrente/idempotente, caixa local, política de preferência, retry e bloqueio de consentimento; testes e lint | Relógio de lembretes BE-025; consentimento BE-011 e provedor produtivo pendentes |
+| BE-007 | RF-029/RNF-013 parcial | Seed em banco vazio, convite de uso único/expiração/reenvio/RBAC, revisão de inatividade, bcrypt; testes e lint | Login/MFA em BE-008; operação do job e provedor produtivo pendentes |
+| BE-008 | RF-002/RNF-013 parcial | TOTP, login interno e de paciente consentido, JWT, refresh rotativo/reuse, idle, lock, cookies/Origin/CSRF; testes e lint | Domínio real de implantação não homologado; consentimento jurídico P-01 |
+| BE-009 | RF-003/RF-005/RNF-013 parcial | Reset sem enumeração, limite, expiração/uso único, histórico, revogação, e-mail novo confirmado, telefone presencial; envio a paciente revalida consentimento | Provedor de e-mail produtivo e parecer P-01 pendentes |
+| BE-010 | RF-001/RNF-016 parcial | CPF validado/único sob concorrência, perfis, vínculos e isolamento de dependentes; cadastro digital/presencial com aceite transacional publicado em BE-011 | Exceções legais P-01 e telas FE-007/039 pendentes |
+| BE-013 | RF-020/RF-026/RF-027/RNF-014 parcial | Storage AES-256-GCM, MIME real, limite/quantidade, FileObject, link HMAC, auditoria de download; upload de termo em BE-011 | POST genérico de arquivos ainda sem contexto autorizável em M0; scanner real e regras clínicas em milestones posteriores |
+| BE-011 | RF-004/RNF-016 parcial | Termos versionados e imutáveis, aceite/recusa/revogação auditados, cadastro transacional, evidência presencial cifrada, bloqueio imediato de portal/notificações, IDOR negado; 22 integrações/15 Node/2 Vitest e lint antes do último teste adicional | P-01 base legal e retenção final aguardam jurídico; contrato de arquivo genérico BE-013 ainda pendente |
+| BE-012 | RF-005/RNF-016 parcial | Pedidos próprios/dependentes, prazo configurável, fila DPO/admin de fallback, metadados de consentimento auditados, decisões com retenção explícita e exportação M0 cifrada e auditada; teste dedicado e lint | P-01 impede decisão final de eliminação e canal assistido pós-revogação; exportação de módulos futuros ainda não existe |
+| BE-014 | RNF-006/RNF-024 parcial | Health/readiness, logs estruturados sanitizados, métricas e alertas por rota/job/fila, registro auditado de manutenção com limites parametrizados; 2 testes Node/1 integração e lint | Destino de alertas, aviso externo efetivo, hospedagem nacional, escala e SLA mensal exigem ambiente P-07 |
+| BE-015 | RNF-007/RNF-006/RN-012 parcial | pgBackRest completo/incremental + WAL contínuo, snapshots de arquivos AES-GCM com chave segregada, restore isolado de banco/WAL/arquivo, alerta em falha; 3 testes Node e ensaio local documentado | RPO/RTO de produção, localidade brasileira secundária, agenda ativa, retenção clínica real e rotação de gravação revogada exigem P-07/P-01/P-03 e módulos M2/M3 |

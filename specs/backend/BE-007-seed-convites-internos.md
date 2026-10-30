@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M0 Fundação
-- **Status:** pendente
+- **Status:** implementada localmente
 - **Depende de:** BE-005, BE-006
 - **Requisitos cobertos:** RF-029, RNF-013
 
@@ -22,19 +22,23 @@ Ler `specs/shared/data-model.md` (`User`, `Invitation`), `specs/shared/access-po
 - Aplicar proteção do último admin de BE-005 e auditar criação, convite, ativação, papel e inativação. Job usa `account.inactivity_review_days` para marcar conta sem login para revisão e avisar admin, sem desativação ou exclusão automática. Endpoints conforme `api-contracts.md`.
 
 ## 5. Critérios de aceite
-- [ ] Dado banco sem admin, quando executar seed duas vezes, então existe exatamente um admin e nenhum segredo aparece em log/código.
-- [ ] Dado gestor, quando convidar recepção/profissional, então 201; quando tentar convidar admin/gestor, então 403.
-- [ ] Dado convite expirado/usado, quando definir senha, então 410 e conta não é ativada.
-- [ ] Dada conta interna inativada, quando usar sessão anterior, então acesso é negado e histórico permanece.
-- [ ] Dada conta sem login além de `account.inactivity_review_days`, quando a rotina rodar, então admin recebe alerta de revisão e a conta não é excluída/desativada automaticamente.
+- [x] Dado banco sem admin, quando executar seed duas vezes, então existe exatamente um admin e nenhum segredo aparece em log/código.
+- [x] Dado gestor, quando convidar recepção/profissional, então 201; quando tentar convidar admin/gestor, então 403.
+- [x] Dado convite expirado/usado, quando definir senha, então 410 e conta não é ativada.
+- [x] Dada conta interna inativada, quando usar sessão anterior, então acesso é negado e histórico permanece.
+- [x] Dada conta sem login além de `account.inactivity_review_days`, quando a rotina rodar, então admin recebe alerta de revisão e a conta não é excluída/desativada automaticamente.
 
 ## 6. Testes esperados
 Integração de seed idempotente, matriz de convites, expiração/uso único e desativação com sessão; auditoria. Lint do backend.
 
 ## 7. Definition of Done
-- [ ] Não existe senha padrão no repositório ou resposta de API.
-- [ ] Fluxo de convite e inativação respeita RBAC e contrato.
-- [ ] Testes/lint passam; sem `tsc`.
+- [x] Não existe senha padrão no repositório ou resposta de API.
+- [x] Fluxo de convite e inativação respeita RBAC e contrato.
+- [x] Testes/lint passam; sem `tsc`.
 
 ## 8. Suposições e pontos em aberto
 Canal de e-mail real é futuro; caixa dev de BE-006 serve demonstração. Procedimento seguro de entrega do segredo do seed ao operador será documentado na spec, sem valor fixo.
+
+## Evidência de implementação
+
+Seed idempotente e convites transacionais, hash bcrypt, tokens opacos/cifrados só na fila, uso único mesmo sob concorrência, reenvio e revisão sem exclusão. Suite Node 10/10 e integração PostgreSQL 10/10 aprovadas; lint aprovado. Teste de seed cria banco temporário próprio, aplica migrations e remove somente esse banco. Comandos documentados no README backend; runtime HTTP/autenticação conectados em BE-008.

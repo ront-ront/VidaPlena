@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M0 Fundação
-- **Status:** pendente
+- **Status:** implementada (verificada em PostgreSQL isolado)
 - **Depende de:** BE-001
 - **Requisitos cobertos:** RF-001, RF-029, RNF-012
 

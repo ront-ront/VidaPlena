@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M0 Fundação
-- **Status:** pendente
+- **Status:** implementada localmente; validação jurídica P-01 pendente para produção
 - **Depende de:** BE-004, BE-010, BE-013
 - **Requisitos cobertos:** RF-004, RNF-016
 
@@ -22,20 +22,24 @@ Ler `specs/shared/data-model.md` (`Consent*`), `specs/shared/api-contracts.md` (
 - Revogar registra evento, invalida acesso digital e bloqueia notificações/tratamentos só consentidos; preserva prontuário/identificação mínima/auditoria/consentimentos/dados fiscais conforme Q-09, com acesso restrito. Os prazos vêm de `privacy.clinical_retention_years`, `privacy.audit_retention_years`, `privacy.min_identity_retention_years`, `privacy.consent_evidence_retention_years` e `privacy.fiscal_retention_years`; as três últimas chaves aguardam P-01. Nova versão requer novo aceite no acesso seguinte.
 
 ## 5. Critérios de aceite
-- [ ] Dado aceite de versão vigente, quando cadastrar, então paciente e ConsentEvent persistem juntos; falha de um desfaz ambos.
-- [ ] Dada recusa em autocadastro, quando tentar concluir, então não há conta/perfil digital criado; se o paciente já possui perfil administrativo, a recusa pode ser registrada nele como ConsentEvent sem ativar portal.
-- [ ] Dada versão nova, quando paciente entrar, então operações digitais dependentes aguardam novo aceite e histórico antigo permanece.
-- [ ] Dada revogação, quando próxima requisição de portal/notificação ocorrer, então é bloqueada; retenção obrigatória não é apagada.
-- [ ] Dado responsável presencial, quando registrar, então evento mostra responsável, parentesco, data, versão, origem e arquivo assinado autorizado.
-- [ ] Dado paciente já cadastrado e termo novo, quando recepção registrar aceite presencial com termo assinado, então surge novo evento sem sobrescrever a versão anterior.
+- [x] Dado aceite de versão vigente, quando cadastrar, então paciente e ConsentEvent persistem juntos; falha de um desfaz ambos.
+- [x] Dada recusa em autocadastro, quando tentar concluir, então não há conta/perfil digital criado; se o paciente já possui perfil administrativo, a recusa pode ser registrada nele como ConsentEvent sem ativar portal.
+- [x] Dada versão nova, quando paciente entrar, então operações digitais dependentes aguardam novo aceite e histórico antigo permanece.
+- [x] Dada revogação, quando próxima requisição de portal/notificação ocorrer, então é bloqueada; retenção obrigatória não é apagada.
+- [x] Dado responsável presencial, quando registrar, então evento mostra responsável, parentesco, data, versão, origem e arquivo assinado autorizado.
+- [x] Dado paciente já cadastrado e termo novo, quando recepção registrar aceite presencial com termo assinado, então surge novo evento sem sobrescrever a versão anterior.
 
 ## 6. Testes esperados
 Integração de transação cadastro+aceite, versão, recusa, revogação imediata, responsável/evidência e auditoria; teste de acesso negado após revogação. Lint.
 
 ## 7. Definition of Done
-- [ ] Histórico imutável e projeção de estado atual derivada de eventos.
-- [ ] BE-013 concluída antes do fluxo presencial; validação jurídica P-01 permanece explícita; testes/lint passam.
-- [ ] Contrato compartilhado respeitado, sem `tsc`.
+- [x] Histórico imutável e projeção de estado atual derivada de eventos.
+- [x] Infraestrutura BE-013 necessária ao termo presencial integrada; validação jurídica P-01 permanece explícita; testes/lint passam.
+- [x] Contrato compartilhado respeitado, sem `tsc`.
 
 ## 8. Suposições e pontos em aberto
 Base legal e retenção pós-revogação são proposta provisória sujeita a DPO/jurídico (P-01). Publicador do termo e regras de responsável maior de idade exigem decisão; não afirmar conformidade LGPD final.
+
+### Evidência local em 30/10/2026
+
+Migrations `202610290009_consent` a `202610300013_consent_evidence_trigger_update` aplicadas no banco de teste; versões e eventos protegidos contra UPDATE/DELETE/TRUNCATE, evidência vinculada imutável, estado derivado pela sequência de eventos. Cadastro digital/presencial, aceite posterior, recusa, revogação, autorização por paciente, atualização de versão e bloqueio de notificações foram integrados ao runtime. Multipart cifra e valida o termo antes de associá-lo; falha descarta o arquivo e reconciliador remove órfãos antigos. Regressão 22/22 integrações, 15/15 testes Node, 2/2 Vitest e lint; após adicionar o caso de nova versão presencial, o arquivo de integração da BE-011 passou 2/2. P-01 segue portão jurídico, e o endpoint genérico `POST /v1/files` da BE-013 permanece sem publicação até existir recurso autorizável próprio.

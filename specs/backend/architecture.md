@@ -60,3 +60,13 @@ DTLS-SRTP protege transporte, mas a interpretação V1 de RNF-014 **não prova c
 - M0 antecipa schema de identidade, RBAC, escrita de auditoria, admin seed, observabilidade e backup; M1 antecipa profissionais/salas antes de agendar. Consulta de auditoria completa vem M4, mas eventos já são escritos desde o primeiro login. O grafo de specs em `03-implementation-order.md` é acíclico.
 - Logs estruturados com requestId, erros sem conteúdo sensível, métricas de latência/erro, health/readiness e alertas. Ambientes dev/homolog/prod separados; dados hospedados no Brasil para produção. Backup completo diário + incremental contínuo, RPO/RTO e teste de restauração semestral conforme RNF-007. Evidência de ambiente real exigida para RNF-006/024.
 - Ensaios de carga/concorrência e mídia usam `shared/performance-scenario.md`; relatórios não confundem script disponível com meta verificada. Ao fim dos lotes, matriz indica cobertura total/parcial/pendente e portões jurídicos/técnicos.
+
+## Implementação BE-006 — outbox local
+
+Fila persistida no PostgreSQL (`Notification`), com chave única por evento/agregado/versão/destinatário. Dispatcher serializa por destinatário via advisory lock transacional; preferências são reavaliadas dentro do lock. BE-011 deve usar o mesmo lock ao revogar consentimento, e injetar sua leitura de consentimento na transação de entrega. Antes dessa dependência, envio para pacientes falha fechado; apenas mensagens de identidade de contas internas são permitidas pela política inicial. Nenhuma exceção legal de envio foi presumida.
+
+Caixa de desenvolvimento usa arquivo privado por ID, publicação atômica e chave idempotente. Tokens de ação na outbox são cifrados com AES-256-GCM, chave derivada do segredo de ambiente e domínio próprio; a API do portal jamais devolve token/link de recuperação. Caixa dev não é endpoint estático nem log de aplicação. Produção exige provedor futuro, e recusa adaptador dev. Redis não é necessário para esse dispatcher M0.
+
+## Bibliotecas de infraestrutura da API (direção do usuário, 29/10/2026)
+
+O BarberHubAPI é referência para Zod, TSyringe, documentação OpenAPI/Scalar e testes HTTP. A decisão e os limites de adoção estão em `../_work/04-library-adoption.md`. Portas de aplicação permanecem interfaces; registros explícitos em um container por instância de app resolvem serviços sem depender de decorators no domínio. Schemas Zod validam entrada na borda e alimentam o OpenAPI 3.1 dos endpoints entregues. O contrato funcional continua em `shared/api-contracts.md`; qualquer divergência entre implementação, OpenAPI e spec precisa ser corrigida antes de avançar de milestone.

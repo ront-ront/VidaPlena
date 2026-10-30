@@ -6,7 +6,7 @@
 
 | Milestone | Valor verificável | Situação documental |
 | --- | --- | --- |
-| M0 — Fundação | Ambiente, identidade, cadastro, consentimento, autorização, auditoria, arquivos e base operacional. | 25/25 specs redigidas; implementação pendente. |
+| M0 — Fundação | Ambiente, identidade, cadastro, consentimento, autorização, auditoria, arquivos e base operacional. | 25/25 specs redigidas; backend BE-001–015 implementado ou base funcional local, com BE-012/013 parciais e portões P-01/P-03/P-07; FE pendente. Usuário pediu pausa ao fim do backend M0 antes do frontend. |
 | M1 — Agenda | Catálogo, grade, salas, reserva concorrente, consultas, lista de espera, lembretes, recepção e CSV. | 25/25 specs redigidas; implementação pendente. |
 | M2 — Prontuário | Vínculo, histórico, evolução/adendo, alertas, documentos, acesso de urgência e projeção do paciente. | 25/25 specs redigidas; implementação e portões P-02/P-06/P-11/P-13 pendentes. |
 | M3 — Teleconsulta | Termo, vídeo P2P, arquivos e gravação revogável. | 11/11 specs redigidas; RNF-014 parcial e portões P-03/P-04/P-10 pendentes. |
@@ -36,21 +36,21 @@ flowchart LR
 
 | Ordem | Marco | Spec | Título | Software | Depende de | Situação |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | M0 | [BE-001](backend/BE-001-configuracao-ambientes.md) | Configuração, ambientes e composition root | back | — | Redigida |
-| 2 | M0 | [BE-002](backend/BE-002-schema-identidade.md) | Schema Prisma inicial e migrations de identidade | back | BE-001 | Redigida |
-| 3 | M0 | [BE-003](backend/BE-003-contrato-http-erros.md) | Contrato HTTP, validação e erros | back | BE-001 | Redigida |
-| 4 | M0 | [BE-004](backend/BE-004-escrita-auditoria.md) | Escrita imutável da trilha de auditoria | back | BE-002, BE-003 | Redigida |
-| 5 | M0 | [BE-005](backend/BE-005-rbac-dpo.md) | RBAC, privacy.dpo e autorização por recurso | back | BE-002, BE-004 | Redigida |
-| 6 | M0 | [BE-006](backend/BE-006-dispatcher-notificacoes.md) | Dispatcher de notificações, EmailSender e portal | back | BE-003, BE-004 | Redigida |
-| 7 | M0 | [BE-007](backend/BE-007-seed-convites-internos.md) | Seed do admin e convite de usuários internos | back | BE-005, BE-006 | Redigida |
-| 8 | M0 | [BE-008](backend/BE-008-login-mfa-sessoes.md) | Login, MFA, sessões e bloqueio por tentativas | back | BE-005, BE-007 | Redigida |
-| 9 | M0 | [BE-009](backend/BE-009-recuperacao-contatos.md) | Recuperação de senha e confirmação de contato | back | BE-006, BE-008 | Redigida |
-| 10 | M0 | [BE-010](backend/BE-010-cadastro-paciente-responsavel.md) | Cadastro de paciente, responsável e dependentes | back | BE-002, BE-003, BE-006 | Redigida |
-| 11 | M0 | [BE-013](backend/BE-013-arquivos-scanner.md) | FileStorage cifrado, links e MalwareScanner de desenvolvimento | back | BE-004, BE-005 | Redigida |
-| 12 | M0 | [BE-011](backend/BE-011-consentimento-dados.md) | Versões, aceite presencial e revogação de consentimento | back | BE-004, BE-010, BE-013 | Redigida |
-| 13 | M0 | [BE-012](backend/BE-012-solicitacoes-titular.md) | Solicitações do titular, exportação e fila do DPO | back | BE-005, BE-011 | Redigida |
-| 14 | M0 | [BE-014](backend/BE-014-observabilidade.md) | Health, logs, métricas e alertas operacionais | back | BE-001, BE-004 | Redigida |
-| 15 | M0 | [BE-015](backend/BE-015-backup-restauracao.md) | Backup, restauração e retenção operacional | back | BE-002, BE-014 | Redigida |
+| 1 | M0 | [BE-001](backend/BE-001-configuracao-ambientes.md) | Configuração, ambientes e composition root | back | — | Implementada localmente |
+| 2 | M0 | [BE-002](backend/BE-002-schema-identidade.md) | Schema Prisma inicial e migrations de identidade | back | BE-001 | Implementada localmente |
+| 3 | M0 | [BE-003](backend/BE-003-contrato-http-erros.md) | Contrato HTTP, validação e erros | back | BE-001 | Implementada localmente |
+| 4 | M0 | [BE-004](backend/BE-004-escrita-auditoria.md) | Escrita imutável da trilha de auditoria | back | BE-002, BE-003 | Implementada localmente |
+| 5 | M0 | [BE-005](backend/BE-005-rbac-dpo.md) | RBAC, privacy.dpo e autorização por recurso | back | BE-002, BE-004 | Implementada localmente |
+| 6 | M0 | [BE-006](backend/BE-006-dispatcher-notificacoes.md) | Dispatcher de notificações, EmailSender e portal | back | BE-003, BE-004 | Implementada localmente |
+| 7 | M0 | [BE-007](backend/BE-007-seed-convites-internos.md) | Seed do admin e convite de usuários internos | back | BE-005, BE-006 | Implementada localmente |
+| 8 | M0 | [BE-008](backend/BE-008-login-mfa-sessoes.md) | Login, MFA, sessões e bloqueio por tentativas | back | BE-005, BE-007 | Implementada localmente; paciente integrado em BE-011 |
+| 9 | M0 | [BE-009](backend/BE-009-recuperacao-contatos.md) | Recuperação de senha e confirmação de contato | back | BE-006, BE-008 | Implementada localmente; consentimento de notificações em BE-011 |
+| 10 | M0 | [BE-010](backend/BE-010-cadastro-paciente-responsavel.md) | Cadastro de paciente, responsável e dependentes | back | BE-002, BE-003, BE-006 | Implementada localmente; publicação em BE-011 |
+| 11 | M0 | [BE-013](backend/BE-013-arquivos-scanner.md) | FileStorage cifrado, links e MalwareScanner de desenvolvimento | back | BE-004, BE-005 | Base e uso em consentimento implementados; POST genérico pendente |
+| 12 | M0 | [BE-011](backend/BE-011-consentimento-dados.md) | Versões, aceite presencial e revogação de consentimento | back | BE-004, BE-010, BE-013 | Implementada localmente; P-01 jurídico pendente |
+| 13 | M0 | [BE-012](backend/BE-012-solicitacoes-titular.md) | Solicitações do titular, exportação e fila do DPO | back | BE-005, BE-011 | Implementada localmente; P-01 e exportação ampliada pendentes |
+| 14 | M0 | [BE-014](backend/BE-014-observabilidade.md) | Health, logs, métricas e alertas operacionais | back | BE-001, BE-004 | Implementada localmente; homologação P-07 pendente |
+| 15 | M0 | [BE-015](backend/BE-015-backup-restauracao.md) | Backup, restauração e retenção operacional | back | BE-002, BE-014 | Implementada/ensaiada localmente; homologação P-07/P-03/P-01 pendente |
 | 16 | M0 | [FE-001](frontend/FE-001-tokens-tema.md) | Tokens, fontes e alternância de tema | front | — | Redigida |
 | 17 | M0 | [FE-002](frontend/FE-002-primitives-estados.md) | Primitives, estados e acessibilidade de base | front | FE-001 | Redigida |
 | 18 | M0 | [FE-003](frontend/FE-003-shell-rotas.md) | Shell responsivo, navegação e rotas por perfil | front | FE-001, FE-002, BE-005 | Redigida |
@@ -134,7 +134,7 @@ flowchart LR
 
 ## Pontos de atenção na ordem
 
-- **M0:** BE-008/009 e FE-005 usam decisões pendentes sobre método de MFA, bloqueio por tentativas e histórico de senhas (P-05). FE-004 precisa de política final de cookie, CSRF e confirmação de telefone (P-12). A documentação existe; a implementação dessas partes depende das decisões.
+- **M0:** P-05/P-12 aprovadas pelo usuário: TOTP, bloqueio e histórico parametrizados; publicação de termos por admin, confirmação presencial de telefone e cookie/Origin/CSRF. Ver registro em `04-open-questions.md`.
 - **M1:** BE-020 é a barreira transacional de sobreposição para profissional e sala. Confirmação, reagendamento, encaixe e importação da agenda passam por ela.
 - **M2:** BE-030 reconcilia consultas já confirmadas no M1 ao criar o vínculo clínico. BE-033/FE-029 aguardam decisão P-11 sobre quem pode lançar conteúdo clínico histórico.
 - **M3:** o adaptador de assinatura dev e a solução de mídia P2P não demonstram validade jurídica nem E2E pleno. Ver limites em `04-open-questions.md`.

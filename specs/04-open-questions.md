@@ -150,11 +150,11 @@ Registrar em `shared/performance-scenario.md` e parametrizar metas em `shared/pa
 | --- | --- | --- |
 | P-01 | DPO/jurídico aprova bases, bloqueios e retenção na revogação, inclusive valores de `privacy.min_identity_retention_years`, `privacy.consent_evidence_retention_years` e `privacy.fiscal_retention_years`; exceções para responsável legal e lista de mensagens essenciais. | Antes de produção |
 | P-02 | Jurídico/conselhos aprovam níveis de assinatura por tipo e integra-se provedor ICP-Brasil real. DevSignatureProvider jamais habilitado em produção. | Antes de produção de emissão clínica |
-| P-03 | Jurídico/responsável técnico aprovam prazo de gravação, exclusão física após revogação e prazo máximo de rotação de backup. | Antes de produção da gravação |
+| P-03 | Jurídico/responsável técnico aprovam prazo de gravação, exclusão física após revogação, prazo máximo de rotação de backup e replicação durável do ledger de supressão usado na restauração BE-015. | Antes de produção da gravação |
 | P-04 | RNF-014: definir arquitetura de criptografia fim a fim, chaves e gravação; WebRTC P2P/DTLS-SRTP cobre só transporte na V1. | Antes de declarar RNF-014 integralmente atendido |
 | P-05 | Definir fator/canal de MFA, duração do bloqueio por falhas e quantidade de senhas anteriores vedadas (`auth.password_history_count`). | Antes de implementar BE-008/009 |
 | P-06 | Confirmar defaults Q-16/Q-17/Q-21: janelas `access.link_pre_hours`, `access.link_post_days`, `access.link_noshow_days`, `access.shared_case_enabled` e campos clínicos entre especialidades. | Antes das specs de vínculo; demais podem seguir com default provisório |
-| P-07 | Confirmar dados legados, `migration.cutoff_date`, validador clínico, valores reais de infraestrutura/carga e metas. | Antes de implantação/teste final |
+| P-07 | Confirmar dados legados, `migration.cutoff_date`, validador clínico, valores reais de infraestrutura/carga e metas; escolher repositórios de backup cifrados em localidade brasileira distinta, cofre de chaves, agendador/alertas, destino de métricas e evidência de aviso de manutenção; medir RPO/RTO e disponibilidade no alvo. | Antes de implantação/teste final |
 | P-08 | Nome/designação formal do detentor de privacy.dpo e eventual ampliação das funções RF-032. | Antes de produção |
 | P-09 | Decidir DICOM, limites definitivos e leitura de gravação pelo paciente; decidir SMS/WhatsApp/provedores futuros. | Evolução ou antes de habilitar função correspondente |
 | P-10 | Definir STUN/TURN próprio ou equivalente, fallback de conectividade P2P e método de medição de banda no pré-teste, sem provedor externo de vídeo. | Antes das specs de vídeo/preparo |
@@ -164,3 +164,15 @@ Registrar em `shared/performance-scenario.md` e parametrizar metas em `shared/pa
 | P-14 | Validar fórmulas de ocupação, absenteísmo e produtividade, formato exportável da V1 e limite `report.aggregation_min_subjects` para suprimir células pequenas sem reidentificação. A proposta técnica M4 usa CSV UTF-8 para relatório operacional e contagens agregadas; nenhuma célula pequena será exibida até o limite ser aprovado. | Antes de liberar painel/exportação em produção |
 
 **Regra de trabalho:** decisões do usuário têm precedência sobre redações conflitantes do DRS, e cada desvio ficará identificado nas specs e na matriz. Pendência não vira fato. Uma spec pode documentar uma chave sem default, mas não deve ser marcada implementável enquanto depender de um valor obrigatório em aberto.
+
+## Decisões aprovadas para implementação M0 — 23/10/2026
+
+- **P-05 resolvida:** usuário aprovou MFA por aplicativo TOTP, bloqueio de 15 minutos após cinco falhas e histórico das últimas cinco senhas, configuráveis. Substitui as marcações pendentes anteriores deste documento.
+- **P-12 resolvida:** admin publica termos com auditoria; telefone novo é confirmado presencialmente pela recepção, sem SMS; front e API no mesmo site, cookie HttpOnly/Secure/SameSite=Lax, allowlist de Origin e CSRF. Desenvolvimento local admite cookie sem Secure apenas em HTTP localhost. Domínios reais continuam configuração de implantação; não é preciso escolhê-los para implementar a política.
+- **P-01, idade civil:** BE-010 usa `patient.legal_adult_age_years` com padrão 18 para impedir autocadastro de menor, conforme [Código Civil, art. 5º](https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm). O tratamento de emancipação, representação de adultos e transição de acesso ao completar 18 anos requer validação jurídica antes de produção; a regra técnica não presume essas exceções.
+- **P-01, contato de dependente:** BE-010 permite telefone/e-mail próprios opcionais no perfil do dependente, pois o responsável com conta própria fornece o contato operacional. A clínica/jurídico deve validar essa interpretação de Q-05 versus os campos obrigatórios genéricos de RF-001 antes de produção.
+- A autorização de implementar M0 substitui a restrição de escrita apenas documental da Fase 3. A implementação para ao final de M0.
+
+### P-15 — Retry de notificações (BE-006)
+
+Suposição técnica provisória: `notification.retry_seconds`, `notification.max_attempts` e `notification.poll_seconds` em `shared/parameters.md`. Equipe técnica deve validar os defaults após medição; baixo risco, não bloqueia implementação local. E-mail externo e suas garantias de idempotência permanecem pendentes para produção.

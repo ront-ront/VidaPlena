@@ -9,7 +9,8 @@
 | `auth.password_min_length` | 10 | Q-15, RF-001/003 | Equipe técnica; decidido, configurável |
 | `auth.password_common_list_enabled` | true | Q-15 | Equipe técnica; decidido |
 | `auth.password_hash` | bcrypt | Q-15, RNF-013 | Equipe técnica; decidido |
-| `auth.password_history_count` | — | RF-003 (“últimas utilizadas”) | Clínica/segurança; pendente P-05 |
+| `auth.password_history_count` | 5 | RF-003, decisão P-05 | Usuário; aprovado, configurável |
+| `patient.legal_adult_age_years` | 18 | RF-001, Q-05; Código Civil art. 5º | Jurídico/clínica; padrão legal de referência, exceções de representação/emancipação em P-01 |
 | `auth.access_token_minutes` | 15 | Q-15 | Equipe técnica; decidido |
 | `auth.refresh_token_days` | 7 | Q-15 | Equipe técnica; decidido, rotação obrigatória |
 | `auth.internal_idle_minutes` | 30 | Q-15 | Clínica/segurança; decidido, desvio RNF-013 (15 min no DRS) |
@@ -19,8 +20,8 @@
 | `auth.email_verify_link_hours` | 48 | Q-15 | Equipe técnica; decidido |
 | `auth.reset_requests_per_hour` | 3 | Q-15 | Equipe técnica; decidido |
 | `auth.failed_login_limit` | 5 | RF-002, RNF-013 | Clínica/segurança; decidido |
-| `auth.lock_minutes` | — | RF-002 | Clínica/segurança; pendente P-05 |
-| `auth.mfa_method` | — | RF-002, RNF-013 | Clínica/segurança; pendente P-05 |
+| `auth.lock_minutes` | 15 | RF-002, decisão P-05 | Usuário; aprovado, configurável |
+| `auth.mfa_method` | TOTP | RF-002, RNF-013, decisão P-05 | Usuário; aprovado |
 | `privacy.clinical_retention_years` | 20 mínimo | RN-012, RNF-017 | Jurídico/DPO; mínimo obrigatório |
 | `privacy.audit_retention_years` | 5 mínimo | RNF-015 | Jurídico/DPO; mínimo obrigatório |
 | `privacy.min_identity_retention_years` | — | Q-09 | Jurídico/DPO; pendente P-01, sujeito à base legal |
@@ -59,6 +60,7 @@ Todos os defaults deste quadro foram autorizados como **provisórios e aguardand
 | `file.recording_max_minutes` | 60 | Q-17 | Equipe técnica; aguardando decisão |
 | `file.max_per_record` | 10 | Q-17 | Equipe técnica; aguardando decisão |
 | `file.signed_url_ttl_seconds` | 120 | Q-17 | Equipe técnica; aguardando decisão |
+| `file.orphan_reconcile_minutes` | 60 | BE-011, evidência presencial | Equipe técnica; padrão operacional provisório para limpar upload sem ConsentEvent após interrupção |
 | `recording.retention_days` | 30 | Q-11 | Jurídico/clínica; provisório |
 | `recording.delete_after_revocation_days` | — | Q-11 | Jurídico/responsável técnico; pendente P-03 |
 | `backup.revoked_content_rotation_days` | — | Q-11 | Jurídico/operações; pendente P-03 |
@@ -88,7 +90,42 @@ Metas Q-22 são provisórias e medidas no cenário versionado de `performance-sc
 | `perf.internal_concurrent_users_min` | 60 | RNF-010; fonte DRS |
 | `perf.video_concurrent_sessions_min` | 40 | RNF-010; fonte DRS |
 | `ops.availability_percent_min` | 99.7 | RNF-006; fonte DRS |
+| `ops.slow_request_ms` | 2000 | BE-014/RNF-006; limiar técnico provisório para alerta, equipe de operação |
+| `ops.readiness_timeout_ms` | 2000 | BE-014/RNF-024; limiar técnico provisório para sonda, equipe de operação |
+| `ops.alerts_enabled` | true | BE-014/RNF-024; em produção deve permanecer ativo, equipe de operação |
+| `ops.log_level` | info | BE-014/RNF-024; nível técnico configurável, equipe de operação |
+| `ops.maintenance_max_hours_month` | 2 | RNF-006; máximo de manutenção por mês, fonte DRS |
+| `ops.maintenance_notice_hours` | 48 | RNF-006; antecedência mínima de aviso, fonte DRS |
 | `ops.rpo_minutes_max` | 15 | RNF-007; fonte DRS |
 | `ops.rto_hours_max` | 4 | RNF-007; fonte DRS |
+| `ops.wal_archive_timeout_seconds` | 300 | BE-015/RNF-007; padrão técnico provisório para ensaio, equipe de operação |
+| `backup.file_cycle_minutes` | 10 | BE-015/RNF-007; padrão técnico provisório para agendador, equipe de operação |
 
 `RNF-011` mantém vídeo 720p/30 fps a 1,5 Mbps, latência <300 ms e áudio prioritário; `RNF-025` mantém pré-teste com pelo menos 2 Mbps em cada sentido. A infraestrutura-alvo real e as metas definitivas precisam de confirmação P-07.
+
+## Entrega de notificações (decisão técnica BE-006)
+
+Defaults provisórios, aguardando decisão da equipe técnica; não bloqueiam a implementação local.
+
+| Chave | Default | Origem | Dono / estado |
+| --- | --- | --- | --- |
+| `notification.retry_seconds` | 60 | BE-006, RF-013 | Equipe técnica; provisório |
+| `notification.max_attempts` | 3 | BE-006, RF-013 | Equipe técnica; provisório |
+| `notification.poll_seconds` | 5 | BE-006 | Equipe técnica; provisório |
+
+A caixa local é idempotente por ID da notificação. Um adaptador externo futuro precisa aceitar a mesma chave; entrega exatamente uma vez não é presumida para provedores sem idempotência.
+
+## Detalhes técnicos de identidade (BE-007)
+
+| Chave | Default | Origem | Dono / estado |
+| --- | --- | --- | --- |
+| `auth.bcrypt_rounds` | 12 | Q-15, RNF-013 | Equipe técnica; provisório, configurável de 10 a 16 |
+
+Senhas aceitas têm no máximo 72 bytes UTF-8, limite do bcrypt; excedentes são recusados, nunca truncados silenciosamente. Sem regra adicional de composição ou expiração periódica. Lista de senhas comuns vem do dicionário versionado `@zxcvbn-ts/language-common`, comparada sem distinguir maiúsculas. Esta escolha de biblioteca é técnica, sem alteração dos requisitos.
+
+| Chave técnica BE-008 | Default | Origem | Dono / estado |
+| --- | --- | --- | --- |
+| `auth.mfa_challenge_minutes` | 5 | P-05, RF-002 | Equipe técnica; provisório |
+| `auth.requests_per_minute` | 30 por origem | RNF-013, RF-002 | Equipe técnica; provisório |
+
+TOTP: seis dígitos, SHA-1, período de 30 s e tolerância de um passo, parâmetros interoperáveis do adaptador; passo já usado não é aceito novamente. Recuperação de dispositivo MFA perdido não autoriza bypass; procedimento operacional futuro precisa de definição explícita.
