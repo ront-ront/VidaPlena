@@ -226,10 +226,12 @@ export class PrismaConsentStore implements ConsentStore {
       return rows.map((row) => ({
         patientId: row.patientId,
         consentEventId: row.id,
+        versionId: row.documentVersionId,
         version: row.documentVersion.version,
         action: row.action as 'accept' | 'refuse' | 'revoke',
         occurredAt: row.occurredAt,
         source: row.source,
+        actorName: row.consentingPersonName,
       }))
     })
   }

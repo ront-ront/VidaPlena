@@ -247,11 +247,13 @@ export class PrismaAuthStore implements AuthStore {
       include: {
         roles: { where: { revokedAt: null } },
         permissions: { where: { revokedAt: null } },
+        patient: { select: { id: true } },
       },
     })
     if (user?.status !== 'active') return null
     return {
       id: user.id,
+      patientId: user.patient?.id ?? null,
       roles: user.roles.map((role) => role.roleCode as Role),
       permissions: user.permissions.map((grant) => grant.permissionCode),
       profile: {

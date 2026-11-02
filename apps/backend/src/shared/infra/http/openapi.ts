@@ -317,7 +317,70 @@ export const openApiDocument = createDocument({
         },
       },
     },
+    '/onsite-guardians': {
+      get: {
+        operationId: 'lookupOnsiteGuardian',
+        summary: 'Localizar responsável por CPF ou e-mail exato',
+        tags: ['Pacientes'],
+        security: bearer,
+        requestParams: {
+          query: z.object({ identifier: z.string().min(3).max(255) }),
+        },
+        responses: {
+          '200': response(
+            z.object({ userId: z.uuid(), fullName: z.string() }),
+            'Identidade mínima do responsável ativo',
+          ),
+          ...errors,
+        },
+      },
+    },
+    '/onsite-patients': {
+      get: {
+        operationId: 'lookupOnsitePatient',
+        summary: 'Localizar cadastro por CPF exato para termo presencial',
+        tags: ['Pacientes'],
+        security: bearer,
+        requestParams: { query: z.object({ cpf: z.string().min(11).max(14) }) },
+        responses: {
+          '200': response(
+            z.object({
+              patientId: z.uuid(),
+              fullName: z.string(),
+              birthDate: z.iso.datetime(),
+            }),
+            'Identidade mínima do cadastro',
+          ),
+          ...errors,
+        },
+      },
+    },
     '/patients/{id}/onsite-consents': {
+      get: {
+        operationId: 'listOnsiteConsentReceipts',
+        summary: 'Consultar recibos de aceites presenciais',
+        tags: ['Consentimento'],
+        security: bearer,
+        requestParams: { path: z.object({ id: z.uuid() }) },
+        responses: {
+          '200': response(
+            z.object({
+              items: z.array(
+                z.object({
+                  consentEventId: z.uuid(),
+                  version: z.string(),
+                  consentingPersonName: z.string(),
+                  consentingRelationship: z.string().nullable(),
+                  occurredAt: z.iso.datetime(),
+                  signedFileId: z.uuid(),
+                }),
+              ),
+            }),
+            'Metadados de até 20 aceites presenciais recentes',
+          ),
+          ...errors,
+        },
+      },
       post: {
         operationId: 'recordOnsiteConsent',
         summary: 'Registrar novo aceite presencial',
@@ -348,10 +411,12 @@ export const openApiDocument = createDocument({
                 z.object({
                   patientId: z.uuid(),
                   consentEventId: z.uuid(),
+                  versionId: z.uuid(),
                   version: z.string(),
                   action: z.enum(['accept', 'refuse', 'revoke']),
                   occurredAt: z.iso.datetime(),
                   source: z.string(),
+                  actorName: z.string(),
                 }),
               ),
             }),
@@ -467,6 +532,21 @@ export const openApiDocument = createDocument({
             'Pedido recebido',
           ),
           '429': response(errorResponse, 'Limite de pedidos excedido'),
+        },
+      },
+    },
+    '/auth/recovery/inspect': {
+      post: {
+        operationId: 'inspectPasswordRecovery',
+        summary: 'Verificar validade do link de recuperação sem consumi-lo',
+        tags: ['Identidade'],
+        requestBody: json(invitationTokenBody),
+        responses: {
+          '200': response(
+            z.object({ status: z.literal('valid') }),
+            'Link válido',
+          ),
+          '410': response(errorResponse, 'Link expirado ou usado'),
         },
       },
     },
@@ -616,6 +696,7 @@ export const openApiDocument = createDocument({
           '200': response(
             z.object({
               id: z.uuid(),
+              patientId: z.uuid().nullable(),
               roles: z.array(z.string()),
               permissions: z.array(z.string()),
               profile: z.object({
@@ -648,7 +729,12 @@ export const openApiDocument = createDocument({
         requestParams: { query: userListQuery },
         responses: {
           '200': response(
-            collection.extend({ dpoDesignated: z.boolean() }),
+            collection.extend({
+              dpoDesignated: z.boolean(),
+              dpoHolders: z.array(
+                z.object({ id: z.uuid(), fullName: z.string() }),
+              ),
+            }),
             'Contas e estado do DPO',
           ),
           ...errors,

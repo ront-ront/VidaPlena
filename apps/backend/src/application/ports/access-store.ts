@@ -23,5 +23,6 @@ export interface AccessStore {
   principal(userId: string, sessionId: string): Promise<Principal | null>
   ownsPatient(userId: string, patientId: string): Promise<boolean>
   hasDpo(): Promise<boolean>
+  dpoHolders(): Promise<{ id: string; fullName: string }[]>
   withLock<T>(run: (transaction: AccessTransaction) => Promise<T>): Promise<T>
 }

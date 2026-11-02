@@ -128,6 +128,17 @@ export class RecoverAccess {
     })
   }
 
+  async inspect(token: string) {
+    const valid = await this.store.transaction(async (tx) => {
+      const row = await tx.token(this.tokens.digest(token), 'password_reset')
+      if (!row || row.consumedAt || row.expiresAt <= this.now()) return false
+      const account = await tx.user(row.userId)
+      return account?.status === 'active'
+    })
+    if (!valid) throw new ApplicationError('TOKEN_EXPIRED')
+    return { status: 'valid' as const }
+  }
+
   async requestEmailChange(
     actor: Principal,
     newEmail: string,

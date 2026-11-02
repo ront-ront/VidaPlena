@@ -223,6 +223,7 @@ test('HTTP real exige Origin/CSRF e nunca inclui refresh no JSON', async () => {
       .set('Authorization', `Bearer ${verified.body.accessToken}`)
       .expect(200)
     assert.equal(me.body.profile.email, 'admin-auth@example.test')
+    assert.equal(me.body.patientId, null)
     await app
       .post('/v1/auth/refresh')
       .set('Origin', 'http://localhost:3000')

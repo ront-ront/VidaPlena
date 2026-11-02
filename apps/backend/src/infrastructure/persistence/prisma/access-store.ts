@@ -58,6 +58,24 @@ export class PrismaAccessStore implements AccessStore {
     )
   }
 
+  async dpoHolders() {
+    const grants = await this.db.userPermissionGrant.findMany({
+      where: {
+        permissionCode: 'privacy.dpo',
+        revokedAt: null,
+        user: {
+          status: 'active',
+          roles: {
+            some: { roleCode: { in: ['admin', 'manager'] }, revokedAt: null },
+          },
+        },
+      },
+      select: { user: { select: { id: true, fullName: true } } },
+      orderBy: { grantedAt: 'asc' },
+    })
+    return [...new Map(grants.map(({ user }) => [user.id, user])).values()]
+  }
+
   withLock<T>(run: (transaction: AccessTransaction) => Promise<T>): Promise<T> {
     return this.db.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(775001)`

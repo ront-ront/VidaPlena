@@ -104,6 +104,7 @@ export interface AuthStore {
   transaction<T>(run: (tx: AuthTransaction) => Promise<T>): Promise<T>
   current(principal: Principal): Promise<{
     id: string
+    patientId: string | null
     roles: Role[]
     permissions: string[]
     profile: { fullName: string; email: string; phone: string | null }

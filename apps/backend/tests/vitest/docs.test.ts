@@ -39,6 +39,9 @@ describe('documentação e validação de entrada M0', () => {
     expect(
       document.body.paths['/me/consents/revoke'].post.responses['201'],
     ).toBeDefined()
+    expect(
+      document.body.paths['/auth/recovery/inspect'].post.responses['410'],
+    ).toBeDefined()
     const page = await request(app).get('/v1/docs').expect(200)
     expect(page.text).toContain('VidaPlena API')
   })

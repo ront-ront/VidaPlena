@@ -113,6 +113,7 @@ test('reset não enumera contas, limita pedidos, rejeita histórico e revoga ses
     message.payloadEncrypted,
     `notification:${seeded.userId}:auth.password_reset`,
   )
+  assert.deepEqual(await recovery.inspect(token), { status: 'valid' })
   await assert.rejects(recovery.complete(token, oldPassword, context()), {
     code: 'VALIDATION_ERROR',
   })
@@ -127,6 +128,10 @@ test('reset não enumera contas, limita pedidos, rejeita histórico e revoga ses
   const newPassword = `Replacement-${randomUUID()}`
   replacementPassword = newPassword
   await recovery.complete(token, newPassword, context())
+  await assert.rejects(recovery.inspect(token), { code: 'TOKEN_EXPIRED' })
+  await assert.rejects(recovery.inspect('unknown-token'), {
+    code: 'TOKEN_EXPIRED',
+  })
   await assert.rejects(
     recovery.complete(token, `YetAnother-${randomUUID()}`, context()),
     {
@@ -179,6 +184,9 @@ test('link vencido não redefine a senha e histórico recente continua vedado', 
     `notification:${admin.id}:auth.password_reset`,
   )
   time = new Date(time.getTime() + (config.resetLinkMinutes + 1) * 60_000)
+  await assert.rejects(recovery.inspect(expiredToken), {
+    code: 'TOKEN_EXPIRED',
+  })
   await assert.rejects(
     recovery.complete(expiredToken, `Different-${randomUUID()}`, context()),
     { code: 'TOKEN_EXPIRED' },

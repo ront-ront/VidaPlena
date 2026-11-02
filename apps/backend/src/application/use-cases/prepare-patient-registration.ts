@@ -63,10 +63,7 @@ export class PreparePatientRegistration {
       throw new ApplicationError('VALIDATION_ERROR', [
         { field: 'birthDate', reason: 'O cadastro requer responsável legal.' },
       ])
-    if (
-      (mode === 'self' && (!phone || !data.email)) ||
-      (mode === 'onsite' && !phone)
-    )
+    if (mode === 'self' && (!phone || !data.email))
       throw new ApplicationError('VALIDATION_ERROR', [
         {
           field: !phone ? 'phone' : 'email',

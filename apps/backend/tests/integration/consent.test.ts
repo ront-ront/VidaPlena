@@ -145,6 +145,43 @@ test('cadastro e aceite são atômicos; versão nova exige aceite e revogação 
     })
     assert.ok(profile.userId)
     assert.equal(await userDataConsentState(db, profile.userId), 'active')
+    const reception = await db.user.create({
+      data: {
+        email: `${randomUUID()}@example.test`,
+        fullName: 'Recepção de teste',
+        status: 'active',
+        roles: { create: { roleCode: 'receptionist' } },
+      },
+    })
+    const receptionToken = await bearer(reception.id, true)
+    const lookup = await request(app.app)
+      .get('/v1/onsite-guardians')
+      .query({ identifier: identity })
+      .set('Authorization', receptionToken)
+      .expect(200)
+    assert.deepEqual(lookup.body, {
+      userId: profile.userId,
+      fullName: registration.patient.fullName,
+    })
+    const patientLookup = await request(app.app)
+      .get('/v1/onsite-patients')
+      .query({ cpf: identity })
+      .set('Authorization', receptionToken)
+      .expect(200)
+    assert.deepEqual(patientLookup.body, {
+      patientId,
+      fullName: registration.patient.fullName,
+      birthDate: '1990-01-01T00:00:00.000Z',
+    })
+    await request(app.app)
+      .get('/v1/onsite-guardians')
+      .query({ identifier: identity })
+      .expect(401)
+    await request(app.app)
+      .get('/v1/onsite-guardians')
+      .query({ identifier: 'CPF inválido' })
+      .set('Authorization', receptionToken)
+      .expect(400)
     const notification = {
       id: randomUUID(),
       userId: profile.userId,
@@ -221,6 +258,7 @@ test('cadastro e aceite são atômicos; versão nova exige aceite e revogação 
       .set('Authorization', patientToken)
       .expect(200)
     assert.equal(pendingProfile.body.consentState, 'pending')
+    assert.equal(pendingProfile.body.patientId, patientId)
     const foreignPatientId = randomUUID()
     await request(app.app)
       .post('/v1/me/consents')
@@ -266,6 +304,12 @@ test('cadastro e aceite são atômicos; versão nova exige aceite e revogação 
       .set('Authorization', patientToken)
       .expect(200)
     assert.equal(history.body.items.length, 5)
+    assert.ok(
+      history.body.items.some(
+        (item: { versionId: string }) => item.versionId === documentId,
+      ),
+    )
+    assert.equal(typeof history.body.items[0].actorName, 'string')
     assert.equal(
       await db.auditEvent.count({
         where: {
@@ -401,6 +445,17 @@ test('recepção registra consentimento presencial com termo real e sem arquivo 
       .attach('signedTerm', pdf, 'termo.pdf')
     assert.equal(repeated.status, 201, JSON.stringify(repeated.body))
     assert.notEqual(repeated.body.consentEventId, event.id)
+    const receipts = await request(app.app)
+      .get(`/v1/patients/${result.body.patientId}/onsite-consents`)
+      .set('Authorization', token)
+      .expect(200)
+    assert.equal(receipts.body.items.length, 2)
+    assert.equal(receipts.body.items[0].version, nextVersion.version)
+    assert.equal(receipts.body.items[0].consentingPersonName, patient.fullName)
+    assert.equal(
+      receipts.body.items[0].signedFileId,
+      repeated.body.signedFileId,
+    )
     assert.equal(
       (await db.consentEvent.findUniqueOrThrow({ where: { id: event.id } }))
         .documentVersionId,
@@ -416,7 +471,6 @@ test('recepção registra consentimento presencial com termo real e sem arquivo 
       fullName: 'Menor Fictício Presencial',
       birthDate: '2016-01-01',
       cpf: cpf('741852963'),
-      phone: '(85) 96666-5555',
     }
     const withoutGuardian = await request(app.app)
       .post('/v1/patients')

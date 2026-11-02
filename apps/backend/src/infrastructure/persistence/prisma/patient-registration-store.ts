@@ -19,6 +19,59 @@ export class PrismaPatientRegistrationStore
     private readonly secrets: SecretBox,
   ) {}
 
+  async findGuardian(identifier: { cpf?: string; email?: string }) {
+    const user = await this.db.user.findFirst({
+      where: {
+        status: 'active',
+        roles: { some: { roleCode: 'patient', revokedAt: null } },
+        ...(identifier.cpf
+          ? { patient: { is: { cpf: identifier.cpf } } }
+          : { email: identifier.email }),
+      },
+      select: { id: true, fullName: true },
+    })
+    return user ? { userId: user.id, fullName: user.fullName } : null
+  }
+
+  async findPatient(cpf: string) {
+    const patient = await this.db.patientProfile.findUnique({
+      where: { cpf },
+      select: { id: true, fullName: true, birthDate: true },
+    })
+    return patient
+      ? {
+          patientId: patient.id,
+          fullName: patient.fullName,
+          birthDate: patient.birthDate,
+        }
+      : null
+  }
+
+  async onsiteConsents(patientId: string) {
+    const patient = await this.db.patientProfile.findUnique({
+      where: { id: patientId },
+      select: { id: true },
+    })
+    if (!patient) return null
+    const rows = await this.db.consentEvent.findMany({
+      where: { patientId, source: 'onsite', signedFileId: { not: null } },
+      include: { documentVersion: { select: { version: true } } },
+      orderBy: { occurredAt: 'desc' },
+      take: 20,
+    })
+    return rows.map((row) => {
+      if (!row.signedFileId) throw new Error('Evidência presencial ausente.')
+      return {
+        consentEventId: row.id,
+        version: row.documentVersion.version,
+        consentingPersonName: row.consentingPersonName,
+        consentingRelationship: row.consentingRelationship,
+        occurredAt: row.occurredAt,
+        signedFileId: row.signedFileId,
+      }
+    })
+  }
+
   async transaction<T>(
     run: (tx: PatientRegistrationTransaction) => Promise<T>,
   ) {

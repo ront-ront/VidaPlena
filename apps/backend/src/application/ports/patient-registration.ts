@@ -54,6 +54,26 @@ export interface PatientRegistrationTransaction {
 }
 
 export interface PatientRegistrationStore {
+  findGuardian(identifier: { cpf?: string; email?: string }): Promise<{
+    userId: string
+    fullName: string
+  } | null>
+  findPatient(cpf: string): Promise<{
+    patientId: string
+    fullName: string
+    birthDate: Date
+  } | null>
+  onsiteConsents(patientId: string): Promise<
+    | {
+        consentEventId: string
+        version: string
+        consentingPersonName: string
+        consentingRelationship: string | null
+        occurredAt: Date
+        signedFileId: string
+      }[]
+    | null
+  >
   transaction<T>(
     run: (tx: PatientRegistrationTransaction) => Promise<T>,
   ): Promise<T>

@@ -172,6 +172,9 @@ test('HTTP guard enforces resource ownership and immediately revoked grants; cha
     const response = await grant('admin', true)
     assert.equal(response.status, 200)
     assert.equal((await response.json()).dpoDesignated, true)
+    assert.deepEqual(await store.dpoHolders(), [
+      { id: manager.userId, fullName: 'Fictício RBAC' },
+    ])
     assert.equal(await store.principal(manager.userId, manager.sessionId), null)
     const fresh = await session(manager.userId)
     assert.ok(await authorize.execute(fresh, 'privacy_consents', context()))
@@ -196,6 +199,7 @@ test('HTTP guard enforces resource ownership and immediately revoked grants; cha
       'inactive',
     )
     assert.equal(await store.hasDpo(), false)
+    assert.deepEqual(await store.dpoHolders(), [])
     assert.ok(await authorize.execute(admin, 'privacy_queue', context()))
     await assert.rejects(
       administer.execute(

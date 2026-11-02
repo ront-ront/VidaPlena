@@ -40,6 +40,7 @@ export function createProvisioningRouter(
     res.json({
       ...(await store.list(principalOf(res), filters, auditContext(req, res))),
       dpoDesignated: await access.hasDpo(),
+      dpoHolders: await access.dpoHolders(),
     })
   })
   router.post('/admin/users/:id/invitation', guard, async (req, res) => {

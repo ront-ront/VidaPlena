@@ -24,6 +24,11 @@ export function createRecoveryRouter(
       .status(202)
       .json(await service.request(identifier, auditContext(req, res)))
   })
+  router.post('/auth/recovery/inspect', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store')
+    const { token } = parseInput(invitationTokenBody, req.body)
+    res.json(await service.inspect(token))
+  })
   router.post('/auth/recovery/complete', async (req, res) => {
     const { token, newPassword } = parseInput(recoveryCompleteBody, req.body)
     await service.complete(token, newPassword, auditContext(req, res))

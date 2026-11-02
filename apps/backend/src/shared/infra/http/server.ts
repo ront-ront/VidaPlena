@@ -19,7 +19,7 @@ main().catch((error: unknown) => {
   console.error(
     error instanceof ConfigurationError
       ? error.message
-      : 'Não foi possível iniciar a aplicação.',
+      : `Não foi possível iniciar a aplicação. ${error instanceof Error ? error.message : String(error)}`,
   )
   process.exitCode = 1
 })
