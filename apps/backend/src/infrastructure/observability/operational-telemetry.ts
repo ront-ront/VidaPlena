@@ -9,7 +9,7 @@ import type { RequestHandler } from 'express'
 import pino, { type Logger } from 'pino'
 
 type AlertKind = 'http_5xx' | 'slow_request' | 'readiness_failed' | 'job_failed'
-type JobName = 'consent_evidence_reconcile'
+type JobName = 'consent_evidence_reconcile' | 'notification_dispatch'
 
 function methodLabel(value: string) {
   return ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'].includes(value)

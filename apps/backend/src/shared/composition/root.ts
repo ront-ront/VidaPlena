@@ -11,6 +11,7 @@ import type { ProvisioningStore } from '../../application/ports/provisioning-sto
 import type { AdministerAccess } from '../../application/use-cases/administer-access'
 import type { Authenticate } from '../../application/use-cases/authenticate'
 import type { Authorize } from '../../application/use-cases/authorize'
+import type { DispatchNotifications } from '../../application/use-cases/dispatch-notifications'
 import type { ManageConsent } from '../../application/use-cases/manage-consent'
 import type { ManageFiles } from '../../application/use-cases/manage-files'
 import type { ManageMaintenance } from '../../application/use-cases/manage-maintenance'
@@ -18,6 +19,7 @@ import type { ManageSubjectRequests } from '../../application/use-cases/manage-s
 import type { ProvisionAccounts } from '../../application/use-cases/provision-accounts'
 import type { RecoverAccess } from '../../application/use-cases/recover-access'
 import { ConsentEvidenceReconciler } from '../../infrastructure/jobs/consent-evidence-reconciler'
+import { startNotificationWorker } from '../../infrastructure/jobs/notification-worker'
 import { OperationalTelemetry } from '../../infrastructure/observability/operational-telemetry'
 import { createPrismaClient } from '../../infrastructure/persistence/prisma/client'
 import type { AppConfig } from '../config/environment'
@@ -226,11 +228,21 @@ export async function composeBackendApplication(config: AppConfig) {
       )
     }, 15 * 60_000)
     timer.unref()
+    const notificationWorker = startNotificationWorker(
+      scope.resolve<DispatchNotifications>(services.dispatcher),
+      config.notificationPollSeconds,
+      () => telemetry.jobResult('notification_dispatch', 'failed', 0),
+    )
     return composeApplication(
       config,
       [
         { close: async () => clearInterval(timer) },
-        { close: () => db.$disconnect() },
+        {
+          close: async () => {
+            await notificationWorker.close()
+            await db.$disconnect()
+          },
+        },
       ],
       routes,
       telemetry,
