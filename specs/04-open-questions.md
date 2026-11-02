@@ -176,3 +176,27 @@ Registrar em `shared/performance-scenario.md` e parametrizar metas em `shared/pa
 ### P-15 — Retry de notificações (BE-006)
 
 Suposição técnica provisória: `notification.retry_seconds`, `notification.max_attempts` e `notification.poll_seconds` em `shared/parameters.md`. Equipe técnica deve validar os defaults após medição; baixo risco, não bloqueia implementação local. E-mail externo e suas garantias de idempotência permanecem pendentes para produção.
+
+### P-16 — Inspeção de link de recuperação (FE-006/BE-009)
+
+**Resolvida tecnicamente em 01/11/2026:** contrato e BE-009 receberam `POST /v1/auth/recovery/inspect`, que só informa validade, não revela conta, não consome token e não é cacheável. Integração em PostgreSQL isolado aprovou tokens válido, usado, expirado e desconhecido. O texto de ajuda da senha usa o default de `auth.password_min_length`; a configuração de frontend e backend deve ser sincronizada na implantação se esse valor mudar.
+
+### P-17 — IDs do próprio titular no perfil (FE-008)
+
+**Resolvida tecnicamente em 01/11/2026:** o contrato original de `GET /v1/me` não expunha o ID do perfil de paciente necessário para pedidos e consentimentos próprios; o histórico de consentimentos trazia só a string de versão, quando a revogação exige `versionId`. O contrato compartilhado e backend foram ajustados para retornar `patientId` próprio ou `null` (sem IDs de dependentes em `/me`), e `versionId`/`actorName` em cada evento autorizado. Dependentes continuam consultados por `GET /v1/me/dependents`, filtrado no servidor. Testes de integração auth/consent 5/5. A validação jurídica P-01 da revogação permanece separada.
+
+### P-18 — Identificação do DPO e controles do gestor (FE-009)
+
+**Decisão técnica de escopo em 01/11/2026:** a política de acesso e o backend existentes permitem ao gestor listar/convidar/reenviar convite apenas para recepção/profissional; edição de papel/status e designação `privacy.dpo` permanecem com o admin. A FE-009 mostrará somente esses controles ao gestor, sem sugerir autorização que a API não concede. Para cumprir Q-20 de identificar a pessoa designada em configuração, `GET /v1/admin/users` deve retornar também uma projeção mínima dos detentores ativos de `privacy.dpo`, independente da paginação da lista; o frontend não inferirá ausência a partir de uma página filtrada. P-08 de designação formal continua pendente para produção.
+
+### P-19 — Localização do responsável no cadastro presencial (FE-039)
+
+**Decisão técnica de contrato em 01/11/2026:** `POST /v1/patients` exige `guardianUserId` para menor, mas nenhuma rota M0 permitia à recepção obter esse ID a partir de um dado fornecido pelo responsável. Será incluída busca exata por CPF ou e-mail, apenas para recepção/admin autenticados, retornando `{userId,fullName}` de conta ativa com papel de paciente; para registrar termo de paciente já cadastrado, busca exata por CPF retorna `{patientId,fullName,birthDate}` para confirmar o registro e exigir responsável quando menor. Um recibo de metadados de consentimento presencial, sem conteúdo do arquivo, permitirá à recepção verificar o registro após recarregar a tela. Consultas e resultados serão auditados sem o identificador em metadados. Busca parcial e listagem de pacientes permanecem para M1. Identidade e representação legal continuam dependentes de conferência presencial e validação P-01.
+
+### P-20 — Ativação do upload genérico de arquivos (BE-013)
+
+**Decisão técnica de escopo em 01/11/2026:** a porta `FileStorage`, o scanner, os limites e os endpoints de link/download já funcionam no M0 para a evidência de consentimento presencial. O `POST /v1/files` genérico consta do contrato planejado, mas ainda não possui recurso de negócio e regra de autorização que determinem quem pode anexar o quê. Sua ativação fica para a spec do primeiro recurso que o consumir em M2/M3; o upload de termo continua no endpoint transacional de consentimento. Publicar agora uma rota genérica com `ownerPatientId` arbitrário permitiria anexos órfãos ou indevidos. A linha do contrato será marcada como planejada, sem alterar seu formato futuro. O scanner real continua condicionado a P-09/produção.
+
+### P-21 — Contato próprio no cadastro presencial (BE-010/FE-039)
+
+**Correção de integração em 01/11/2026:** o formulário presencial trata telefone/e-mail próprios como opcionais, especialmente para menor com responsável legal identificado. O backend ainda exigia telefone em qualquer cadastro presencial. Removida essa exigência nesse modo; autocadastro adulto continua exigindo telefone e e-mail. Adulto cadastrado sem e-mail fica em atendimento assistido, e adulto com e-mail recebe convite conforme o contrato. O contato operacional do menor é a conta do responsável. A interpretação de campos genéricos RF-001 permanece para validação da clínica/jurídico em P-01 antes da produção.

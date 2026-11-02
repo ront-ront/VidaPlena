@@ -37,3 +37,7 @@ Validação/normalização CPF e contatos, concorrência de CPF, vínculos múlt
 
 ## 8. Suposições e pontos em aberto
 Documentos de prova de responsabilidade e exceções de sigilo do menor dependem de validação P-01. Idade legal/critério de menor não é hardcoded sem fonte normativa aprovada.
+
+## Evidência de integração presencial
+
+Em P-21, foi removida a exigência indevida de telefone próprio no modo presencial; ela permanece no autocadastro adulto. Um menor sem contato próprio, com responsável legal vinculado, termo assinado e consentimento registrado passou no navegador com API/banco reais. O teste PostgreSQL de consentimento agora cobre menor sem telefone, e a suíte de integração M0 passou 24/24. A interpretação jurídica de contato do menor continua P-01.

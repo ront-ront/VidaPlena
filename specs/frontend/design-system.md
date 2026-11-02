@@ -43,7 +43,15 @@ Motion: micro 120 ms, interação 150, dropdown 180, sheet 220, modal 250, pági
 
 ## Componentes e estados
 
-- **Button:** ações primárias em `primary`, secundárias em `secondary`, ghost discreto, destrutivas em `destructive`; altura de produto 44–48 px, foco visível e disabled explícito. O `Button` existente tem default `h-9`; FE-002 deve usar/adaptar tamanho de produto sem alterar variantes fora do escopo.
+### Implementação base FE-002
+
+- `apps/frontend/src/components/ui/button.tsx`: ação padrão `h-11` (44 px), `lg` `h-12` (48 px); `xs`/`sm` e ícones compactos permanecem para contexto denso. A variante `destructive` usa os tokens semânticos próprios. Todas têm foco visível e respeitam movimento reduzido.
+- `ui/input.tsx`, `ui/field.tsx` e `ui/textarea.tsx`: `TextField` associa `Label`, ajuda e erro ao input por `htmlFor`, `aria-describedby`, `aria-invalid` e `role=alert`. Campos especiais podem compor as mesmas peças; placeholder não substitui label.
+- `ui/status-badge.tsx`: `StatusBadge` exige `tone` e `label`, mostra ícone decorativo e texto visível. Usar para estados; não deduzir status de cor de marca.
+- `ui/card.tsx`: Card e partes Header/Title/Description/Content/Footer compartilham superfície, raio e sombra discretos.
+- `ui/feedback.tsx`: `LoadingState`, `EmptyState`, `ErrorState` e `SuccessNotice`. `ErrorState` exige `title` e `nextStep` em linguagem natural; quem consome a API mapeia códigos para mensagens seguras na FE-004. `Dialog`/`Sheet` entram apenas na spec da primeira tela que precisar deles.
+
+- **Button:** ações primárias em `primary`, secundárias em `secondary`, ghost discreto, destrutivas em `destructive`; altura de produto 44–48 px, foco visível e disabled explícito. O default anterior `h-9` foi ajustado em FE-002; variantes compactas continuam disponíveis.
 - **Input:** altura 44 px, borda `input`, radius 10 px, padding horizontal 12 px, ring perceptível. Label persistente acima; placeholder nunca substitui label. Help text abaixo, 11 px `muted-foreground`; erro ligado ao campo por texto/ARIA.
 - **Campo médico:** unidade sempre visível; contexto/última medição quando útil; formatação pt-BR. **Textarea:** largura total, altura mínima 160 px, padding 12 px, resize vertical.
 - **Badge/status:** pill, padding 6×9 px, 11 px/700, ponto colorido e texto; estados incluem informado, confirmado, aguardando, em atendimento, finalizado, cancelado, no-show e salvo.

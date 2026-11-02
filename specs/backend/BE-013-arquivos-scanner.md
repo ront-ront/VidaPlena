@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M0 Fundação
-- **Status:** implementação parcial (base, upload de termo e política de consentimento integrados; endpoint genérico POST /v1/files aguarda contexto autorizável de negócio)
+- **Status:** implementada localmente no escopo M0; upload genérico planejado para M2/M3 (P-20)
 - **Depende de:** BE-004, BE-005
 - **Requisitos cobertos:** RF-020, RF-026, RF-027, RNF-014
 
@@ -41,4 +41,4 @@ Scanner real, storage externo e limites definitivos são P-09/portão de produç
 
 ### Estado local em 29/10/2026
 
-`FileStorage` local cifrado, classificação por conteúdo/extensão, limite por categoria e por registro, `FileObject`, link HMAC restrito à sessão, revogação e auditoria foram implementados. Migration `202610290008_files` aplicada no banco isolado; 19/19 testes de integração, 15/15 testes Node, 2/2 Vitest e lint aprovados nesse ponto. BE-011 acrescentou upload multipart de termo presencial com política `FileAccessPolicy` específica, download pelo paciente/responsável e proibição de leitura pela recepção. A rota genérica `POST /v1/files` permanece pendente até haver um recurso de negócio autorizável além de termo presencial; tipos de resultado e gravação continuam M2/M3. O scanner de desenvolvimento segue bloqueado em produção.
+`FileStorage` local cifrado, classificação por conteúdo/extensão, limite por categoria e por registro, `FileObject`, link HMAC restrito à sessão, revogação e auditoria foram implementados. Migration `202610290008_files` aplicada no banco isolado; 19/19 testes de integração, 15/15 testes Node, 2/2 Vitest e lint aprovados nesse ponto. BE-011 acrescentou upload multipart de termo presencial com política `FileAccessPolicy` específica, download pelo paciente/responsável e proibição de leitura pela recepção. O navegador confirmou upload/recibo presencial com backend real e a suíte final de integração M0 passou 24/24. P-20 marca `POST /v1/files` genérico como contrato planejado para M2/M3, quando houver recurso autorizável; o scanner de desenvolvimento segue bloqueado em produção.
