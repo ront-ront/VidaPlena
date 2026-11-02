@@ -2,7 +2,7 @@
 
 - **Software:** front
 - **Milestone:** M0 Fundação
-- **Status:** pendente
+- **Status:** implementada localmente; revisão manual com leitor de tela pendente
 - **Depende de:** FE-003, BE-003, BE-008
 - **Requisitos cobertos:** RF-002, RNF-012, RNF-013
 
@@ -37,3 +37,7 @@ Integração com servidor/mock contratual para refresh concorrente, 401/403/409/
 
 ## 8. Suposições e pontos em aberto
 Domínio real de front/back e política de cookies/CSRF são decisões técnicas pendentes BE-001/P-05. FE-004 não fica implementável sem contrato final de sessão.
+
+## Evidência de implementação
+
+`services/api-client.ts` centraliza URL, headers, erro, token em memória, refresh único sob concorrência, CSRF de cookie e logout. `AuthProvider` carrega `/v1/me`, protege o grupo `(app)` e redireciona sessão ausente. Três testes Node cobrem rotação concorrente, refresh revogado e mensagens 409/429. Firefox headless com API e banco reais confirmou login, refresh após recarga, cookie CSRF legível, refresh HttpOnly invisível a JavaScript, ausência de token em localStorage e viewport 360 px. Lint/build passaram; revisão manual com leitor de tela permanece para homologação.

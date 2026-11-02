@@ -2,7 +2,7 @@
 
 - **Software:** front
 - **Milestone:** M0 Fundação
-- **Status:** pendente
+- **Status:** implementada localmente; revisão manual com leitor de tela pendente
 - **Depende de:** FE-003, FE-004, BE-005, BE-007
 - **Requisitos cobertos:** RF-029, RNF-012
 
@@ -37,3 +37,7 @@ Fluxos admin/gestor, convite, DPO, último admin, inativação e estados; teclad
 
 ## 8. Suposições e pontos em aberto
 Designação formal do DPO é P-08. A rota e composição são propostas técnicas Q-14, não layout específico do documento original.
+
+## Evidência de implementação
+
+`/admin/usuarios` lista contas por papel/status com busca na página, paginação, situação/último acesso/revisão; permite convite/reenvio por admin ou gestor, e edição de papéis/status/DPO somente por admin conforme RBAC efetivo. O backend devolve `dpoHolders` mínimo independente da página para identificar designados; conflito do último admin e ausência de DPO têm mensagens específicas. Firefox headless com API simulada verificou admin/gestor, designação DPO, conflito e 360 px; com backend real confirmou login/MFA, listagem e convite até ativação pela caixa dev. Backend `AccessStore` validado em PostgreSQL isolado 2/2; lint backend e lint/build frontend aprovados. Revisão manual com leitor de tela e designação formal P-08 permanecem para homologação/produção.

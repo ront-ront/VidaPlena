@@ -6,7 +6,7 @@
 
 | Milestone | Valor verificável | Situação documental |
 | --- | --- | --- |
-| M0 — Fundação | Ambiente, identidade, cadastro, consentimento, autorização, auditoria, arquivos e base operacional. | 25/25 specs redigidas; backend BE-001–015 implementado ou base funcional local, com BE-012/013 parciais e portões P-01/P-03/P-07; FE pendente. Usuário pediu pausa ao fim do backend M0 antes do frontend. |
+| M0 — Fundação | Ambiente, identidade, cadastro, consentimento, autorização, auditoria, arquivos e base operacional. | 25/25 specs redigidas e escopo implementável de M0 concluído localmente; API, front, worker e PostgreSQL integrados; 24/24 integrações, 20/20 testes Node, 2/2 Vitest, 3/3 front API, lint e build aprovados. Portões jurídicos/operacionais P-01/P-03/P-07/P-08 e revisão manual de acessibilidade permanecem antes de produção; arquivo genérico P-20 só ativa com recurso M2/M3. |
 | M1 — Agenda | Catálogo, grade, salas, reserva concorrente, consultas, lista de espera, lembretes, recepção e CSV. | 25/25 specs redigidas; implementação pendente. |
 | M2 — Prontuário | Vínculo, histórico, evolução/adendo, alertas, documentos, acesso de urgência e projeção do paciente. | 25/25 specs redigidas; implementação e portões P-02/P-06/P-11/P-13 pendentes. |
 | M3 — Teleconsulta | Termo, vídeo P2P, arquivos e gravação revogável. | 11/11 specs redigidas; RNF-014 parcial e portões P-03/P-04/P-10 pendentes. |
@@ -46,21 +46,21 @@ flowchart LR
 | 8 | M0 | [BE-008](backend/BE-008-login-mfa-sessoes.md) | Login, MFA, sessões e bloqueio por tentativas | back | BE-005, BE-007 | Implementada localmente; paciente integrado em BE-011 |
 | 9 | M0 | [BE-009](backend/BE-009-recuperacao-contatos.md) | Recuperação de senha e confirmação de contato | back | BE-006, BE-008 | Implementada localmente; consentimento de notificações em BE-011 |
 | 10 | M0 | [BE-010](backend/BE-010-cadastro-paciente-responsavel.md) | Cadastro de paciente, responsável e dependentes | back | BE-002, BE-003, BE-006 | Implementada localmente; publicação em BE-011 |
-| 11 | M0 | [BE-013](backend/BE-013-arquivos-scanner.md) | FileStorage cifrado, links e MalwareScanner de desenvolvimento | back | BE-004, BE-005 | Base e uso em consentimento implementados; POST genérico pendente |
+| 11 | M0 | [BE-013](backend/BE-013-arquivos-scanner.md) | FileStorage cifrado, links e MalwareScanner de desenvolvimento | back | BE-004, BE-005 | Implementada no escopo M0; POST genérico planejado M2/M3 (P-20) |
 | 12 | M0 | [BE-011](backend/BE-011-consentimento-dados.md) | Versões, aceite presencial e revogação de consentimento | back | BE-004, BE-010, BE-013 | Implementada localmente; P-01 jurídico pendente |
-| 13 | M0 | [BE-012](backend/BE-012-solicitacoes-titular.md) | Solicitações do titular, exportação e fila do DPO | back | BE-005, BE-011 | Implementada localmente; P-01 e exportação ampliada pendentes |
+| 13 | M0 | [BE-012](backend/BE-012-solicitacoes-titular.md) | Solicitações do titular, exportação e fila do DPO | back | BE-005, BE-011 | Implementada no escopo M0; P-01 e exportação de módulos futuros pendentes |
 | 14 | M0 | [BE-014](backend/BE-014-observabilidade.md) | Health, logs, métricas e alertas operacionais | back | BE-001, BE-004 | Implementada localmente; homologação P-07 pendente |
 | 15 | M0 | [BE-015](backend/BE-015-backup-restauracao.md) | Backup, restauração e retenção operacional | back | BE-002, BE-014 | Implementada/ensaiada localmente; homologação P-07/P-03/P-01 pendente |
-| 16 | M0 | [FE-001](frontend/FE-001-tokens-tema.md) | Tokens, fontes e alternância de tema | front | — | Redigida |
-| 17 | M0 | [FE-002](frontend/FE-002-primitives-estados.md) | Primitives, estados e acessibilidade de base | front | FE-001 | Redigida |
-| 18 | M0 | [FE-003](frontend/FE-003-shell-rotas.md) | Shell responsivo, navegação e rotas por perfil | front | FE-001, FE-002, BE-005 | Redigida |
-| 19 | M0 | [FE-004](frontend/FE-004-cliente-http-sessao.md) | Cliente HTTP, sessão e proteção de rotas | front | FE-003, BE-003, BE-008 | Redigida |
-| 20 | M0 | [FE-005](frontend/FE-005-login-mfa.md) | Tela de login e desafio MFA | front | FE-004, BE-008 | Redigida |
-| 21 | M0 | [FE-006](frontend/FE-006-convite-recuperacao.md) | Telas de convite e recuperação de acesso | front | FE-004, BE-007, BE-009 | Redigida |
-| 22 | M0 | [FE-007](frontend/FE-007-cadastro-dependentes-consentimento.md) | Autocadastro, dependentes e consentimento inicial | front | FE-002, FE-004, BE-010, BE-011 | Redigida |
-| 23 | M0 | [FE-008](frontend/FE-008-perfil-privacidade.md) | Perfil, contatos, consentimentos e direitos do titular | front | FE-004, BE-009, BE-011, BE-012 | Redigida |
-| 24 | M0 | [FE-009](frontend/FE-009-administracao-contas.md) | Administração de contas, perfis e convites | front | FE-003, FE-004, BE-005, BE-007 | Redigida |
-| 25 | M0 | [FE-039](frontend/FE-039-cadastro-presencial-consentimento.md) | Cadastro presencial de paciente e consentimento assinado | front | FE-003, FE-004, BE-010, BE-011, BE-013 | Redigida |
+| 16 | M0 | [FE-001](frontend/FE-001-tokens-tema.md) | Tokens, fontes e alternância de tema | front | — | Implementada localmente |
+| 17 | M0 | [FE-002](frontend/FE-002-primitives-estados.md) | Primitives, estados e acessibilidade de base | front | FE-001 | Implementada localmente; leitor de tela em fluxo real pendente |
+| 18 | M0 | [FE-003](frontend/FE-003-shell-rotas.md) | Shell responsivo, navegação e rotas por perfil | front | FE-001, FE-002, BE-005 | Implementada localmente; browser real 360–1280 px |
+| 19 | M0 | [FE-004](frontend/FE-004-cliente-http-sessao.md) | Cliente HTTP, sessão e proteção de rotas | front | FE-003, BE-003, BE-008 | Implementada localmente; cookies/refresh reais verificados |
+| 20 | M0 | [FE-005](frontend/FE-005-login-mfa.md) | Tela de login e desafio MFA | front | FE-004, BE-008 | Implementada localmente; TOTP e destino reais verificados |
+| 21 | M0 | [FE-006](frontend/FE-006-convite-recuperacao.md) | Telas de convite e recuperação de acesso | front | FE-004, BE-007, BE-009 | Implementada localmente; convite/reset reais verificados |
+| 22 | M0 | [FE-007](frontend/FE-007-cadastro-dependentes-consentimento.md) | Autocadastro, dependentes e consentimento inicial | front | FE-002, FE-004, BE-010, BE-011 | Implementada localmente; autocadastro real verificado |
+| 23 | M0 | [FE-008](frontend/FE-008-perfil-privacidade.md) | Perfil, contatos, consentimentos e direitos do titular | front | FE-004, BE-009, BE-011, BE-012 | Implementada localmente; pedido/novo termo reais verificados |
+| 24 | M0 | [FE-009](frontend/FE-009-administracao-contas.md) | Administração de contas, perfis e convites | front | FE-003, FE-004, BE-005, BE-007 | Implementada localmente; lista/convite reais verificados |
+| 25 | M0 | [FE-039](frontend/FE-039-cadastro-presencial-consentimento.md) | Cadastro presencial de paciente e consentimento assinado | front | FE-003, FE-004, BE-010, BE-011, BE-013 | Implementada localmente; menor/termo/recibo reais verificados |
 | 26 | M1 | [BE-016](backend/BE-016-profissionais-especialidades.md) | Profissionais, especialidades e duração padrão | back | BE-005, BE-007 | Redigida |
 | 27 | M1 | [BE-017](backend/BE-017-salas.md) | Cadastro e inativação de salas | back | BE-005, BE-016 | Redigida |
 | 28 | M1 | [BE-018](backend/BE-018-grade-bloqueios.md) | Grade, férias e bloqueios do profissional | back | BE-016, BE-004 | Redigida |

@@ -2,7 +2,7 @@
 
 - **Software:** front
 - **Milestone:** M0 Fundação
-- **Status:** pendente
+- **Status:** implementada localmente; revisão manual com leitor de tela pendente
 - **Depende de:** FE-004, BE-007, BE-009
 - **Requisitos cobertos:** RF-003, RF-029
 
@@ -36,3 +36,7 @@ Fluxo com mock contratual: enumeração, token inválido, senha divergente, conv
 
 ## 8. Suposições e pontos em aberto
 Contagem de senhas anteriores depende P-05; UI pode explicar a regra somente após decisão do parâmetro.
+
+## Evidência de implementação
+
+Rotas `/convite`, `/recuperar-acesso` e `/redefinir-senha` usam serviços HTTP centralizados. Convite e reset são inspecionados antes do formulário; tokens de link são removidos da URL após leitura e apagados da memória após uso; validação local de senha/confirmação e estados de sucesso/erro estão presentes. P-16 foi resolvida com inspeção sem consumo no contrato/BE-009. Firefox headless com API simulada confirmou links expirados; com backend, banco e worker reais confirmou convite por admin até ativação e recuperação por paciente até nova senha, ambos pela caixa de e-mail dev, com token removido da URL e sem overflow em 360 px. Lint/build passaram; revisão manual com leitor de tela permanece para homologação.

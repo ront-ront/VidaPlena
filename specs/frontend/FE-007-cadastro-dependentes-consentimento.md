@@ -2,7 +2,7 @@
 
 - **Software:** front
 - **Milestone:** M0 Fundação
-- **Status:** pendente
+- **Status:** implementada localmente; revisão manual com leitor de tela pendente
 - **Depende de:** FE-002, FE-004, BE-010, BE-011
 - **Requisitos cobertos:** RF-001, RF-004, RNF-003, RNF-019
 
@@ -37,3 +37,7 @@ Fluxos adulto/dependente, recusa, CPF duplicado, validação/senha e acessibilid
 
 ## 8. Suposições e pontos em aberto
 Exceções de sigilo e transição na maioridade aguardam DPO/jurídico. Termo por responsável presencial fica em BE-011/FE administrativo futuro, não nesta tela.
+
+## Evidência de implementação
+
+`/cadastro` oferece autocadastro adulto e dependente de responsável autenticado, termo completo versionado, aceite explícito, validação local Zod e resposta de duplicidade sem limpar campos. Firefox headless com API simulada confirmou ausência de envio sem aceite, cadastro adulto/dependente, relacionamento/consentimento enviados e recuperação após CPF duplicado; com backend e banco reais confirmou autocadastro adulto, aceite, login e viewport 360 px sem rolagem horizontal. Lint/build passaram. Revisão manual de teclado/leitor de tela e P-01 permanecem para homologação/produção.

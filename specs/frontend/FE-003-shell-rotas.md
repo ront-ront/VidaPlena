@@ -2,7 +2,7 @@
 
 - **Software:** front
 - **Milestone:** M0 Fundação
-- **Status:** pendente
+- **Status:** implementada localmente; revisão manual com leitor de tela pendente
 - **Depende de:** FE-001, FE-002, BE-005
 - **Requisitos cobertos:** UI-001, UI-008, UI-011, UI-015, RNF-018, RNF-019, RNF-020
 
@@ -37,3 +37,7 @@ Navegação por papel/rota ativa, viewport 360/760/1050, teclado e estados 403/4
 
 ## 8. Suposições e pontos em aberto
 Rotas do `screens-map.md` são propostas técnicas Q-14. Sidebar do Design System é demonstração operacional; adaptação do portal do paciente é proposta visual fiel aos tokens.
+
+## Evidência de implementação
+
+Shell App Router `(app)`, sidebar 280/220 px, topbar, navegação mobile com `Dialog` Base UI, foco/labels, rota ativa por `aria-current`, filtros de papel/rotas disponíveis, 404 e estado 403 visual foram criados. Firefox headless com backend real confirmou navegação ativa e ausência de overflow em 360/760/761/1050/1280 px, diálogo mobile e destinos por perfil. Lint e build passaram. Revisão manual com leitor de tela ainda cabe à homologação.

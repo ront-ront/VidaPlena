@@ -2,7 +2,7 @@
 
 - **Software:** front
 - **Milestone:** M0 Fundação
-- **Status:** pendente
+- **Status:** implementada localmente; revisão manual com leitor de tela pendente
 - **Depende de:** FE-004, BE-009, BE-011, BE-012
 - **Requisitos cobertos:** RF-004, RF-005, RNF-016
 
@@ -37,3 +37,7 @@ Fluxos de contato, histórico/revogação, dependentes, pedido e estados loading
 
 ## 8. Suposições e pontos em aberto
 Canal de confirmação de telefone não existe operacionalmente na V1 (sem SMS); até decisão, a tela não deve fingir confirmação automática. Fluxo pós-revogação precisa de validação DPO/jurídico.
+
+## Evidência de implementação
+
+`/minha-conta` usa projeção filtrada de `/v1/me`, dependentes/termos/pedidos próprios, e-mail pendente até prova em `/confirmar-email`, telefone presencial, revogação com consequências explícitas e prazo do pedido devolvido pelo servidor. Novo termo pode ser aceito quando `consentState=pending`, enquanto outras ações dependentes ficam bloqueadas. Contrato de `/v1/me` ganhou `patientId` próprio; histórico de consentimento ganhou `versionId` e nome do consentinte. Testes PostgreSQL auth/consent 5/5; Firefox headless com API simulada verificou contato, pedido, revogação e confirmação de e-mail. Com backend real confirmou histórico, pedido do titular, nova versão pendente e novo aceite em 360 px. Lint/backend e lint/build frontend aprovados. Leitor de tela e P-01 permanecem para homologação/produção.

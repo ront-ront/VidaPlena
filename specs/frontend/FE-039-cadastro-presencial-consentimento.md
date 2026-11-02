@@ -2,7 +2,7 @@
 
 - **Software:** front
 - **Milestone:** M0 Fundação
-- **Status:** pendente
+- **Status:** implementada localmente; revisão manual com leitor de tela pendente
 - **Depende de:** FE-003, FE-004, BE-010, BE-011, BE-013
 - **Requisitos cobertos:** RF-001, RF-004
 
@@ -39,3 +39,7 @@ Fluxos adulto/menor, anexo ausente/inválido/excessivo, CPF duplicado, sucesso t
 
 ## 8. Suposições e pontos em aberto
 Versão/publicador do termo e regras legais de representação estão em P-01/P-12. A verificação de autenticidade do documento físico é procedimento da clínica, não prova automática por upload.
+
+## Evidência de implementação
+
+`/recepcao/pacientes/novo` e `/recepcao/pacientes/[id]/consentimento` compartilham formulário assistido com CPF, responsável localizado por busca exata, termo vigente, nome/parentesco do consentinte, arquivo PDF/JPG/PNG com checagem local de assinatura de bytes/extensão/tamanho e validação final no servidor. O `FormData` envia `data` antes de `signedTerm`; recibos presenciais autorizados mostram versão, consentinte, parentesco, data e ID da evidência após recarga. A busca de responsável/paciente e o recibo foram adicionados ao contrato compartilhado como P-19; contato próprio opcional foi alinhado em P-21. Firefox headless com API simulada verificou menor sem responsável, extensão falsificada e novo aceite; com backend real confirmou login/MFA da recepção, busca de responsável, cadastro de menor sem contato próprio, upload multipart e recibo após recarga em 360 px. Integração PostgreSQL de consentimento 2/2, lint backend e lint/build frontend aprovados. Revisão manual de teclado/leitor de tela e P-01 permanecem para homologação/produção.

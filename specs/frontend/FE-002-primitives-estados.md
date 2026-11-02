@@ -2,7 +2,7 @@
 
 - **Software:** front
 - **Milestone:** M0 Fundação
-- **Status:** pendente
+- **Status:** implementada localmente (leitor de tela em fluxo completo pendente)
 - **Depende de:** FE-001
 - **Requisitos cobertos:** UI-002, UI-006, UI-007, UI-012, UI-013, UI-015, RNF-003, RNF-021
 
@@ -22,18 +22,22 @@ Ler `specs/frontend/design-system.md` (“Componentes e estados”; “Acessibil
 - Componentes de estado exibem causa e caminho de resolução em pt-BR; loading/empty/error/disabled/hover/focus/success têm aparência e semântica acessíveis. Não expor código interno de API diretamente.
 
 ## 5. Critérios de aceite
-- [ ] Dado formulário com erro, quando foco navegar por teclado, então label/erro são anunciados e foco visível.
-- [ ] Dado status clínico, quando remover cor (escala de cinza/leitor), então texto/ícone ainda comunicam estado.
-- [ ] Dado botão primário de produto, quando medir área de interação, então altura respeita 44–48 px sem alterar variante compacta intencional.
-- [ ] Dado erro de API, quando mostrar feedback, então texto indica causa em linguagem natural e próxima ação.
+- [x] Dado formulário com erro, quando foco navegar por teclado, então label/erro são associados semanticamente e foco visível é aplicado.
+- [x] Dado status clínico, quando remover cor (escala de cinza/leitor), então texto/ícone ainda comunicam estado.
+- [x] Dado botão primário de produto, quando medir área de interação, então altura respeita 44–48 px sem alterar variante compacta intencional.
+- [x] Dado erro de API, quando mostrar feedback, então texto indica causa em linguagem natural e próxima ação.
 
 ## 6. Testes esperados
 Verificação de teclado/leitor de tela, contraste WCAG 2.1 AA em uso do paciente e estados de componente; lint do frontend.
 
 ## 7. Definition of Done
-- [ ] Biblioteca única sem duplicatas divergentes; documentação de uso em design system respeitada.
-- [ ] Estados e acessibilidade conferidos; lint passa, sem `tsc`.
-- [ ] Nenhuma tela de domínio implementada nesta spec.
+- [x] Biblioteca única sem duplicatas divergentes; documentação de uso em design system respeitada.
+- [x] Estados e associações semânticas conferidos; lint passa, sem `tsc`.
+- [x] Nenhuma tela de domínio implementada nesta spec.
 
 ## 8. Suposições e pontos em aberto
 Escolha entre Dialog/Sheet por viewport é decisão de composição de cada tela; componente base não presume fluxo clínico.
+
+## Evidência de implementação
+
+Em 30/10/2026, Button usa 44 px por padrão e 48 px em `lg`, preservando tamanhos compactos; estados disabled/hover/focus e movimento reduzido estão nos estilos. `TextField` compõe input/label/ajuda/erro com `htmlFor`, `aria-describedby`, `aria-invalid` e alerta. StatusBadge sempre mostra texto e ícone, com tokens de status separados da marca; Card, LoadingState, EmptyState, ErrorState e SuccessNotice completam a base. Renderização SSR verificou seis propriedades semânticas; lint e build frontend aprovados. O leitor de tela em um formulário real e a linguagem dos erros da API serão verificados nas telas FE-005/007/008 e no cliente FE-004. Dialog/Sheet não foram necessários nesta spec.

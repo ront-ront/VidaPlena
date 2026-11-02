@@ -2,7 +2,7 @@
 
 - **Software:** front
 - **Milestone:** M0 Fundação
-- **Status:** pendente
+- **Status:** implementada localmente; revisão manual com leitor de tela pendente
 - **Depende de:** FE-004, BE-008
 - **Requisitos cobertos:** RF-002, RNF-013
 
@@ -37,3 +37,7 @@ Fluxos com backend/mock contratual: paciente, interno MFA, erro genérico, bloqu
 
 ## 8. Suposições e pontos em aberto
 Método/canal MFA e duração do bloqueio permanecem P-05. A rota `/login` é proposta técnica do mapa; `/` pode redirecionar quando implementado.
+
+## Evidência de implementação
+
+`/` redireciona a `/login`; formulário preserva marca/hierarquia, aceita e-mail/CPF, chama API real e mostra desafio TOTP com chave de primeiro acesso apenas em memória. Erros e bloqueio usam mensagens seguras; token não aparece em UI/URL. Firefox headless com backend real confirmou matrícula TOTP do admin e da recepção, código válido, entrada de paciente sem MFA e redirecionamento por papel para páginas M0 em 360 px. Lint/build passaram; revisão manual com leitor de tela permanece para homologação.
