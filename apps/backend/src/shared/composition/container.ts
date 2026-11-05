@@ -8,6 +8,9 @@ import type {
   AccessTokens,
   AuthStore,
 } from '../../application/ports/authentication'
+import type { AvailabilityStore } from '../../application/ports/availability'
+import type { BookingStore } from '../../application/ports/booking'
+import type { CatalogStore } from '../../application/ports/catalog'
 import type { ConsentStore } from '../../application/ports/consent'
 import type {
   FileAccessPolicy,
@@ -25,15 +28,23 @@ import type { OpaqueTokens, Passwords } from '../../application/ports/passwords'
 import type { PatientRegistrationStore } from '../../application/ports/patient-registration'
 import type { ProvisioningStore } from '../../application/ports/provisioning-store'
 import type { RecoveryStore } from '../../application/ports/recovery'
+import type { ReservationStore } from '../../application/ports/reservations'
+import type { RoomStore } from '../../application/ports/rooms'
+import type { ScheduleStore } from '../../application/ports/schedule'
 import type { SecretBox } from '../../application/ports/secret-box'
 import type { SubjectRequestStore } from '../../application/ports/subject-requests'
 import { AdministerAccess } from '../../application/use-cases/administer-access'
 import { Authenticate } from '../../application/use-cases/authenticate'
 import { Authorize } from '../../application/use-cases/authorize'
+import { BookAppointment } from '../../application/use-cases/book-appointment'
 import { DispatchNotifications } from '../../application/use-cases/dispatch-notifications'
+import { FindAvailability } from '../../application/use-cases/find-availability'
+import { ManageCatalog } from '../../application/use-cases/manage-catalog'
 import { ManageConsent } from '../../application/use-cases/manage-consent'
 import { ManageFiles } from '../../application/use-cases/manage-files'
 import { ManageMaintenance } from '../../application/use-cases/manage-maintenance'
+import { ManageRooms } from '../../application/use-cases/manage-rooms'
+import { ManageSchedule } from '../../application/use-cases/manage-schedule'
 import { ManageSubjectRequests } from '../../application/use-cases/manage-subject-requests'
 import { PreparePatientRegistration } from '../../application/use-cases/prepare-patient-registration'
 import { ProvisionAccounts } from '../../application/use-cases/provision-accounts'
@@ -53,6 +64,9 @@ import {
 import { PrismaAccessStore } from '../../infrastructure/persistence/prisma/access-store'
 import { PrismaAuditWriter } from '../../infrastructure/persistence/prisma/audit-writer'
 import { PrismaAuthStore } from '../../infrastructure/persistence/prisma/auth-store'
+import { PrismaAvailabilityStore } from '../../infrastructure/persistence/prisma/availability-store'
+import { PrismaBookingStore } from '../../infrastructure/persistence/prisma/booking-store'
+import { PrismaCatalogStore } from '../../infrastructure/persistence/prisma/catalog-store'
 import { PrismaConsentStore } from '../../infrastructure/persistence/prisma/consent-store'
 import { PrismaFileRepository } from '../../infrastructure/persistence/prisma/file-repository'
 import { PrismaMaintenanceStore } from '../../infrastructure/persistence/prisma/maintenance-store'
@@ -63,6 +77,9 @@ import {
 import { PrismaPatientRegistrationStore } from '../../infrastructure/persistence/prisma/patient-registration-store'
 import { PrismaProvisioningStore } from '../../infrastructure/persistence/prisma/provisioning-store'
 import { PrismaRecoveryStore } from '../../infrastructure/persistence/prisma/recovery-store'
+import { PrismaReservationStore } from '../../infrastructure/persistence/prisma/reservation-store'
+import { PrismaRoomStore } from '../../infrastructure/persistence/prisma/room-store'
+import { PrismaScheduleStore } from '../../infrastructure/persistence/prisma/schedule-store'
 import { PrismaSubjectRequestStore } from '../../infrastructure/persistence/prisma/subject-request-store'
 import { JwtAccessTokens } from '../../infrastructure/security/access-tokens'
 import { AesSecretBox } from '../../infrastructure/security/aes-secret-box'
@@ -108,6 +125,17 @@ export const services = {
   manageSubjectRequests: Symbol('manageSubjectRequests'),
   maintenanceStore: Symbol('maintenanceStore'),
   manageMaintenance: Symbol('manageMaintenance'),
+  catalogStore: Symbol('catalogStore'),
+  manageCatalog: Symbol('manageCatalog'),
+  roomStore: Symbol('roomStore'),
+  manageRooms: Symbol('manageRooms'),
+  scheduleStore: Symbol('scheduleStore'),
+  manageSchedule: Symbol('manageSchedule'),
+  availabilityStore: Symbol('availabilityStore'),
+  findAvailability: Symbol('findAvailability'),
+  reservationStore: Symbol('reservationStore'),
+  bookingStore: Symbol('bookingStore'),
+  bookAppointment: Symbol('bookAppointment'),
 } as const
 
 export function createServiceContainer(
@@ -117,6 +145,92 @@ export function createServiceContainer(
   const scoped = container.createChildContainer()
   scoped.register<AppConfig>(services.config, { useValue: config })
   scoped.register<PrismaClient>(services.database, { useValue: database })
+  scoped.register<BookingStore>(services.bookingStore, {
+    useFactory: (scope) => {
+      const options = scope.resolve<AppConfig>(services.config)
+      return new PrismaBookingStore(
+        scope.resolve<PrismaClient>(services.database),
+        {
+          timeoutMs: options.reservationTxTimeoutMs,
+          maxWaitMs: options.reservationTxMaxWaitMs,
+          retryAttempts: options.reservationTxRetryAttempts,
+          internalMinutes: options.internalIdleMinutes,
+          patientMinutes: options.patientIdleMinutes,
+        },
+      )
+    },
+  })
+  scoped.register<BookAppointment>(services.bookAppointment, {
+    useFactory: (scope) =>
+      new BookAppointment(
+        scope.resolve<BookingStore>(services.bookingStore),
+        scope.resolve<AuditWriter>(services.audit),
+        scope.resolve<FindAvailability>(services.findAvailability),
+      ),
+  })
+  scoped.register<ReservationStore>(services.reservationStore, {
+    useFactory: (scope) => {
+      const options = scope.resolve<AppConfig>(services.config)
+      return new PrismaReservationStore(
+        scope.resolve<PrismaClient>(services.database),
+        {
+          timeoutMs: options.reservationTxTimeoutMs,
+          maxWaitMs: options.reservationTxMaxWaitMs,
+          retryAttempts: options.reservationTxRetryAttempts,
+        },
+      )
+    },
+  })
+  scoped.register<AvailabilityStore>(services.availabilityStore, {
+    useFactory: (scope) =>
+      new PrismaAvailabilityStore(
+        scope.resolve<PrismaClient>(services.database),
+      ),
+  })
+  scoped.register<FindAvailability>(services.findAvailability, {
+    useFactory: (scope) => {
+      const options = scope.resolve<AppConfig>(services.config)
+      return new FindAvailability(
+        scope.resolve<AvailabilityStore>(services.availabilityStore),
+        options.clinicTimeZone,
+        options.availabilityMaxWindowDays,
+        options.availabilityLookaheadDays,
+      )
+    },
+  })
+  scoped.register<ScheduleStore>(services.scheduleStore, {
+    useFactory: (scope) =>
+      new PrismaScheduleStore(scope.resolve<PrismaClient>(services.database)),
+  })
+  scoped.register<ManageSchedule>(services.manageSchedule, {
+    useFactory: (scope) => {
+      const options = scope.resolve<AppConfig>(services.config)
+      return new ManageSchedule(
+        scope.resolve<ScheduleStore>(services.scheduleStore),
+        options.clinicTimeZone,
+        options.scheduleMaxWindowDays,
+      )
+    },
+  })
+  scoped.register<RoomStore>(services.roomStore, {
+    useFactory: (scope) =>
+      new PrismaRoomStore(scope.resolve<PrismaClient>(services.database)),
+  })
+  scoped.register<ManageRooms>(services.manageRooms, {
+    useFactory: (scope) =>
+      new ManageRooms(scope.resolve<RoomStore>(services.roomStore)),
+  })
+  scoped.register<CatalogStore>(services.catalogStore, {
+    useFactory: (scope) =>
+      new PrismaCatalogStore(scope.resolve<PrismaClient>(services.database)),
+  })
+  scoped.register<ManageCatalog>(services.manageCatalog, {
+    useFactory: (scope) =>
+      new ManageCatalog(
+        scope.resolve<CatalogStore>(services.catalogStore),
+        scope.resolve<AuditWriter>(services.audit),
+      ),
+  })
   scoped.register<AuditWriter>(services.audit, {
     useFactory: (scope) =>
       new PrismaAuditWriter(scope.resolve<PrismaClient>(services.database)),

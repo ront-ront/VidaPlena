@@ -6,6 +6,36 @@ import {
 } from '../../../../application/errors/application-error'
 
 const errors: Record<ErrorCode, { status: number; message: string }> = {
+  DUPLICATE_SPECIALTY_WARNING: {
+    status: 409,
+    message:
+      'Já existe uma consulta futura nesta especialidade. Confira os dados e confirme se deseja outra consulta.',
+  },
+  AUTO_BOOKING_SUSPENDED: {
+    status: 403,
+    message:
+      'O agendamento online está temporariamente suspenso. Fale com a recepção para agendar.',
+  },
+  BOOKING_LEAD_TIME: {
+    status: 409,
+    message:
+      'O horário não atende à antecedência necessária. Escolha outro horário ou fale com a recepção.',
+  },
+  SLOT_UNAVAILABLE: {
+    status: 409,
+    message:
+      'O horário deixou de estar disponível. Atualize a busca e escolha outro horário.',
+  },
+  OFFER_EXPIRED: {
+    status: 409,
+    message:
+      'Esta oferta expirou ou já foi utilizada. Confira sua posição na lista de espera.',
+  },
+  SCHEDULE_IMPACT_REVIEW: {
+    status: 409,
+    message:
+      'Existem consultas afetadas. Reagende ou cancele cada uma antes de publicar a alteração.',
+  },
   ACCOUNT_LOCKED: {
     status: 423,
     message: 'Acesso temporariamente bloqueado. Aguarde e tente novamente.',
@@ -91,6 +121,7 @@ export function errorHandler(
           code: error.code,
           message: definition.message,
           details: error.details,
+          ...error.context,
           requestId: res.locals.requestId,
         },
       })

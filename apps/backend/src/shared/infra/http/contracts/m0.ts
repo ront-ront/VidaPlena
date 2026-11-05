@@ -91,5 +91,27 @@ export const errorResponse = z.object({
       .array(z.object({ field: z.string(), reason: z.string() }))
       .optional(),
     requestId: idSchema,
+    affectedAppointments: z
+      .array(
+        z.object({
+          id: idSchema,
+          startsAt: z.iso.datetime(),
+          endsAt: z.iso.datetime(),
+        }),
+      )
+      .optional(),
+    duplicateAppointments: z
+      .array(z.object({ id: idSchema, startsAt: z.iso.datetime() }))
+      .optional(),
+    alternatives: z
+      .array(
+        z.object({
+          startsAt: z.iso.datetime(),
+          endsAt: z.iso.datetime(),
+          professionalId: idSchema,
+          roomAvailable: z.boolean(),
+        }),
+      )
+      .optional(),
   }),
 })

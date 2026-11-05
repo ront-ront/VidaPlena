@@ -11,10 +11,15 @@ import type { ProvisioningStore } from '../../application/ports/provisioning-sto
 import type { AdministerAccess } from '../../application/use-cases/administer-access'
 import type { Authenticate } from '../../application/use-cases/authenticate'
 import type { Authorize } from '../../application/use-cases/authorize'
+import type { BookAppointment } from '../../application/use-cases/book-appointment'
 import type { DispatchNotifications } from '../../application/use-cases/dispatch-notifications'
+import type { FindAvailability } from '../../application/use-cases/find-availability'
+import type { ManageCatalog } from '../../application/use-cases/manage-catalog'
 import type { ManageConsent } from '../../application/use-cases/manage-consent'
 import type { ManageFiles } from '../../application/use-cases/manage-files'
 import type { ManageMaintenance } from '../../application/use-cases/manage-maintenance'
+import type { ManageRooms } from '../../application/use-cases/manage-rooms'
+import type { ManageSchedule } from '../../application/use-cases/manage-schedule'
 import type { ManageSubjectRequests } from '../../application/use-cases/manage-subject-requests'
 import type { ProvisionAccounts } from '../../application/use-cases/provision-accounts'
 import type { RecoverAccess } from '../../application/use-cases/recover-access'
@@ -25,7 +30,10 @@ import { createPrismaClient } from '../../infrastructure/persistence/prisma/clie
 import type { AppConfig } from '../config/environment'
 import { createAccessRouter } from '../infra/http/access-router'
 import { createApp } from '../infra/http/app'
+import { createAppointmentRouter } from '../infra/http/appointment-router'
 import { createAuthRouter } from '../infra/http/auth-router'
+import { createAvailabilityRouter } from '../infra/http/availability-router'
+import { createCatalogRouter } from '../infra/http/catalog-router'
 import { createConsentRouter } from '../infra/http/consent-router'
 import { maintenanceBody } from '../infra/http/contracts/maintenance'
 import { createFileRouter } from '../infra/http/file-router'
@@ -40,6 +48,8 @@ import { parseInput } from '../infra/http/parse-input'
 import { createPatientRouter } from '../infra/http/patient-router'
 import { createProvisioningRouter } from '../infra/http/provisioning-router'
 import { createRecoveryRouter } from '../infra/http/recovery-router'
+import { createRoomRouter } from '../infra/http/room-router'
+import { createScheduleRouter } from '../infra/http/schedule-router'
 import { createSubjectRequestRouter } from '../infra/http/subject-request-router'
 import { createServiceContainer, services } from './container'
 
@@ -88,6 +98,41 @@ export async function composeBackendApplication(config: AppConfig) {
     })
     const routes = Router()
     registerApiDocumentation(routes)
+    routes.use(
+      createAppointmentRouter(
+        tokens,
+        authorize,
+        scope.resolve<BookAppointment>(services.bookAppointment),
+      ),
+    )
+    routes.use(
+      createAvailabilityRouter(
+        tokens,
+        authorize,
+        scope.resolve<FindAvailability>(services.findAvailability),
+      ),
+    )
+    routes.use(
+      createScheduleRouter(
+        tokens,
+        authorize,
+        scope.resolve<ManageSchedule>(services.manageSchedule),
+      ),
+    )
+    routes.use(
+      createRoomRouter(
+        tokens,
+        authorize,
+        scope.resolve<ManageRooms>(services.manageRooms),
+      ),
+    )
+    routes.use(
+      createCatalogRouter(
+        tokens,
+        authorize,
+        scope.resolve<ManageCatalog>(services.manageCatalog),
+      ),
+    )
     const maintenance = scope.resolve<ManageMaintenance>(
       services.manageMaintenance,
     )

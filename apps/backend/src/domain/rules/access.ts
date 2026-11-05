@@ -15,6 +15,10 @@ export interface Principal {
   consentState?: 'active' | 'pending' | 'revoked'
 }
 export type Capability =
+  | 'manage_catalog'
+  | 'operational_catalog'
+  | 'manage_schedule'
+  | 'book_appointment'
   | 'session'
   | 'consent_management'
   | 'consent_patient'
@@ -60,9 +64,18 @@ export function mayAccess(
         (role) =>
           role === 'receptionist' || role === 'admin' || role === 'manager',
       )
+    case 'operational_catalog':
+    case 'manage_schedule':
+      return actor.roles.some((role) => role !== 'patient')
+    case 'book_appointment':
+      return actor.roles.some(
+        (role) =>
+          role === 'patient' || role === 'receptionist' || role === 'admin',
+      )
     case 'admin_users':
       return actor.roles.includes('admin')
     case 'invite_users':
+    case 'manage_catalog':
       return actor.roles.some((role) => role === 'admin' || role === 'manager')
     case 'onsite_registration':
       return actor.roles.some(

@@ -52,6 +52,58 @@ export const consentAwareNotificationCheck: NotificationConsentCheck = async (
   message,
 ) => {
   if (await internalIdentityNotificationsOnly(tx, message)) return true
+  if (message.templateKey.startsWith('appointment.')) {
+    if (!message.aggregateId || message.aggregateVersion == null) return false
+    const appointment = await tx.appointment.findUnique({
+      where: { id: message.aggregateId },
+      include: {
+        professional: true,
+        patient: {
+          include: {
+            guardians: {
+              where: {
+                guardianUserId: message.userId,
+                status: 'active',
+                endedAt: null,
+              },
+            },
+          },
+        },
+      },
+    })
+    if (
+      !appointment ||
+      appointment.version !== message.aggregateVersion ||
+      appointment.patientId !== message.patientId
+    )
+      return false
+    if (
+      message.templateKey === 'appointment.cancelled'
+        ? appointment.status !== 'cancelled'
+        : !['confirmed', 'waiting', 'in_service'].includes(appointment.status)
+    )
+      return false
+    if (
+      message.templateKey === 'appointment.reminder' &&
+      appointment.status !== 'confirmed'
+    )
+      return false
+    if ((await dataConsentState(tx, appointment.patientId)) !== 'active')
+      return false
+    if (appointment.professional.userId === message.userId)
+      return !!(await tx.userRoleAssignment.findFirst({
+        where: {
+          userId: message.userId,
+          roleCode: 'professional',
+          revokedAt: null,
+        },
+      }))
+    if (
+      appointment.patient.userId !== message.userId &&
+      !appointment.patient.guardians.length
+    )
+      return false
+  }
   const patientRole = await tx.userRoleAssignment.findFirst({
     where: { userId: message.userId, roleCode: 'patient', revokedAt: null },
     select: { id: true },
@@ -103,6 +155,7 @@ export class PrismaNotificationStore implements NotificationStore {
   ) {
     await this.db.$transaction(
       async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock_shared(775001)`
         const owner = await tx.notification.findUnique({
           where: { id },
           select: { userId: true },
@@ -295,6 +348,8 @@ export async function enqueueNotification(
       userId: input.userId,
       patientId: input.patientId,
       templateKey: input.type,
+      aggregateId: input.aggregateId,
+      aggregateVersion: input.version,
       category: notificationCategory(input.type),
       payloadEncrypted: encrypted,
       destinationEncrypted,

@@ -8,6 +8,7 @@ export const notificationTemplates = [
   'appointment.reminder',
   'appointment.cancelled',
   'appointment.rescheduled',
+  'appointment.schedule_changed',
   'waitlist.offered',
   'marketing.news',
 ] as const
@@ -84,6 +85,8 @@ export function safeNotificationText(template: NotificationTemplate): string {
       'Sua consulta foi cancelada. Consulte os detalhes no portal.',
     'appointment.rescheduled':
       'Sua consulta foi remarcada. Consulte os detalhes no portal.',
+    'appointment.schedule_changed':
+      'A clínica precisa ajustar sua consulta por alteração de disponibilidade. Procure a recepção para definir o novo horário.',
     'waitlist.offered':
       'Há um horário disponível para você. Consulte a oferta no portal.',
     'marketing.news': 'Há novidades da clínica disponíveis no portal.',

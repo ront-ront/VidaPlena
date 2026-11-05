@@ -24,6 +24,8 @@ export interface NotificationMessage {
   payloadEncrypted: string | null
   requestId: string
   attempts: number
+  aggregateId?: string | null
+  aggregateVersion?: number | null
 }
 export interface Delivery {
   idempotencyKey: string

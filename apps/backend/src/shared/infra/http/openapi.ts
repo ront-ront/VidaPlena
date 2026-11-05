@@ -2,6 +2,7 @@ import { apiReference } from '@scalar/express-api-reference'
 import type { Router } from 'express'
 import { z } from 'zod'
 import { createDocument } from 'zod-openapi'
+import { catalogOpenApiPaths } from './catalog-openapi'
 import {
   consentActionBody,
   consentDocumentResponse,
@@ -118,6 +119,7 @@ export const openApiDocument = createDocument({
     },
   },
   paths: {
+    ...catalogOpenApiPaths,
     '/admin/ops/maintenance-windows': {
       get: {
         operationId: 'listMaintenanceWindows',
