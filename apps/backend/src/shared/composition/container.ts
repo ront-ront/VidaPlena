@@ -33,6 +33,8 @@ import type { RoomStore } from '../../application/ports/rooms'
 import type { ScheduleStore } from '../../application/ports/schedule'
 import type { SecretBox } from '../../application/ports/secret-box'
 import type { SubjectRequestStore } from '../../application/ports/subject-requests'
+import type { WaitlistStore } from '../../application/ports/waitlist'
+import { AcceptWaitlistOffer } from '../../application/use-cases/accept-waitlist-offer'
 import { AdministerAccess } from '../../application/use-cases/administer-access'
 import { Authenticate } from '../../application/use-cases/authenticate'
 import { Authorize } from '../../application/use-cases/authorize'
@@ -48,7 +50,9 @@ import { ManageMaintenance } from '../../application/use-cases/manage-maintenanc
 import { ManageRooms } from '../../application/use-cases/manage-rooms'
 import { ManageSchedule } from '../../application/use-cases/manage-schedule'
 import { ManageSubjectRequests } from '../../application/use-cases/manage-subject-requests'
+import { ManageWaitlist } from '../../application/use-cases/manage-waitlist'
 import { PreparePatientRegistration } from '../../application/use-cases/prepare-patient-registration'
+import { ProcessWaitlist } from '../../application/use-cases/process-waitlist'
 import { ProvisionAccounts } from '../../application/use-cases/provision-accounts'
 import { RecoverAccess } from '../../application/use-cases/recover-access'
 import { RescheduleAppointment } from '../../application/use-cases/reschedule-appointment'
@@ -84,6 +88,7 @@ import { PrismaReservationStore } from '../../infrastructure/persistence/prisma/
 import { PrismaRoomStore } from '../../infrastructure/persistence/prisma/room-store'
 import { PrismaScheduleStore } from '../../infrastructure/persistence/prisma/schedule-store'
 import { PrismaSubjectRequestStore } from '../../infrastructure/persistence/prisma/subject-request-store'
+import { PrismaWaitlistStore } from '../../infrastructure/persistence/prisma/waitlist-store'
 import { JwtAccessTokens } from '../../infrastructure/security/access-tokens'
 import { AesSecretBox } from '../../infrastructure/security/aes-secret-box'
 import { HmacFileDownloadTokens } from '../../infrastructure/security/file-download-tokens'
@@ -142,6 +147,10 @@ export const services = {
   cancelAppointment: Symbol('cancelAppointment'),
   rescheduleAppointment: Symbol('rescheduleAppointment'),
   listMyAppointments: Symbol('listMyAppointments'),
+  waitlistStore: Symbol('waitlistStore'),
+  manageWaitlist: Symbol('manageWaitlist'),
+  acceptWaitlistOffer: Symbol('acceptWaitlistOffer'),
+  processWaitlist: Symbol('processWaitlist'),
 } as const
 
 export function createServiceContainer(
@@ -149,6 +158,52 @@ export function createServiceContainer(
   database: PrismaClient,
 ): DependencyContainer {
   const scoped = container.createChildContainer()
+  scoped.register<WaitlistStore>(services.waitlistStore, {
+    useFactory: (scope) => {
+      const config = scope.resolve<AppConfig>(services.config)
+      return new PrismaWaitlistStore(
+        scope.resolve<PrismaClient>(services.database),
+        {
+          timeoutMs: config.reservationTxTimeoutMs,
+          maxWaitMs: config.reservationTxMaxWaitMs,
+          retryAttempts: config.reservationTxRetryAttempts,
+          internalMinutes: config.internalIdleMinutes,
+          patientMinutes: config.patientIdleMinutes,
+        },
+      )
+    },
+  })
+  scoped.register<ManageWaitlist>(services.manageWaitlist, {
+    useFactory: (scope) => {
+      const config = scope.resolve<AppConfig>(services.config)
+      return new ManageWaitlist(
+        scope.resolve<WaitlistStore>(services.waitlistStore),
+        scope.resolve<AuditWriter>(services.audit),
+        scope.resolve<FindAvailability>(services.findAvailability),
+        config.clinicTimeZone,
+        config.waitlistMaxWindowDays,
+        config.availabilityMaxWindowDays,
+      )
+    },
+  })
+  scoped.register<AcceptWaitlistOffer>(services.acceptWaitlistOffer, {
+    useFactory: (scope) =>
+      new AcceptWaitlistOffer(
+        scope.resolve<WaitlistStore>(services.waitlistStore),
+        scope.resolve<AuditWriter>(services.audit),
+      ),
+  })
+  scoped.register<ProcessWaitlist>(services.processWaitlist, {
+    useFactory: (scope) => {
+      const config = scope.resolve<AppConfig>(services.config)
+      return new ProcessWaitlist(
+        scope.resolve<WaitlistStore>(services.waitlistStore),
+        config.clinicTimeZone,
+        config.waitlistOfferTtlMinutes,
+        config.waitlistWorkerBatchSize,
+      )
+    },
+  })
   scoped.register<AppConfig>(services.config, { useValue: config })
   scoped.register<PrismaClient>(services.database, { useValue: database })
   scoped.register<BookingStore>(services.bookingStore, {

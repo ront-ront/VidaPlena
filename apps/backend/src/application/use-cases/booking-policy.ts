@@ -9,6 +9,7 @@ export async function eligibleBookingSlot(
   input: BookInput,
   portal: boolean,
   now: Date,
+  outsideGrade = false,
 ) {
   const target = await tx.target(input.professionalId, input.specialtyId)
   if (!target?.active || !target.specialtyActive || !target.linked)
@@ -31,17 +32,28 @@ export async function eligibleBookingSlot(
   const endsAt = new Date(startsAt.getTime() + durationMinutes * 60_000)
   if (startsAt < new Date(now.getTime() + (portal ? 2 * 3_600_000 : 0)))
     throw new ApplicationError('BOOKING_LEAD_TIME')
-  if (
-    !target.schedule ||
-    !scheduleContains(
+  const withinGrade =
+    target.schedule &&
+    scheduleContains(
       target.schedule.rules,
       startsAt,
       endsAt,
       input.modality,
       target.schedule.clinicTimeZone,
       durationMinutes,
-    ) ||
-    scheduleBlocked(target.schedule.blocks, startsAt, endsAt)
+    )
+  if (outsideGrade && withinGrade)
+    throw new ApplicationError('VALIDATION_ERROR', [
+      {
+        field: 'startsAt',
+        reason:
+          'Este horário pertence à grade regular. Use o agendamento normal.',
+      },
+    ])
+  if (
+    (!outsideGrade && !withinGrade) ||
+    (target.schedule &&
+      scheduleBlocked(target.schedule.blocks, startsAt, endsAt))
   )
     throw new ApplicationError('SLOT_UNAVAILABLE')
   return { target, startsAt, endsAt, durationMinutes }

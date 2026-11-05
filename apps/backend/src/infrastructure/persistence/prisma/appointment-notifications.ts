@@ -7,6 +7,7 @@ import { enqueueNotification } from './notification-store'
 export async function patientNotificationRecipients(
   tx: Prisma.TransactionClient,
   patientId: string,
+  now = new Date(),
 ) {
   const patient = await tx.patientProfile.findUniqueOrThrow({
     where: { id: patientId },
@@ -33,7 +34,7 @@ export async function patientNotificationRecipients(
     if (
       link.guardian.status === 'active' &&
       link.guardian.roles.length &&
-      (await userDataConsentState(tx, link.guardianUserId)) === 'active'
+      (await userDataConsentState(tx, link.guardianUserId, now)) === 'active'
     )
       ids.add(link.guardianUserId)
   return [...ids]

@@ -8,11 +8,11 @@ Objetivo autorizado em 04/11/2026: implementar integralmente M1 na ordem de `03-
 | BE-017 | Integrada a consultas | Salas unitárias, unicidade/RBAC/auditoria; inativação com consulta futura bloqueada e sala inativa recusada na confirmação. Resolução por cancelamento comprovada em BE-023, preservando histórico/FKs. |
 | BE-018 | Implementada localmente | Snapshot/fuso/versão/RBAC, impacto ordinário recusado, emergência mantém reservas e enfileira avisos por publicação. Catálogo/grade e confirmação aprovados; resolução operacional segue BE-022/023. |
 | BE-019 | Implementada localmente; desempenho pendente | Disponibilidade lê ocupação real, bloqueios, salas, duração, modalidade e antecedência. Carga/p95 permanece BE-051. |
-| BE-020 | Barreira integrada e testada | Cinco testes PostgreSQL passaram após adequar fixtures à FK, sem afrouxar constraints. Corrida HTTP, sala e rollback aprovados; encaixe BE-024 e carga BE-051 pendentes. |
+| BE-020 | Barreira integrada e testada | Cinco testes PostgreSQL passaram após adequar fixtures à FK, sem afrouxar constraints. Corrida HTTP, sala e rollback aprovados; encaixe BE-024 comprovado; carga BE-051 pendente. |
 | BE-021 | Implementada localmente | 9/9 testes HTTP/PostgreSQL: confirmação/idempotência/duração, consentimento/representação, sala/modalidade, concorrência, outbox, rollback e impactos administrativos. Autenticação/convite/confirmação 13/13 após correção BIGINT; lint. |
 | BE-022 | Implementada localmente | Reagendamento/listagem própria; 9/9 HTTP/PostgreSQL, com confirmação 18/18; origem clínica, limite RN-004/RN-003, corrida/rollback, transferência, representação e paginação. Planejamento de novos lembretes integra BE-025. |
-| BE-023 | Implementada localmente | Cancelamento, origem clínica, autorização, prazo, liberação e outbox de oportunidade; 9/9 testes, com reagendamento 18/18. Consumo da vaga BE-024 e jobs BE-025 pendentes. |
-| BE-024 | Pendente | Lista de espera/encaixe |
+| BE-023 | Implementada localmente | Cancelamento, origem clínica, autorização, prazo, liberação e outbox de oportunidade; 9/9 testes, com reagendamento 18/18. Consumo da vaga BE-024 comprovado; jobs BE-025 pendentes. |
+| BE-024 | Implementada localmente | Fila/oferta/hold/aceite/worker/encaixe; 17/17 integrações pertinentes; regressão completa 78/78 integrações, 25/25 Node, 2/2 Vitest e lint. P-29 detalha decisões e integrações assistidas. |
 | BE-025 | Pendente | Lembretes |
 | BE-026 | Pendente | Check-in/fila |
 | BE-027 | Pendente | No-show/suspensão |
@@ -72,3 +72,18 @@ Nove integrações de cancelamento e nove de reagendamento aprovadas (18/18); li
 ## Fechamento local até BE-023 — 05/11/2026
 
 **Regressão completa: 61/61 integrações backend, 25/25 testes Node e 2/2 Vitest aprovados; lint backend em 162 arquivos aprovado.** Nenhum `tsc`. BE-016–023 estão implementadas no escopo local, com extensões explicitadas para BE-024/025/051 e front. Permanecem BE-024–029 e FE-010–020; M1 não está concluído. PostgreSQL descartável permanece ativo para a continuação. Nenhum dado real foi usado.
+
+## Fechamento local BE-024 — 05/11/2026
+
+Entrada/listagem/saída, FIFO por oportunidade, expiração/avanço, aceite com o mesmo hold e encaixe justificado estão implementados. P-29 completa o contrato técnico; worker persistido e encerramento gracioso estão ativos no runtime. O SQL valida entrada/oferta/reserva ao commit, sem apagar histórico. Oferta aceita preserva histórico após cancelamento posterior da consulta. Contato assistido mantém pacientes sem conta digital ativa ou com suspensão online na fila; consentimento revogado continua bloqueando envio/aceite.
+
+Bateria final de espera: 17/17 integrações, incluindo 12 inscrições simultâneas sem esgotar o pool e oportunidade tomada antes do consumidor sem oferta falsa. A revisão compartilhou o adapter de disponibilidade com a transação já aberta; não há transação aninhada durante inscrição. `bookingTransaction`/`bookingUnitOfWork` são reutilizados para reserva, consulta e espera. Primeiro checkpoint teve 76/76; **estado final: 78/78 integrações backend, 25/25 Node, 2/2 Vitest e lint backend em 172 arquivos aprovados**. Nenhum `tsc`. Node 22.22.0 e PostgreSQL 17 isolado; sem dados reais.
+
+M1 ainda não concluído: faltam BE-025–029 e FE-010–020. Próxima spec: BE-025; fonte inicial já lida integralmente (39 linhas), mas reler seção DRS RF-013 e contratos antes de definir os jobs. O container de teste permanece ativo.
+
+### Pontos de integração para BE-025 (planejamento, não implementado)
+
+- Jobs persistidos por consulta/versão e instante de `reminder.schedule_hours_before`, teto de dois lembretes bem-sucedidos por consulta, com reprogramação/invalidação em confirmação/remarcação/cancelamento. Definir no contrato a contagem para responsável com múltiplos destinatários e para novas versões; não presumir limite reiniciado a cada remarcação.
+- M0 já oferece outbox, retry, preferência/canal no envio, caixa dev e método `DispatchNotifications.deliver(id)`. Revalidar versão/status/consentimento antes do envio e impedir lembrete de horário antigo, inclusive sob corrida com alteração da consulta.
+- Não usar `payloadEncrypted` de lembrete como token de recuperação: hoje o dispatcher interpreta conteúdo cifrado como token. Payload de agenda deve ter contrato próprio, contendo apenas informações administrativas mínimas, sem dados clínicos; endereço real da clínica ainda não foi fornecido e precisa constar como pendência/parâmetro, nunca ser inventado.
+- Publicação de convite/reset e aviso de oferta não devem mudar. Novos jobs do CSV devem respeitar Q-19 (importação não dispara notificações). M3 não está autorizado como parte do M1; não simular sala/preparo de vídeo operacional.

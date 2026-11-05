@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { ApplicationError } from '../../../application/errors/application-error'
 import type {
   ReservationStore,
@@ -78,20 +79,67 @@ export function reservationTransaction(
         where: { id, active: true, capacity: 1 },
         select: { id: true },
       })),
-    expire: async (now, professionalIds, roomIds) =>
-      (
-        await tx.slotReservation.updateMany({
+    expire: async (now, professionalIds, roomIds) => {
+      const where: Prisma.SlotReservationWhereInput = {
+        state: 'held',
+        expiresAt: { lte: now },
+        OR: [
+          { professionalId: { in: professionalIds } },
+          { roomId: { in: roomIds } },
+        ],
+      }
+      const offers = await tx.waitlistOffer.findMany({
+        where: { status: 'active', reservation: where },
+        select: { id: true, entryId: true, releaseEventId: true },
+      })
+      if (offers.length) {
+        await tx.waitlistOffer.updateMany({
+          where: { id: { in: offers.map((o) => o.id) }, status: 'active' },
+          data: { status: 'expired' },
+        })
+        await tx.waitlistEntry.updateMany({
           where: {
-            state: 'held',
-            expiresAt: { lte: now },
-            OR: [
-              { professionalId: { in: professionalIds } },
-              { roomId: { in: roomIds } },
-            ],
+            id: { in: offers.map((o) => o.entryId) },
+            status: 'offered',
           },
+          data: { status: 'waiting' },
+        })
+        await tx.slotReleaseEvent.updateMany({
+          where: {
+            id: { in: offers.map((o) => o.releaseEventId) },
+            processedAt: null,
+          },
+          data: { nextAttemptAt: now },
+        })
+        await tx.notification.updateMany({
+          where: {
+            aggregateId: { in: offers.map((o) => o.id) },
+            templateKey: 'waitlist.offered',
+            deliveryStatus: { in: ['queued', 'retry'] },
+          },
+          data: {
+            deliveryStatus: 'suppressed',
+            failureReasonSafe: 'offer_expired',
+          },
+        })
+        for (const offer of offers)
+          await new PrismaAuditWriter(tx).append({
+            actorRoles: [],
+            requestId: randomUUID(),
+            authorizationBasis: 'system',
+            action: 'waitlist.offer_expired',
+            resourceType: 'WaitlistOffer',
+            resourceId: offer.id,
+            metadata: { reasonCode: 'ttl' },
+          })
+      }
+      return (
+        await tx.slotReservation.updateMany({
+          where,
           data: { state: 'released' },
         })
-      ).count,
+      ).count
+    },
     occupied: async (professionalId, roomId, startsAt, endsAt, ignoreId) =>
       !!(await tx.slotReservation.findFirst({
         where: {

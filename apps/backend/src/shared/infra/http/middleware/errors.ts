@@ -6,6 +6,11 @@ import {
 } from '../../../../application/errors/application-error'
 
 const errors: Record<ErrorCode, { status: number; message: string }> = {
+  WAITLIST_NOT_NEEDED: {
+    status: 409,
+    message:
+      'Há horários disponíveis nas suas preferências. Escolha um horário para agendar.',
+  },
   BOOKING_CHANGE_WINDOW: {
     status: 409,
     message:

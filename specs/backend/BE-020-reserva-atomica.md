@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M1 Agenda
-- **Status:** barreira implementada e testada localmente; encaixe BE-024 e carga BE-051 pendentes
+- **Status:** barreira e encaixe implementados/testados localmente; carga formal BE-051 pendente
 - **Depende de:** BE-017, BE-018, BE-019
 - **Requisitos cobertos:** RF-008, RN-001, RNF-010
 
@@ -25,7 +25,7 @@ Ler `specs/shared/data-model.md#m1` (`SlotReservation`), `specs/shared/api-contr
 - [x] Dadas duas confirmações simultâneas do mesmo intervalo/profissional, quando executar, então exatamente uma confirma e a outra recebe 409, com zero registro parcial.
 - [x] Dadas duas salas ou profissionais independentes, quando reservar intervalos iguais, então confirmações válidas coexistem somente se ambos recursos não colidem.
 - [x] Dado atendimento presencial sem sala livre, quando confirmar, então 409 mesmo que profissional esteja livre; remoto dispensa sala.
-- [ ] Dado encaixe fora da grade em intervalo ocupado, quando tentar, então 409 sem exceção; em intervalo livre com justificativa, a barreira permite ao caso de uso avançar.
+- [x] Dado encaixe fora da grade em intervalo ocupado, quando tentar, então 409 sem exceção; em intervalo livre com justificativa, a barreira permite ao caso de uso avançar.
 - [x] Dada falha na troca de horário, quando transação reverter, então reserva antiga permanece confirmada.
 
 ## 6. Testes esperados
@@ -45,3 +45,5 @@ Migration `202611040020_reservations` cria `btree_gist`, duas constraints de exc
 **Reverificação integrada em 05/11/2026:** BE-021 adicionou a FK diferida de consulta e a consistência entre consulta ativa/reserva. A corrida HTTP passou, mas os cinco testes diretos acima falham porque suas fixtures usam consultas inexistentes. Atualizar fixtures para transações completas e repetir; o resultado 15/15 acima é histórico e não representa o estado atual. Suíte selecionada atual: 13/18; lint backend/frontend aprovado.
 
 **Correção da regressão em 05/11/2026:** fixtures agora criam consulta/reserva na mesma transação e atualizam a consulta durante troca; 5/5 testes PostgreSQL passaram, sem relaxar FK/constraints. A corrida HTTP de BE-021 também confirmou uma única efetivação com resposta 409 concorrente.
+
+**Integração BE-024:** encaixe justificado usa a mesma reserva/constraint e foi confirmado em intervalo livre fora de slots regulares; colisão foi recusada. Hold expirado associado a oferta real encerra oferta/entrada/notificação na mesma transação antes de outra reserva, preservando as constraints diferidas. Aceite usa a reserva original; histórico da oferta aceita continua válido após cancelamento da consulta. Carga formal continua BE-051.

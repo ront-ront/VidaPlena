@@ -20,6 +20,8 @@ export type Capability =
   | 'manage_schedule'
   | 'book_appointment'
   | 'cancel_appointment'
+  | 'create_fit_in'
+  | 'operational_waitlist'
   | 'session'
   | 'consent_management'
   | 'consent_patient'
@@ -76,6 +78,14 @@ export function mayAccess(
     case 'cancel_appointment':
       return actor.roles.some((role) =>
         ['patient', 'receptionist', 'professional', 'admin'].includes(role),
+      )
+    case 'create_fit_in':
+      return actor.roles.some(
+        (role) => role === 'receptionist' || role === 'manager',
+      )
+    case 'operational_waitlist':
+      return actor.roles.some(
+        (role) => role === 'receptionist' || role === 'admin',
       )
     case 'admin_users':
       return actor.roles.includes('admin')

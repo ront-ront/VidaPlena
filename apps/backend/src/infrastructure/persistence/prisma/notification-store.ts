@@ -52,6 +52,49 @@ export const consentAwareNotificationCheck: NotificationConsentCheck = async (
   message,
 ) => {
   if (await internalIdentityNotificationsOnly(tx, message)) return true
+  if (message.templateKey === 'waitlist.offered') {
+    // Serialize delivery with offer acceptance/withdrawal until this transaction commits.
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock_shared(662024)`
+    if (
+      !message.aggregateId ||
+      !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(
+        message.aggregateId,
+      ) ||
+      message.aggregateVersion !== 1
+    )
+      return false
+    const offer = await tx.waitlistOffer.findUnique({
+      where: { id: message.aggregateId },
+      include: {
+        entry: {
+          include: {
+            patient: {
+              include: {
+                guardians: {
+                  where: {
+                    guardianUserId: message.userId,
+                    status: 'active',
+                    endedAt: null,
+                  },
+                },
+              },
+            },
+          },
+        },
+        reservation: true,
+      },
+    })
+    if (
+      offer?.status !== 'active' ||
+      offer.expiresAt <= new Date() ||
+      offer.entry.status !== 'offered' ||
+      offer.reservation.state !== 'held' ||
+      offer.entry.patientId !== message.patientId ||
+      (offer.entry.patient.userId !== message.userId &&
+        !offer.entry.patient.guardians.length)
+    )
+      return false
+  }
   if (message.templateKey.startsWith('appointment.')) {
     if (
       !message.aggregateId ||

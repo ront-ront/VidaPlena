@@ -38,6 +38,16 @@ import {
   scheduleQuery,
   scheduleResponse,
 } from './contracts/schedule'
+import {
+  acceptOfferBody,
+  acceptOfferResponse,
+  fitInBody,
+  waitlistBody,
+  waitlistCreatedResponse,
+  waitlistParams,
+  waitlistQuery,
+  waitlistResponse,
+} from './contracts/waitlist'
 
 const response = (schema: z.ZodType) => ({
   description: 'Resposta do catalogo',
@@ -72,6 +82,58 @@ const command = (
   responses: { [patch ? '200' : '201']: response(result), ...errors },
 })
 export const catalogOpenApiPaths = {
+  '/waitlist': {
+    get: {
+      operationId: 'listWaitlist',
+      tags: ['Agenda'],
+      security,
+      requestParams: { query: waitlistQuery },
+      responses: { '200': response(waitlistResponse), ...errors },
+    },
+    post: {
+      operationId: 'enterWaitlist',
+      tags: ['Agenda'],
+      security,
+      requestBody: {
+        content: { 'application/json': { schema: waitlistBody } },
+      },
+      responses: { '201': response(waitlistCreatedResponse), ...errors },
+    },
+  },
+  '/waitlist/{id}': {
+    delete: {
+      operationId: 'leaveWaitlist',
+      tags: ['Agenda'],
+      security,
+      requestParams: { path: waitlistParams },
+      responses: {
+        '204': { description: 'Entrada retirada; histórico preservado.' },
+        ...errors,
+      },
+    },
+  },
+  '/waitlist/offers/{id}/accept': {
+    post: {
+      operationId: 'acceptWaitlistOffer',
+      tags: ['Agenda'],
+      security,
+      requestParams: { path: waitlistParams, header: idempotencyHeader },
+      requestBody: {
+        content: { 'application/json': { schema: acceptOfferBody } },
+      },
+      responses: { '201': response(acceptOfferResponse), ...errors },
+    },
+  },
+  '/appointments/fit-ins': {
+    post: {
+      operationId: 'bookFitIn',
+      tags: ['Agenda'],
+      security,
+      requestParams: { header: idempotencyHeader },
+      requestBody: { content: { 'application/json': { schema: fitInBody } } },
+      responses: { '201': response(bookingResponse), ...errors },
+    },
+  },
   '/appointments/{id}/cancel': {
     post: {
       operationId: 'cancelAppointment',

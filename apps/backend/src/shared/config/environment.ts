@@ -46,6 +46,10 @@ export const environmentSchema = z
     RESERVATION_TX_TIMEOUT_MS: integer(10000, 1000, 60000),
     RESERVATION_TX_MAX_WAIT_MS: integer(5000, 100, 30000),
     RESERVATION_TX_RETRY_ATTEMPTS: integer(3, 1, 10),
+    WAITLIST_OFFER_TTL_MINUTES: integer(30, 1, 1440),
+    WAITLIST_MAX_WINDOW_DAYS: integer(93, 1, 366),
+    WAITLIST_POLL_SECONDS: integer(5, 1, 3600),
+    WAITLIST_WORKER_BATCH_SIZE: integer(10, 1, 100),
     AUTH_PASSWORD_MIN_LENGTH: integer(10, 1, 72),
     AUTH_PASSWORD_COMMON_LIST_ENABLED: z
       .enum(['true', 'false'])
@@ -152,6 +156,10 @@ export const environmentSchema = z
       reservationTxTimeoutMs: env.RESERVATION_TX_TIMEOUT_MS,
       reservationTxMaxWaitMs: env.RESERVATION_TX_MAX_WAIT_MS,
       reservationTxRetryAttempts: env.RESERVATION_TX_RETRY_ATTEMPTS,
+      waitlistOfferTtlMinutes: env.WAITLIST_OFFER_TTL_MINUTES,
+      waitlistMaxWindowDays: env.WAITLIST_MAX_WINDOW_DAYS,
+      waitlistPollSeconds: env.WAITLIST_POLL_SECONDS,
+      waitlistWorkerBatchSize: env.WAITLIST_WORKER_BATCH_SIZE,
       passwordMinLength: env.AUTH_PASSWORD_MIN_LENGTH,
       passwordCommonListEnabled: env.AUTH_PASSWORD_COMMON_LIST_ENABLED,
       bcryptRounds: env.AUTH_BCRYPT_ROUNDS,

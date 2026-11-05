@@ -8,6 +8,7 @@ import type {
 import type { NotificationStore } from '../../application/ports/notifications'
 import type { PatientRegistrationStore } from '../../application/ports/patient-registration'
 import type { ProvisioningStore } from '../../application/ports/provisioning-store'
+import type { AcceptWaitlistOffer } from '../../application/use-cases/accept-waitlist-offer'
 import type { AdministerAccess } from '../../application/use-cases/administer-access'
 import type { Authenticate } from '../../application/use-cases/authenticate'
 import type { Authorize } from '../../application/use-cases/authorize'
@@ -23,11 +24,14 @@ import type { ManageMaintenance } from '../../application/use-cases/manage-maint
 import type { ManageRooms } from '../../application/use-cases/manage-rooms'
 import type { ManageSchedule } from '../../application/use-cases/manage-schedule'
 import type { ManageSubjectRequests } from '../../application/use-cases/manage-subject-requests'
+import type { ManageWaitlist } from '../../application/use-cases/manage-waitlist'
+import type { ProcessWaitlist } from '../../application/use-cases/process-waitlist'
 import type { ProvisionAccounts } from '../../application/use-cases/provision-accounts'
 import type { RecoverAccess } from '../../application/use-cases/recover-access'
 import type { RescheduleAppointment } from '../../application/use-cases/reschedule-appointment'
 import { ConsentEvidenceReconciler } from '../../infrastructure/jobs/consent-evidence-reconciler'
 import { startNotificationWorker } from '../../infrastructure/jobs/notification-worker'
+import { startWaitlistWorker } from '../../infrastructure/jobs/waitlist-worker'
 import { OperationalTelemetry } from '../../infrastructure/observability/operational-telemetry'
 import { createPrismaClient } from '../../infrastructure/persistence/prisma/client'
 import type { AppConfig } from '../config/environment'
@@ -54,6 +58,7 @@ import { createRecoveryRouter } from '../infra/http/recovery-router'
 import { createRoomRouter } from '../infra/http/room-router'
 import { createScheduleRouter } from '../infra/http/schedule-router'
 import { createSubjectRequestRouter } from '../infra/http/subject-request-router'
+import { createWaitlistRouter } from '../infra/http/waitlist-router'
 import { createServiceContainer, services } from './container'
 
 export interface ManagedResource {
@@ -101,6 +106,15 @@ export async function composeBackendApplication(config: AppConfig) {
     })
     const routes = Router()
     registerApiDocumentation(routes)
+    routes.use(
+      createWaitlistRouter(
+        tokens,
+        authorize,
+        scope.resolve<ManageWaitlist>(services.manageWaitlist),
+        scope.resolve<AcceptWaitlistOffer>(services.acceptWaitlistOffer),
+        scope.resolve<BookAppointment>(services.bookAppointment),
+      ),
+    )
     routes.use(
       createAppointmentRouter(
         tokens,
@@ -284,12 +298,18 @@ export async function composeBackendApplication(config: AppConfig) {
       config.notificationPollSeconds,
       () => telemetry.jobResult('notification_dispatch', 'failed', 0),
     )
+    const waitlistWorker = startWaitlistWorker(
+      scope.resolve<ProcessWaitlist>(services.processWaitlist),
+      config.waitlistPollSeconds,
+      (status, count) => telemetry.jobResult('waitlist_process', status, count),
+    )
     return composeApplication(
       config,
       [
         { close: async () => clearInterval(timer) },
         {
           close: async () => {
+            await waitlistWorker.close()
             await notificationWorker.close()
             await db.$disconnect()
           },

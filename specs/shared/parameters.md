@@ -43,6 +43,9 @@ Todos os defaults deste quadro foram autorizados como **provisórios e aguardand
 | `reservation.transaction_max_wait_ms` | 5000 | RF-008/BE-020 | Equipe técnica; espera por conexão, aguardando BE-051 |
 | `reservation.transaction_retry_attempts` | 3 | RF-008/BE-020, P-25 | Equipe técnica; deadlock/serialização, aguardando BE-051 |
 | `waitlist.offer_ttl_minutes` | 30 | RF-012 | Clínica/gestor; oferta passa ao próximo |
+| `waitlist.max_window_days` | 93 | RF-012, P-29 | Equipe técnica/clínica; limite técnico provisório, aguardando decisão |
+| `waitlist.poll_seconds` | 5 | BE-024, RF-012 | Equipe técnica; frequência provisória de expiração/oferta, aguardando decisão |
+| `waitlist.worker_batch_size` | 10 | BE-024, RF-012 | Equipe técnica; oportunidades por ciclo, aguardando medição |
 | `reminder.schedule_hours_before` | `[24, 2]` | RF-013, RN-005 | Clínica/gestor; no máximo 2 envios; 2 h adição Q-16 |
 | `appointment.late_tolerance_minutes` | 15 | RF-014 | Clínica/gestor |
 | `appointment.noshow_after_minutes` | 30 | RF-015 | Clínica/gestor; confirmação manual V1 |

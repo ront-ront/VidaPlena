@@ -28,6 +28,15 @@ export class FindAvailability {
     private readonly lookaheadDays: number,
     private readonly now = () => new Date(),
   ) {}
+  withStore(store: AvailabilityStore, now = this.now) {
+    return new FindAvailability(
+      store,
+      this.timeZone,
+      this.maxWindowDays,
+      this.lookaheadDays,
+      now,
+    )
+  }
   localDateOf(instant: string) {
     return Temporal.Instant.from(instant)
       .toZonedDateTimeISO(this.timeZone)

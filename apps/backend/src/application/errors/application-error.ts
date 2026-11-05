@@ -17,6 +17,7 @@ export type ErrorCode =
   | 'AUTO_BOOKING_SUSPENDED'
   | 'BOOKING_LEAD_TIME'
   | 'BOOKING_CHANGE_WINDOW'
+  | 'WAITLIST_NOT_NEEDED'
 
 export class ApplicationError extends Error {
   constructor(

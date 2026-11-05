@@ -70,3 +70,11 @@ Caixa de desenvolvimento usa arquivo privado por ID, publicação atômica e cha
 ## Bibliotecas de infraestrutura da API (direção do usuário, 29/10/2026)
 
 O BarberHubAPI é referência para Zod, TSyringe, documentação OpenAPI/Scalar e testes HTTP. A decisão e os limites de adoção estão em `../_work/04-library-adoption.md`. Portas de aplicação permanecem interfaces; registros explícitos em um container por instância de app resolvem serviços sem depender de decorators no domínio. Schemas Zod validam entrada na borda e alimentam o OpenAPI 3.1 dos endpoints entregues. O contrato funcional continua em `shared/api-contracts.md`; qualquer divergência entre implementação, OpenAPI e spec precisa ser corrigida antes de avançar de milestone.
+
+## Implementação BE-024 — espera persistida
+
+P-29 fixa o contrato técnico. `WaitlistEntry`/`WaitlistOffer` consomem `SlotReleaseEvent`, e a ocupação continua exclusivamente em `SlotReservation`. O worker tem polling/lote/TTL configuráveis, relógio injetável, estado persistido e encerramento gracioso; reinício não recria oferta existente. Não depende de Redis. Constraints diferidas ligam estados de entrada/oferta/reserva; correlação `offerId` só é canônica quando há `WaitlistOffer.slotReservationId` correspondente. Oferta aceita continua histórica quando a consulta é reagendada/cancelada.
+
+Um advisory lock transacional da fila serializa entrada/saída/aceite/processamento; entrega de oferta usa a modalidade compartilhada até o commit para coordenar retirada/aceite. O lock de consentimento M0 continua aplicado antes dele. `bookingTransaction`/`bookingUnitOfWork` compartilham adapters e retry com a mesma transação Prisma. Disponibilidade dentro da inscrição usa o adapter da própria unidade de trabalho, evitando abrir segunda transação e saturar o pool. Medição sob carga e eventual refinamento da contenção continuam BE-051; testes locais não provam p95/SLA.
+
+Oportunidade pós-commit é revalidada: reserva que precede o consumidor impede oferta falsa; após criado o hold, apenas aceite autorizado ou encerramento/expiração o libera. Suspensão online não bloqueia aceite assistido, e ausência de conta digital ativa é sinalizada à recepção; consentimento revogado continua fechando envio/aceite. Encaixe usa a mesma barreira de exclusão, com motivo e ator recepção/gestor, sem contornar bloqueios nem sobreposição.

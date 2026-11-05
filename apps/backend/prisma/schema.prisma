@@ -56,6 +56,7 @@ model User {
   createdAppointments Appointment[] @relation("AppointmentCreator")
   appointmentHistory AppointmentHistory[]
   bookingCommands BookingCommand[]
+  waitlistEntries WaitlistEntry[]
 
   @@index([status])
   auditEvents AuditEvent[]
@@ -111,6 +112,7 @@ model PatientProfile {
   status    String         @default("active")
   autoBookingSuspendedUntil DateTime? @db.Timestamptz(3)
   appointments Appointment[]
+  waitlistEntries WaitlistEntry[]
   createdAt DateTime       @default(now()) @db.Timestamptz(3)
   updatedAt DateTime       @updatedAt @db.Timestamptz(3)
   user      User?          @relation(fields: [userId], references: [id], onDelete: Restrict)
@@ -391,6 +393,7 @@ model Specialty {
   professionals ProfessionalSpecialty[]
   appointments Appointment[]
   slotReleases SlotReleaseEvent[]
+  waitlistEntries WaitlistEntry[]
   @@index([active,id])
 }
 
@@ -496,6 +499,7 @@ model SlotReservation {
   professional ProfessionalProfile @relation(fields:[professionalId],references:[id],onDelete:Restrict)
   room Room? @relation(fields:[roomId],references:[id],onDelete:Restrict)
   appointment Appointment? @relation(fields:[appointmentId],references:[id],onDelete:Restrict)
+  waitlistOffer WaitlistOffer?
   @@index([professionalId,startsAt,endsAt])
   @@index([roomId,startsAt,endsAt])
   @@index([state,expiresAt])
@@ -595,6 +599,46 @@ model SlotReleaseEvent {
   professional ProfessionalProfile @relation(fields:[professionalId],references:[id],onDelete:Restrict)
   specialty Specialty @relation(fields:[specialtyId],references:[id],onDelete:Restrict)
   room Room? @relation(fields:[roomId],references:[id],onDelete:Restrict)
+  offers WaitlistOffer[]
   @@unique([appointmentId,changeVersion])
   @@index([processedAt,nextAttemptAt,createdAt])
+}
+
+model WaitlistEntry {
+  id String @id @default(uuid()) @db.Uuid
+  patientId String @db.Uuid
+  specialtyId String @db.Uuid
+  modality AppointmentModality
+  visitType String
+  dateFrom DateTime @db.Date
+  dateTo DateTime @db.Date
+  timePreferences Json
+  fingerprint String
+  queuedAt DateTime @default(now()) @db.Timestamptz(3)
+  status String @default("waiting")
+  createdBy String @db.Uuid
+  patient PatientProfile @relation(fields:[patientId],references:[id],onDelete:Restrict)
+  specialty Specialty @relation(fields:[specialtyId],references:[id],onDelete:Restrict)
+  creator User @relation(fields:[createdBy],references:[id],onDelete:Restrict)
+  offers WaitlistOffer[]
+  @@index([specialtyId,modality,status,queuedAt,id])
+  @@index([patientId,queuedAt,id])
+}
+
+model WaitlistOffer {
+  id String @id @default(uuid()) @db.Uuid
+  entryId String @db.Uuid
+  releaseEventId String @db.Uuid
+  slotReservationId String @unique @db.Uuid
+  offeredAt DateTime @default(now()) @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+  status String @default("active")
+  acceptedAt DateTime? @db.Timestamptz(3)
+  manualContactRequired Boolean @default(false)
+  entry WaitlistEntry @relation(fields:[entryId],references:[id],onDelete:Restrict)
+  releaseEvent SlotReleaseEvent @relation(fields:[releaseEventId],references:[id],onDelete:Restrict)
+  reservation SlotReservation @relation(fields:[slotReservationId],references:[id],onDelete:Restrict)
+  @@unique([entryId,releaseEventId])
+  @@index([status,expiresAt])
+  @@index([releaseEventId,status])
 }

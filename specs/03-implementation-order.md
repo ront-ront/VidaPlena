@@ -7,7 +7,7 @@
 | Milestone | Valor verificável | Situação documental |
 | --- | --- | --- |
 | M0 — Fundação | Ambiente, identidade, cadastro, consentimento, autorização, auditoria, arquivos e base operacional. | 25/25 specs redigidas e escopo implementável de M0 concluído localmente; API, front, worker e PostgreSQL integrados; 24/24 integrações, 20/20 testes Node, 2/2 Vitest, 3/3 front API, lint e build aprovados. Portões jurídicos/operacionais P-01/P-03/P-07/P-08 e revisão manual de acessibilidade permanecem antes de produção; arquivo genérico P-20 só ativa com recurso M2/M3. |
-| M1 — Agenda | Catálogo, grade, salas, reserva concorrente, consultas, lista de espera, lembretes, recepção e CSV. | 25/25 specs redigidas; BE-016–021 integradas localmente, com resolução operacional BE-022/023 e encaixe/carga posteriores. Fixtures corrigidas: reservas 5/5, confirmação 9/9; autenticação/convites/confirmação 13/13 após correção BIGINT; lint aprovado. BE-022/023 implementadas localmente; regressão completa 61/61 integrações, 25/25 Node e 2/2 Vitest, lint aprovado. BE-024–029 e FE-010–020 pendentes. |
+| M1 — Agenda | Catálogo, grade, salas, reserva concorrente, consultas, lista de espera, lembretes, recepção e CSV. | 25/25 specs redigidas; BE-016–024 implementadas localmente. Regressão completa: 78/78 integrações, 25/25 Node, 2/2 Vitest e lint aprovados. Restam BE-025–029 e FE-010–020. Carga formal, jurídico e homologação permanecem nas specs/portões próprios. |
 | M2 — Prontuário | Vínculo, histórico, evolução/adendo, alertas, documentos, acesso de urgência e projeção do paciente. | 25/25 specs redigidas; implementação e portões P-02/P-06/P-11/P-13 pendentes. |
 | M3 — Teleconsulta | Termo, vídeo P2P, arquivos e gravação revogável. | 11/11 specs redigidas; RNF-014 parcial e portões P-03/P-04/P-10 pendentes. |
 | M4 — Gestão | Indicadores, relatórios, auditoria consultável e ensaios de desempenho. | 9/9 specs redigidas; produção depende de P-07/P-14. |
@@ -69,7 +69,7 @@ flowchart LR
 | 31 | M1 | [BE-021](backend/BE-021-confirmacao-consulta.md) | Confirmação de consulta e alocação de sala | back | BE-010, BE-011, BE-020, BE-006 | Implementada localmente; confirmação 9/9 e impactos administrativos integrados |
 | 32 | M1 | [BE-022](backend/BE-022-reagendamento.md) | Reagendamento transacional | back | BE-020, BE-021 | Implementada localmente; 9/9 integrações, planejamento de lembretes BE-025 |
 | 33 | M1 | [BE-023](backend/BE-023-cancelamento.md) | Cancelamento e liberação de horário | back | BE-021, BE-006 | Implementada localmente; 9/9 integrações, evento de oportunidade consumido em BE-024 |
-| 34 | M1 | [BE-024](backend/BE-024-espera-encaixe.md) | Espera, oferta e encaixe fora da grade | back | BE-020, BE-023, BE-006 | Redigida |
+| 34 | M1 | [BE-024](backend/BE-024-espera-encaixe.md) | Espera, oferta e encaixe fora da grade | back | BE-020, BE-023, BE-006 | Implementada localmente; 17/17 integrações pertinentes e worker ativo |
 | 35 | M1 | [BE-025](backend/BE-025-lembretes.md) | Lembretes, respostas, preferências e retry | back | BE-006, BE-021, BE-023 | Redigida |
 | 36 | M1 | [BE-026](backend/BE-026-checkin-fila.md) | Check-in e fila de atendimento | back | BE-021, BE-022 | Redigida |
 | 37 | M1 | [BE-027](backend/BE-027-ausencia-suspensao.md) | No-show, justificativas e suspensão online | back | BE-025, BE-026 | Redigida |

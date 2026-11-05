@@ -20,14 +20,27 @@ export class BookAppointment {
     private readonly now = () => new Date(),
     private readonly newId = () => randomUUID(),
   ) {}
+  fitIn(
+    actor: Principal,
+    input: BookInput & { reason: string },
+    key: string,
+    context: AuditContext,
+  ) {
+    if (!input.reason.trim()) throw new ApplicationError('VALIDATION_ERROR')
+    return this.execute(actor, input, key, context, {
+      reason: input.reason.trim(),
+    })
+  }
   async execute(
     actor: Principal,
     input: BookInput,
     idempotencyKey: string,
     context: AuditContext,
+    fitIn?: { reason: string },
   ) {
+    const operation = fitIn ? 'fit_in' : 'confirm'
     const requestKey = createHash('sha256')
-      .update(`${actor.userId}:confirm:${idempotencyKey.toLowerCase()}`)
+      .update(`${actor.userId}:${operation}:${idempotencyKey.toLowerCase()}`)
       .digest('hex')
     const hash = createHash('sha256')
       .update(
@@ -40,6 +53,7 @@ export class BookAppointment {
           input.startsAt,
           input.roomId ?? null,
           input.confirmDuplicateSpecialty ?? false,
+          ...(fitIn ? [fitIn.reason] : []),
         ]),
       )
       .digest('hex')
@@ -54,7 +68,9 @@ export class BookAppointment {
           currentActor.consentState !== 'active'
         )
           throw new ApplicationError('CONSENT_REQUIRED')
-        if (!mayAccess(currentActor, 'book_appointment'))
+        if (
+          !mayAccess(currentActor, fitIn ? 'create_fit_in' : 'book_appointment')
+        )
           throw new ApplicationError('FORBIDDEN')
         const patient = await tx.patient(currentActor, input.patientId, now)
         if (
@@ -83,7 +99,7 @@ export class BookAppointment {
           }
         }
         const { target, startsAt, endsAt, durationMinutes } =
-          await eligibleBookingSlot(tx, input, portal, now)
+          await eligibleBookingSlot(tx, input, portal, now, !!fitIn)
         const duplicates = await tx.duplicateAppointments(
           patient.id,
           input.specialtyId,
@@ -124,10 +140,10 @@ export class BookAppointment {
           specialtyVersion: target.specialtyVersion,
           status: 'confirmed',
           version: 1,
-          bookingSource: portal ? 'portal' : 'reception',
+          bookingSource: fitIn ? 'fit_in' : portal ? 'portal' : 'reception',
           createdBy: actor.userId,
           parentAppointmentId: null,
-          reason: null,
+          reason: fitIn?.reason ?? null,
           notificationAttention: false,
         }
         const row = await tx.create(data)
@@ -136,13 +152,21 @@ export class BookAppointment {
           'appointment.confirmed',
           context.requestId,
         )
-        await tx.history(row, currentActor, 'confirmed')
-        await tx.recordCommand(requestKey, actor.userId, 'confirm', hash, id)
+        await tx.history(
+          row,
+          currentActor,
+          fitIn ? 'fit_in' : 'confirmed',
+          undefined,
+          fitIn?.reason,
+        )
+        await tx.recordCommand(requestKey, actor.userId, operation, hash, id)
         await tx.audit.append({
           ...context,
           actorUserId: actor.userId,
           actorRoles: currentActor.roles,
-          action: 'appointment.confirmed',
+          action: fitIn
+            ? 'appointment.fit_in_confirmed'
+            : 'appointment.confirmed',
           resourceType: 'Appointment',
           resourceId: id,
           subjectPatientId: patient.id,
