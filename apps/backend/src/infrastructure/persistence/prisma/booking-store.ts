@@ -7,6 +7,7 @@ import type {
 import { appointmentSummary } from '../../../application/ports/booking'
 import type {
   Appointment,
+  Prisma,
   PrismaClient,
 } from '../../../generated/prisma/client'
 import { readPrincipal } from './access-store'
@@ -152,13 +153,106 @@ export class PrismaBookingStore implements BookingStore {
                 }),
               create: async (input) =>
                 appointmentRecord(await tx.appointment.create({ data: input })),
-              history: async (row, actor, action, previous, reason) => {
+              update: async (id, version, input) =>
+                appointmentRecord(
+                  await tx.appointment.update({
+                    where: { id, version },
+                    data: { ...input, version: { increment: 1 } },
+                  }),
+                ),
+              confirmedReservation: (appointmentId) =>
+                tx.slotReservation.findFirst({
+                  where: { appointmentId, state: 'confirmed' },
+                  select: { id: true },
+                }),
+              invalidateNotifications: async (appointmentId) => {
+                await tx.notification.updateMany({
+                  where: {
+                    aggregateId: appointmentId,
+                    deliveryStatus: { in: ['queued', 'retry'] },
+                  },
+                  data: {
+                    deliveryStatus: 'suppressed',
+                    failureReasonSafe: 'appointment_changed',
+                    payloadEncrypted: null,
+                    destinationEncrypted: null,
+                  },
+                })
+              },
+              ownAppointments: async (actor, query) => {
+                const subjects = await tx.patientProfile.findMany({
+                  where: {
+                    status: 'active',
+                    OR: [
+                      { userId: actor.userId },
+                      {
+                        guardians: {
+                          some: {
+                            guardianUserId: actor.userId,
+                            status: 'active',
+                            endedAt: null,
+                          },
+                        },
+                      },
+                    ],
+                  },
+                  select: { id: true },
+                })
+                const ids: string[] = []
+                for (const subject of subjects)
+                  if (
+                    (!query.patientId || query.patientId === subject.id) &&
+                    (await dataConsentState(tx, subject.id)) === 'active'
+                  )
+                    ids.push(subject.id)
+                const where: Prisma.AppointmentWhereInput = {
+                  patientId: { in: ids },
+                  status: query.status,
+                  startsAt: { gte: query.from, lt: query.to },
+                }
+                const cursor = query.cursor
+                  ? await tx.appointment.findFirst({
+                      where: { AND: [where, { id: query.cursor }] },
+                      select: { id: true, startsAt: true },
+                    })
+                  : null
+                if (query.cursor && !cursor)
+                  throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
+                const rows = await tx.appointment.findMany({
+                  where: {
+                    AND: [
+                      where,
+                      ...(cursor
+                        ? [
+                            {
+                              OR: [
+                                { startsAt: { gt: cursor.startsAt } },
+                                {
+                                  startsAt: cursor.startsAt,
+                                  id: { gt: cursor.id },
+                                },
+                              ],
+                            },
+                          ]
+                        : []),
+                    ],
+                  },
+                  orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
+                  take: 31,
+                })
+                return {
+                  items: rows.slice(0, 30).map(appointmentRecord),
+                  nextCursor: rows.length > 30 ? rows[29].id : null,
+                }
+              },
+              history: async (row, actor, action, previous, reason, origin) => {
                 await tx.appointmentHistory.create({
                   data: {
                     appointmentId: row.id,
                     action,
                     actorUserId: actor.userId,
                     reason,
+                    origin,
                     previous: previous
                       ? appointmentSummary(previous)
                       : undefined,
@@ -166,14 +260,28 @@ export class PrismaBookingStore implements BookingStore {
                   },
                 })
               },
-              notify: (row, type, requestId) =>
-                enqueueAppointmentNotification(tx, row, type, requestId),
+              notify: (row, type, requestId, previousProfessionalId) =>
+                enqueueAppointmentNotification(
+                  tx,
+                  row,
+                  type,
+                  requestId,
+                  undefined,
+                  previousProfessionalId,
+                ),
               reservations: reservationTransaction(tx),
               audit: new PrismaAuditWriter(tx),
             }),
           { maxWait: this.policy.maxWaitMs, timeout: this.policy.timeoutMs },
         )
       } catch (error) {
+        if (
+          error &&
+          typeof error === 'object' &&
+          'code' in error &&
+          error.code === 'P2025'
+        )
+          throw new ApplicationError('CONFLICT')
         if (isExclusionConflict(error))
           throw new ApplicationError('SLOT_UNAVAILABLE')
         if (!isReservationRetryConflict(error)) throw error

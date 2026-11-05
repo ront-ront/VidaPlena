@@ -1,8 +1,13 @@
 import type { z } from 'zod'
 import {
   appointmentBody,
+  appointmentParams,
   bookingResponse,
   idempotencyHeader,
+  myAppointmentsQuery,
+  myAppointmentsResponse,
+  rescheduleBody,
+  rescheduleResponse,
 } from './contracts/appointments'
 import {
   availabilityQuery,
@@ -65,6 +70,27 @@ const command = (
   responses: { [patch ? '200' : '201']: response(result), ...errors },
 })
 export const catalogOpenApiPaths = {
+  '/me/appointments': {
+    get: {
+      operationId: 'listMyAppointments',
+      tags: ['Agenda'],
+      security,
+      requestParams: { query: myAppointmentsQuery },
+      responses: { '200': response(myAppointmentsResponse), ...errors },
+    },
+  },
+  '/appointments/{id}/reschedule': {
+    post: {
+      operationId: 'rescheduleAppointment',
+      tags: ['Agenda'],
+      security,
+      requestParams: { path: appointmentParams, header: idempotencyHeader },
+      requestBody: {
+        content: { 'application/json': { schema: rescheduleBody } },
+      },
+      responses: { '200': response(rescheduleResponse), ...errors },
+    },
+  },
   '/appointments': {
     post: {
       operationId: 'confirmAppointment',

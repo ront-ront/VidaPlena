@@ -39,6 +39,7 @@ import { Authorize } from '../../application/use-cases/authorize'
 import { BookAppointment } from '../../application/use-cases/book-appointment'
 import { DispatchNotifications } from '../../application/use-cases/dispatch-notifications'
 import { FindAvailability } from '../../application/use-cases/find-availability'
+import { ListMyAppointments } from '../../application/use-cases/list-my-appointments'
 import { ManageCatalog } from '../../application/use-cases/manage-catalog'
 import { ManageConsent } from '../../application/use-cases/manage-consent'
 import { ManageFiles } from '../../application/use-cases/manage-files'
@@ -49,6 +50,7 @@ import { ManageSubjectRequests } from '../../application/use-cases/manage-subjec
 import { PreparePatientRegistration } from '../../application/use-cases/prepare-patient-registration'
 import { ProvisionAccounts } from '../../application/use-cases/provision-accounts'
 import { RecoverAccess } from '../../application/use-cases/recover-access'
+import { RescheduleAppointment } from '../../application/use-cases/reschedule-appointment'
 import type { PrismaClient } from '../../generated/prisma/client'
 import { ConsentEvidenceFilePolicy } from '../../infrastructure/files/consent-evidence-policy'
 import {
@@ -136,6 +138,8 @@ export const services = {
   reservationStore: Symbol('reservationStore'),
   bookingStore: Symbol('bookingStore'),
   bookAppointment: Symbol('bookAppointment'),
+  rescheduleAppointment: Symbol('rescheduleAppointment'),
+  listMyAppointments: Symbol('listMyAppointments'),
 } as const
 
 export function createServiceContainer(
@@ -166,6 +170,22 @@ export function createServiceContainer(
         scope.resolve<BookingStore>(services.bookingStore),
         scope.resolve<AuditWriter>(services.audit),
         scope.resolve<FindAvailability>(services.findAvailability),
+      ),
+  })
+  scoped.register<RescheduleAppointment>(services.rescheduleAppointment, {
+    useFactory: (scope) =>
+      new RescheduleAppointment(
+        scope.resolve<BookingStore>(services.bookingStore),
+        scope.resolve<AuditWriter>(services.audit),
+        scope.resolve<FindAvailability>(services.findAvailability),
+      ),
+  })
+  scoped.register<ListMyAppointments>(services.listMyAppointments, {
+    useFactory: (scope) =>
+      new ListMyAppointments(
+        scope.resolve<BookingStore>(services.bookingStore),
+        scope.resolve<AppConfig>(services.config).clinicTimeZone,
+        scope.resolve<AuditWriter>(services.audit),
       ),
   })
   scoped.register<ReservationStore>(services.reservationStore, {

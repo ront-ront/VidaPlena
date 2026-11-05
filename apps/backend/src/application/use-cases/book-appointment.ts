@@ -1,6 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { mayAccess, type Principal } from '../../domain/rules/access'
-import { scheduleBlocked, scheduleContains } from '../../domain/rules/schedule'
 import { ApplicationError } from '../errors/application-error'
 import type { AuditContext, AuditWriter } from '../ports/audit-writer'
 import {
@@ -9,6 +8,7 @@ import {
   type BookInput,
   type BookingStore,
 } from '../ports/booking'
+import { bookingAlternatives, eligibleBookingSlot } from './booking-policy'
 import type { FindAvailability } from './find-availability'
 import { ReserveSlot } from './reserve-slot'
 
@@ -82,42 +82,8 @@ export class BookAppointment {
               : ('queued' as const),
           }
         }
-        const target = await tx.target(input.professionalId, input.specialtyId)
-        if (!target?.active || !target.specialtyActive || !target.linked)
-          throw new ApplicationError('SLOT_UNAVAILABLE')
-        if (
-          !target.modalities.includes(input.modality) ||
-          !target.specialtyModalities.includes(input.modality) ||
-          (input.modality === 'remote' && input.roomId)
-        )
-          throw new ApplicationError('VALIDATION_ERROR', [
-            {
-              field: 'modality',
-              reason:
-                'Confira a modalidade permitida para a especialidade e o profissional.',
-            },
-          ])
-        const startsAt = new Date(input.startsAt),
-          durationMinutes =
-            input.visitType === 'first'
-              ? target.durationFirst
-              : target.durationReturn,
-          endsAt = new Date(startsAt.getTime() + durationMinutes * 60_000)
-        if (startsAt < new Date(now.getTime() + (portal ? 2 * 3_600_000 : 0)))
-          throw new ApplicationError('BOOKING_LEAD_TIME')
-        if (
-          !target.schedule ||
-          !scheduleContains(
-            target.schedule.rules,
-            startsAt,
-            endsAt,
-            input.modality,
-            target.schedule.clinicTimeZone,
-            durationMinutes,
-          ) ||
-          scheduleBlocked(target.schedule.blocks, startsAt, endsAt)
-        )
-          throw new ApplicationError('SLOT_UNAVAILABLE')
+        const { target, startsAt, endsAt, durationMinutes } =
+          await eligibleBookingSlot(tx, input, portal, now)
         const duplicates = await tx.duplicateAppointments(
           patient.id,
           input.specialtyId,
@@ -208,27 +174,11 @@ export class BookAppointment {
         error instanceof ApplicationError &&
         error.code === 'SLOT_UNAVAILABLE'
       ) {
-        let alternatives: {
-          startsAt: string
-          endsAt: string
-          professionalId: string
-          roomAvailable: boolean
-        }[] = []
-        try {
-          const day = input.startsAt.slice(0, 10)
-          const available = await this.availability.execute(actor, {
-            specialtyId: input.specialtyId,
-            professionalId: input.professionalId,
-            modality: input.modality,
-            visitType: input.visitType,
-            from: day,
-            to: day,
-          })
-          alternatives = available.days
-            .flatMap((d) => d.slots)
-            .filter((s) => s.startsAt !== input.startsAt)
-            .slice(0, 3)
-        } catch {}
+        const alternatives = await bookingAlternatives(
+          this.availability,
+          actor,
+          input,
+        )
         throw new ApplicationError('SLOT_UNAVAILABLE', undefined, {
           alternatives,
         })

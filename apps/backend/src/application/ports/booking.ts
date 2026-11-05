@@ -41,6 +41,7 @@ export type BookInput = {
   confirmDuplicateSpecialty?: boolean
 }
 export type BookingTarget = {
+  // Slot eligibility is revalidated in the same reservation transaction.
   professionalId: string
   professionalUserId: string
   active: boolean
@@ -52,6 +53,23 @@ export type BookingTarget = {
   durationFirst: number
   durationReturn: number
   schedule: ScheduleSnapshot | null
+}
+export type AppointmentOrigin = 'patient' | 'reception' | 'clinic'
+export type RescheduleInput = {
+  startsAt: string
+  professionalId?: string
+  modality?: Modality
+  roomId?: string | null
+  reason?: string
+  origin?: AppointmentOrigin
+  expectedVersion: number
+}
+export type OwnAppointmentsQuery = {
+  patientId?: string
+  status?: AppointmentStatus
+  from?: Date
+  to?: Date
+  cursor?: string
 }
 export type BookingPatient = {
   id: string
@@ -90,17 +108,46 @@ export interface BookingTransaction {
     exceptId?: string,
   ): Promise<{ id: string; startsAt: Date }[]>
   create(input: AppointmentRecord): Promise<AppointmentRecord>
+  update(
+    id: string,
+    version: number,
+    input: Partial<
+      Pick<
+        AppointmentRecord,
+        | 'professionalId'
+        | 'roomId'
+        | 'modality'
+        | 'startsAt'
+        | 'endsAt'
+        | 'durationMinutes'
+        | 'specialtyVersion'
+        | 'status'
+        | 'reason'
+      >
+    >,
+  ): Promise<AppointmentRecord>
+  confirmedReservation(appointmentId: string): Promise<{ id: string } | null>
+  invalidateNotifications(appointmentId: string): Promise<void>
+  ownAppointments(
+    actor: Principal,
+    query: OwnAppointmentsQuery,
+  ): Promise<{ items: AppointmentRecord[]; nextCursor: string | null }>
   history(
     appointment: AppointmentRecord,
     actor: Principal,
     action: string,
     previous?: AppointmentRecord,
     reason?: string,
+    origin?: AppointmentOrigin,
   ): Promise<void>
   notify(
     appointment: AppointmentRecord,
-    type: 'appointment.confirmed',
+    type:
+      | 'appointment.confirmed'
+      | 'appointment.rescheduled'
+      | 'appointment.rescheduled_by_clinic',
     requestId: string,
+    previousProfessionalId?: string,
   ): Promise<'queued' | 'unreachable'>
   reservations: ReservationTransaction
   audit: AuditWriter

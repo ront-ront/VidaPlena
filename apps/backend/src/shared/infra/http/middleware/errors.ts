@@ -6,6 +6,11 @@ import {
 } from '../../../../application/errors/application-error'
 
 const errors: Record<ErrorCode, { status: number; message: string }> = {
+  BOOKING_CHANGE_WINDOW: {
+    status: 409,
+    message:
+      'O prazo para alterar esta consulta pelo portal terminou. Fale com a recepção.',
+  },
   DUPLICATE_SPECIALTY_WARNING: {
     status: 409,
     message:

@@ -14,6 +14,7 @@ import type { Authorize } from '../../application/use-cases/authorize'
 import type { BookAppointment } from '../../application/use-cases/book-appointment'
 import type { DispatchNotifications } from '../../application/use-cases/dispatch-notifications'
 import type { FindAvailability } from '../../application/use-cases/find-availability'
+import type { ListMyAppointments } from '../../application/use-cases/list-my-appointments'
 import type { ManageCatalog } from '../../application/use-cases/manage-catalog'
 import type { ManageConsent } from '../../application/use-cases/manage-consent'
 import type { ManageFiles } from '../../application/use-cases/manage-files'
@@ -23,6 +24,7 @@ import type { ManageSchedule } from '../../application/use-cases/manage-schedule
 import type { ManageSubjectRequests } from '../../application/use-cases/manage-subject-requests'
 import type { ProvisionAccounts } from '../../application/use-cases/provision-accounts'
 import type { RecoverAccess } from '../../application/use-cases/recover-access'
+import type { RescheduleAppointment } from '../../application/use-cases/reschedule-appointment'
 import { ConsentEvidenceReconciler } from '../../infrastructure/jobs/consent-evidence-reconciler'
 import { startNotificationWorker } from '../../infrastructure/jobs/notification-worker'
 import { OperationalTelemetry } from '../../infrastructure/observability/operational-telemetry'
@@ -103,6 +105,8 @@ export async function composeBackendApplication(config: AppConfig) {
         tokens,
         authorize,
         scope.resolve<BookAppointment>(services.bookAppointment),
+        scope.resolve<RescheduleAppointment>(services.rescheduleAppointment),
+        scope.resolve<ListMyAppointments>(services.listMyAppointments),
       ),
     )
     routes.use(

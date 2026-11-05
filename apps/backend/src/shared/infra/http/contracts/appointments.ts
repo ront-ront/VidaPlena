@@ -42,3 +42,40 @@ export const bookingResponse = z.object({
   appointment: appointmentResponse,
   notificationState: z.enum(['queued', 'unreachable']),
 })
+export const appointmentParams = z.object({ id: z.uuid() })
+export const rescheduleBody = z
+  .object({
+    startsAt: z.iso.datetime(),
+    professionalId: z.uuid().optional(),
+    modality: modalitySchema.optional(),
+    roomId: z.uuid().nullable().optional(),
+    reason: z.string().trim().min(1).max(1000).optional(),
+    origin: z.enum(['patient', 'reception', 'clinic']).optional(),
+    expectedVersion: z.int().positive(),
+  })
+  .strict()
+export const myAppointmentsQuery = z
+  .object({
+    patientId: z.uuid().optional(),
+    status: appointmentResponse.shape.status.optional(),
+    from: z.iso.date().optional(),
+    to: z.iso.date().optional(),
+    cursor: z.uuid().optional(),
+  })
+  .strict()
+export const myAppointmentsResponse = z.object({
+  items: z.array(appointmentResponse),
+  nextCursor: z.uuid().nullable(),
+})
+export const rescheduleResponse = bookingResponse.extend({
+  previousSlotReleased: z.literal(true),
+  origin: z.enum(['patient', 'reception', 'clinic']),
+  alternatives: z.array(
+    z.object({
+      startsAt: z.iso.datetime(),
+      endsAt: z.iso.datetime(),
+      professionalId: z.uuid(),
+      roomAvailable: z.boolean(),
+    }),
+  ),
+})

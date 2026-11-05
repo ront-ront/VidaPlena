@@ -106,6 +106,36 @@ export const consentAwareNotificationCheck: NotificationConsentCheck = async (
         },
       }))
     if (
+      ['appointment.rescheduled', 'appointment.rescheduled_by_clinic'].includes(
+        message.templateKey,
+      )
+    ) {
+      const previous = await tx.professionalProfile.findUnique({
+        where: { userId: message.userId },
+        select: { id: true },
+      })
+      if (
+        previous &&
+        (await tx.appointmentHistory.findFirst({
+          where: {
+            appointmentId: appointment.id,
+            action: 'rescheduled',
+            previous: { path: ['professionalId'], equals: previous.id },
+            next: { path: ['version'], equals: appointment.version },
+          },
+          select: { id: true },
+        }))
+      )
+        return !!(await tx.userRoleAssignment.findFirst({
+          where: {
+            userId: message.userId,
+            roleCode: 'professional',
+            revokedAt: null,
+          },
+          select: { id: true },
+        }))
+    }
+    if (
       appointment.patient.userId !== message.userId &&
       !appointment.patient.guardians.length
     )

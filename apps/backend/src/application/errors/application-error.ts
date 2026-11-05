@@ -16,6 +16,7 @@ export type ErrorCode =
   | 'DUPLICATE_SPECIALTY_WARNING'
   | 'AUTO_BOOKING_SUSPENDED'
   | 'BOOKING_LEAD_TIME'
+  | 'BOOKING_CHANGE_WINDOW'
 
 export class ApplicationError extends Error {
   constructor(

@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M1 Agenda
-- **Status:** pendente
+- **Status:** implementada localmente; planejamento de novos lembretes integra BE-025
 - **Depende de:** BE-020, BE-021
 - **Requisitos cobertos:** RF-009, RN-004
 
@@ -22,17 +22,25 @@ Ler `specs/shared/api-contracts.md#m1`, `specs/shared/data-model.md#m1`, `specs/
 - Commit gera eventos de alteração para paciente/profissional, invalida lembretes anteriores e agenda novos via BE-025 quando disponível; outbox evita perda/duplicidade de aviso.
 
 ## 5. Critérios de aceite
-- [ ] Dado prazo RN-004 ultrapassado, quando paciente tentar remarcar, então 409 orienta recepção e original permanece.
-- [ ] Dado novo slot tomado concorrentemente, quando tentar, então 409 `SLOT_UNAVAILABLE`, reserva e dados originais permanecem, sem histórico falso.
-- [ ] Dado pedido da clínica, quando confirmar, então histórico/aviso identificam origem e próximos horários elegíveis são oferecidos.
-- [ ] Dada troca presencial/remota válida, quando concluir, então só o novo recurso é ocupado e a antiga reserva fica liberada.
+- [x] Dado prazo RN-004 ultrapassado, quando paciente tentar remarcar, então 409 orienta recepção e original permanece.
+- [x] Dado novo slot tomado concorrentemente, quando tentar, então 409 `SLOT_UNAVAILABLE`, reserva e dados originais permanecem, sem histórico falso.
+- [x] Dado pedido da clínica, quando confirmar, então histórico/aviso identificam origem e próximos horários elegíveis são oferecidos.
+- [x] Dada troca presencial/remota válida, quando concluir, então só o novo recurso é ocupado e a antiga reserva fica liberada.
 
 ## 6. Testes esperados
 Prazo, IDOR, concorrência, rollback, troca de sala/modalidade, histórico, eventos e reprogramação de lembrete; lint.
 
 ## 7. Definition of Done
-- [ ] Uma unidade de trabalho atômica; contrato/erro estáveis e autoria auditada.
-- [ ] Testes/lint passam, sem `tsc`; notificação não altera resultado da reserva.
+- [x] Uma unidade de trabalho atômica; contrato/erro estáveis e autoria auditada.
+- [x] Testes pertinentes/lint passam, sem `tsc`; notificação não altera resultado da reserva.
 
 ## 8. Suposições e pontos em aberto
 O pedido de remarcação após prazo pela recepção usa motivo obrigatório; lista de alternativas segue a busca atual, sem garantia de reserva até confirmação.
+
+## Evidência local — 05/11/2026
+
+Arquivo original lido integralmente, da primeira à última das 38 linhas. P-27 registra identidade estável, duração vigente e origem. Migration `202611050022_rescheduling` acrescenta origem ao histórico append-only. API autentica e revalida representação, consentimento, estado, versão, prazo original RN-004 e nova antecedência RN-003; escolha explícita de sala continua só recepção. Reserva antiga é liberada e nova confirmada na mesma transação de consulta/histórico/auditoria/outbox. Avisos pendentes são invalidados por versão; BE-025 cria novos lembretes a partir da nova versão. Notificação clínica destaca origem; anterior/novo profissional recebem aviso administrativo seguro.
+
+Nove testes HTTP/PostgreSQL passaram: troca presencial/remota, ID/versão/histórico e idempotência; concorrência preservando original; motivo assistido, autoria e origem; transferência com avisos ao profissional anterior/novo; IDOR/origem forjada/cursor alheio; limite exato RN-004 e RN-003; rollback total após falha de auditoria; responsável/dependente com perda imediata de acesso; paginação 30+1 sem duplicação e filtros civis. Regressão de confirmação 9/9 junto: 18/18. Lint aprovado. Novos jobs de lembrete e resolução completa de inativação por cancelamento ficam nas specs próprias.
+
+**Regressão completa ao concluir:** 52/52 integrações backend, 25/25 testes Node e 2/2 Vitest aprovados, com lint em 159 arquivos.

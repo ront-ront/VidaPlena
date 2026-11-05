@@ -44,6 +44,7 @@ export async function enqueueAppointmentNotification(
   type: NotificationTemplate,
   requestId: string,
   deduplicationKey?: string,
+  previousProfessionalId?: string,
 ): Promise<'queued' | 'unreachable'> {
   const patientRecipients = await patientNotificationRecipients(
     tx,
@@ -53,7 +54,18 @@ export async function enqueueAppointmentNotification(
     where: { id: row.professionalId },
     select: { userId: true },
   })
-  for (const userId of new Set([...patientRecipients, professional.userId]))
+  const previous =
+    previousProfessionalId && previousProfessionalId !== row.professionalId
+      ? await tx.professionalProfile.findUnique({
+          where: { id: previousProfessionalId },
+          select: { userId: true },
+        })
+      : null
+  for (const userId of new Set([
+    ...patientRecipients,
+    professional.userId,
+    ...(previous ? [previous.userId] : []),
+  ]))
     await enqueueNotification(
       tx,
       {
@@ -67,10 +79,10 @@ export async function enqueueAppointmentNotification(
       },
       null,
     )
-  if (!patientRecipients.length)
+  if (row.notificationAttention !== !patientRecipients.length)
     await tx.appointment.update({
       where: { id: row.id },
-      data: { notificationAttention: true },
+      data: { notificationAttention: !patientRecipients.length },
     })
   return patientRecipients.length ? 'queued' : 'unreachable'
 }

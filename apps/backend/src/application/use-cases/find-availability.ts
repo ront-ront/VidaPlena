@@ -28,6 +28,12 @@ export class FindAvailability {
     private readonly lookaheadDays: number,
     private readonly now = () => new Date(),
   ) {}
+  localDateOf(instant: string) {
+    return Temporal.Instant.from(instant)
+      .toZonedDateTimeISO(this.timeZone)
+      .toPlainDate()
+      .toString()
+  }
   async execute(actor: Principal, query: AvailabilityQuery) {
     if (!mayAccess(actor, 'session')) throw new ApplicationError('FORBIDDEN')
     const now = this.now()
