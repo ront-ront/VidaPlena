@@ -53,6 +53,8 @@ As entidades abaixo são propostas técnicas de persistência para RF-006–015/
 
 `SlotReservation` é a barreira de integridade: uma consulta confirmada possui exatamente uma reserva `confirmed`; presencial tem `roomId`, remoto não. A troca de horário/profissional/sala cria a nova reserva e libera a antiga na mesma transação; se falhar, preserva a antiga. Oferta de espera usa `held` e não vira atendimento até aceite transacional. Disponibilidade subtrai reservas e bloqueios; a grade sozinha não garante exclusão. O código de aplicação trata violação da constraint como `SLOT_UNAVAILABLE`, sem resposta parcial. Não existe exceção para encaixe.
 
+P-28/BE-023: `SlotReleaseEvent` guarda consulta/versão da mudança (únicas), profissional/especialidade/sala/modalidade e intervalo anterior, kind `cancelled/rescheduled`, instante de criação e estado de processamento (`processedAt`, tentativas e próxima tentativa). É outbox operacional sem dados clínicos; cancelamento/remarcação publicam na mesma transação da liberação, e BE-024 revalida o slot antes de oferecer. Não substitui `AppointmentHistory` nem reserva recurso.
+
 ## M2
 
 ### Vínculo, prontuário, evolução e documentos

@@ -165,6 +165,26 @@ export class PrismaBookingStore implements BookingStore {
                   where: { appointmentId, state: 'confirmed' },
                   select: { id: true },
                 }),
+              professionalOwned: async (id, actor) =>
+                !!(await tx.professionalProfile.findFirst({
+                  where: { id, userId: actor.userId },
+                  select: { id: true },
+                })),
+              slotReleased: async (previous, changeVersion, kind) => {
+                await tx.slotReleaseEvent.create({
+                  data: {
+                    appointmentId: previous.id,
+                    changeVersion,
+                    professionalId: previous.professionalId,
+                    specialtyId: previous.specialtyId,
+                    roomId: previous.roomId,
+                    modality: previous.modality,
+                    startsAt: previous.startsAt,
+                    endsAt: previous.endsAt,
+                    kind,
+                  },
+                })
+              },
               invalidateNotifications: async (appointmentId) => {
                 await tx.notification.updateMany({
                   where: {

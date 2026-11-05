@@ -55,6 +55,11 @@ export type BookingTarget = {
   schedule: ScheduleSnapshot | null
 }
 export type AppointmentOrigin = 'patient' | 'reception' | 'clinic'
+export type CancelInput = {
+  origin: AppointmentOrigin
+  reason?: string
+  expectedVersion: number
+}
 export type RescheduleInput = {
   startsAt: string
   professionalId?: string
@@ -123,11 +128,18 @@ export interface BookingTransaction {
         | 'specialtyVersion'
         | 'status'
         | 'reason'
+        | 'notificationAttention'
       >
     >,
   ): Promise<AppointmentRecord>
   confirmedReservation(appointmentId: string): Promise<{ id: string } | null>
   invalidateNotifications(appointmentId: string): Promise<void>
+  slotReleased(
+    previous: AppointmentRecord,
+    changeVersion: number,
+    kind: 'cancelled' | 'rescheduled',
+  ): Promise<void>
+  professionalOwned(id: string, actor: Principal): Promise<boolean>
   ownAppointments(
     actor: Principal,
     query: OwnAppointmentsQuery,
@@ -145,7 +157,9 @@ export interface BookingTransaction {
     type:
       | 'appointment.confirmed'
       | 'appointment.rescheduled'
-      | 'appointment.rescheduled_by_clinic',
+      | 'appointment.rescheduled_by_clinic'
+      | 'appointment.cancelled'
+      | 'appointment.cancelled_by_clinic',
     requestId: string,
     previousProfessionalId?: string,
   ): Promise<'queued' | 'unreachable'>

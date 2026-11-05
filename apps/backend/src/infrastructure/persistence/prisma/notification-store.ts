@@ -85,7 +85,9 @@ export const consentAwareNotificationCheck: NotificationConsentCheck = async (
     )
       return false
     if (
-      message.templateKey === 'appointment.cancelled'
+      ['appointment.cancelled', 'appointment.cancelled_by_clinic'].includes(
+        message.templateKey,
+      )
         ? appointment.status !== 'cancelled'
         : !['confirmed', 'waiting', 'in_service'].includes(appointment.status)
     )

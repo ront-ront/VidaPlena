@@ -7,7 +7,7 @@
 | Milestone | Valor verificável | Situação documental |
 | --- | --- | --- |
 | M0 — Fundação | Ambiente, identidade, cadastro, consentimento, autorização, auditoria, arquivos e base operacional. | 25/25 specs redigidas e escopo implementável de M0 concluído localmente; API, front, worker e PostgreSQL integrados; 24/24 integrações, 20/20 testes Node, 2/2 Vitest, 3/3 front API, lint e build aprovados. Portões jurídicos/operacionais P-01/P-03/P-07/P-08 e revisão manual de acessibilidade permanecem antes de produção; arquivo genérico P-20 só ativa com recurso M2/M3. |
-| M1 — Agenda | Catálogo, grade, salas, reserva concorrente, consultas, lista de espera, lembretes, recepção e CSV. | 25/25 specs redigidas; BE-016–021 integradas localmente, com resolução operacional BE-022/023 e encaixe/carga posteriores. Fixtures corrigidas: reservas 5/5, confirmação 9/9; autenticação/convites/confirmação 13/13 após correção BIGINT; lint aprovado. BE-022 implementada localmente; regressão completa 52/52 integrações, 25/25 Node e 2/2 Vitest, lint aprovado. Demais specs pendentes. |
+| M1 — Agenda | Catálogo, grade, salas, reserva concorrente, consultas, lista de espera, lembretes, recepção e CSV. | 25/25 specs redigidas; BE-016–021 integradas localmente, com resolução operacional BE-022/023 e encaixe/carga posteriores. Fixtures corrigidas: reservas 5/5, confirmação 9/9; autenticação/convites/confirmação 13/13 após correção BIGINT; lint aprovado. BE-022/023 implementadas localmente; regressão completa 61/61 integrações, 25/25 Node e 2/2 Vitest, lint aprovado. BE-024–029 e FE-010–020 pendentes. |
 | M2 — Prontuário | Vínculo, histórico, evolução/adendo, alertas, documentos, acesso de urgência e projeção do paciente. | 25/25 specs redigidas; implementação e portões P-02/P-06/P-11/P-13 pendentes. |
 | M3 — Teleconsulta | Termo, vídeo P2P, arquivos e gravação revogável. | 11/11 specs redigidas; RNF-014 parcial e portões P-03/P-04/P-10 pendentes. |
 | M4 — Gestão | Indicadores, relatórios, auditoria consultável e ensaios de desempenho. | 9/9 specs redigidas; produção depende de P-07/P-14. |
@@ -61,14 +61,14 @@ flowchart LR
 | 23 | M0 | [FE-008](frontend/FE-008-perfil-privacidade.md) | Perfil, contatos, consentimentos e direitos do titular | front | FE-004, BE-009, BE-011, BE-012 | Implementada localmente; pedido/novo termo reais verificados |
 | 24 | M0 | [FE-009](frontend/FE-009-administracao-contas.md) | Administração de contas, perfis e convites | front | FE-003, FE-004, BE-005, BE-007 | Implementada localmente; lista/convite reais verificados |
 | 25 | M0 | [FE-039](frontend/FE-039-cadastro-presencial-consentimento.md) | Cadastro presencial de paciente e consentimento assinado | front | FE-003, FE-004, BE-010, BE-011, BE-013 | Implementada localmente; menor/termo/recibo reais verificados |
-| 26 | M1 | [BE-016](backend/BE-016-profissionais-especialidades.md) | Profissionais, especialidades e duração padrão | back | BE-005, BE-007 | Base local testada; integração de impacto/duração com BE-021/022/023 pendente |
-| 27 | M1 | [BE-017](backend/BE-017-salas.md) | Cadastro e inativação de salas | back | BE-005, BE-016 | Base local testada; impacto e reserva aguardam BE-020/021/022/023 |
-| 28 | M1 | [BE-018](backend/BE-018-grade-bloqueios.md) | Grade, férias e bloqueios do profissional | back | BE-016, BE-004 | Base local testada; slots/impactos/avisos aguardam BE-019/021/023/025 |
-| 29 | M1 | [BE-019](backend/BE-019-disponibilidade.md) | Consulta de disponibilidade e antecedência | back | BE-017, BE-018 | Base local testada; ocupação BE-020/021 e desempenho BE-051 pendentes |
+| 26 | M1 | [BE-016](backend/BE-016-profissionais-especialidades.md) | Profissionais, especialidades e duração padrão | back | BE-005, BE-007 | Implementada localmente; duração/impacto/resolução comprovados |
+| 27 | M1 | [BE-017](backend/BE-017-salas.md) | Cadastro e inativação de salas | back | BE-005, BE-016 | Implementada localmente; impacto, reserva e resolução comprovados |
+| 28 | M1 | [BE-018](backend/BE-018-grade-bloqueios.md) | Grade, férias e bloqueios do profissional | back | BE-016, BE-004 | Implementada localmente; slots, impactos e avisos integrados |
+| 29 | M1 | [BE-019](backend/BE-019-disponibilidade.md) | Consulta de disponibilidade e antecedência | back | BE-017, BE-018 | Implementada localmente; ocupação integrada, desempenho BE-051 pendente |
 | 30 | M1 | [BE-020](backend/BE-020-reserva-atomica.md) | Reserva atômica sem sobreposição | back | BE-017, BE-018, BE-019 | Barreira integrada/testada; fixtures corrigidas 5/5, corrida HTTP comprovada; encaixe BE-024 pendente |
 | 31 | M1 | [BE-021](backend/BE-021-confirmacao-consulta.md) | Confirmação de consulta e alocação de sala | back | BE-010, BE-011, BE-020, BE-006 | Implementada localmente; confirmação 9/9 e impactos administrativos integrados |
 | 32 | M1 | [BE-022](backend/BE-022-reagendamento.md) | Reagendamento transacional | back | BE-020, BE-021 | Implementada localmente; 9/9 integrações, planejamento de lembretes BE-025 |
-| 33 | M1 | [BE-023](backend/BE-023-cancelamento.md) | Cancelamento e liberação de horário | back | BE-021, BE-006 | Redigida |
+| 33 | M1 | [BE-023](backend/BE-023-cancelamento.md) | Cancelamento e liberação de horário | back | BE-021, BE-006 | Implementada localmente; 9/9 integrações, evento de oportunidade consumido em BE-024 |
 | 34 | M1 | [BE-024](backend/BE-024-espera-encaixe.md) | Espera, oferta e encaixe fora da grade | back | BE-020, BE-023, BE-006 | Redigida |
 | 35 | M1 | [BE-025](backend/BE-025-lembretes.md) | Lembretes, respostas, preferências e retry | back | BE-006, BE-021, BE-023 | Redigida |
 | 36 | M1 | [BE-026](backend/BE-026-checkin-fila.md) | Check-in e fila de atendimento | back | BE-021, BE-022 | Redigida |

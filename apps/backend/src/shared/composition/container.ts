@@ -37,6 +37,7 @@ import { AdministerAccess } from '../../application/use-cases/administer-access'
 import { Authenticate } from '../../application/use-cases/authenticate'
 import { Authorize } from '../../application/use-cases/authorize'
 import { BookAppointment } from '../../application/use-cases/book-appointment'
+import { CancelAppointment } from '../../application/use-cases/cancel-appointment'
 import { DispatchNotifications } from '../../application/use-cases/dispatch-notifications'
 import { FindAvailability } from '../../application/use-cases/find-availability'
 import { ListMyAppointments } from '../../application/use-cases/list-my-appointments'
@@ -138,6 +139,7 @@ export const services = {
   reservationStore: Symbol('reservationStore'),
   bookingStore: Symbol('bookingStore'),
   bookAppointment: Symbol('bookAppointment'),
+  cancelAppointment: Symbol('cancelAppointment'),
   rescheduleAppointment: Symbol('rescheduleAppointment'),
   listMyAppointments: Symbol('listMyAppointments'),
 } as const
@@ -175,6 +177,14 @@ export function createServiceContainer(
   scoped.register<RescheduleAppointment>(services.rescheduleAppointment, {
     useFactory: (scope) =>
       new RescheduleAppointment(
+        scope.resolve<BookingStore>(services.bookingStore),
+        scope.resolve<AuditWriter>(services.audit),
+        scope.resolve<FindAvailability>(services.findAvailability),
+      ),
+  })
+  scoped.register<CancelAppointment>(services.cancelAppointment, {
+    useFactory: (scope) =>
+      new CancelAppointment(
         scope.resolve<BookingStore>(services.bookingStore),
         scope.resolve<AuditWriter>(services.audit),
         scope.resolve<FindAvailability>(services.findAvailability),

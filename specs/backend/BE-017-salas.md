@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M1 Agenda
-- **Status:** base implementada localmente; impacto e recusa de reserva aguardam BE-020/021/022/023
+- **Status:** implementada localmente; resolução de impactos comprovada em BE-023
 - **Depende de:** BE-005, BE-016
 - **Requisitos cobertos:** RF-007, RF-008, RN-001
 
@@ -24,15 +24,15 @@ Ler `specs/shared/data-model.md#m1`, `specs/shared/api-contracts.md#m1`, `specs/
 ## 5. Critérios de aceite
 - [x] Dado gestor/admin, quando criar sala ativa, então ela entra no conjunto de salas elegíveis; outro perfil recebe 403 para mutação.
 - [x] Dado nome duplicado ativo, quando criar/renomear, então 409 sem duplicação.
-- [ ] Dada sala com consulta futura, quando inativar sem decisão, então 409 com impacto e reserva permanece; após resolução explícita, sala fica inativa e histórico preservado.
+- [x] Dada sala com consulta futura, quando inativar sem decisão, então 409 com impacto e reserva permanece; após resolução explícita, sala fica inativa e histórico preservado.
 - [x] Dada sala inativa, quando tentar nova reserva presencial nela, então a confirmação é recusada.
 
 ## 6. Testes esperados
 CRUD sem DELETE, unicidade, RBAC, FK histórica, inativação com impacto e auditoria; lint backend.
 
 ## 7. Definition of Done
-- [ ] Migration e use cases limitados a sala; nenhuma capacidade/equipamento futuro criado.
-- [ ] Testes/lint passam; regra de exclusão física ausente, sem `tsc`.
+- [x] Migration e use cases limitados a sala; nenhuma capacidade/equipamento futuro criado.
+- [x] Testes/lint passam; regra de exclusão física ausente, sem `tsc`.
 
 ## 8. Suposições e pontos em aberto
 Resolução operacional da consulta afetada ocorre via BE-022/023; esta spec apenas exige a decisão e impede a inativação destrutiva até a operação existir.
@@ -42,3 +42,5 @@ Resolução operacional da consulta afetada ocorre via BE-022/023; esta spec ape
 Migration `202611040017_rooms`, capacidade 1 protegida por CHECK, índice único parcial por nome ativo normalizado, DELETE bloqueado, CRUD sem DELETE com versão e auditoria. A suíte de catálogo passou 3/3 testes HTTP/PostgreSQL, incluindo concorrência de nomes, RBAC, reativação conflitante, capacidade e histórico preservado; lint aprovado em 128 arquivos. A porta de impacto será ligada a `Appointment` em BE-021, quando haverá evidência real de inativação com consulta futura e recusa de reserva em sala inativa.
 
 **Integração BE-021 em 05/11/2026:** inativação com consulta futura devolve impacto seguro e preserva status/reserva; confirmação recusa sala inativa e ausência de sala livre mesmo com profissional disponível. Resolução por BE-022/023 ainda será exercitada.
+
+**Resolução exercitada em BE-023 — 05/11/2026:** teste HTTP criou profissional/especialidade/sala exclusivos com consulta futura; as três inativações foram recusadas com impacto. Após cancelamento explícito, as três inativações foram aceitas, e a consulta cancelada manteve todos os IDs/FKs históricos. Critérios de resolução local concluídos sem apagar ou alterar consultas anteriores.

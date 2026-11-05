@@ -390,6 +390,7 @@ model Specialty {
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
   professionals ProfessionalSpecialty[]
   appointments Appointment[]
+  slotReleases SlotReleaseEvent[]
   @@index([active,id])
 }
 
@@ -409,6 +410,7 @@ model ProfessionalProfile {
   schedules ScheduleVersion[]
   reservations SlotReservation[]
   appointments Appointment[]
+  slotReleases SlotReleaseEvent[]
   @@unique([councilType,councilRegion,councilNumber])
   @@index([active,id])
 }
@@ -434,6 +436,7 @@ model Room {
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
   reservations SlotReservation[]
   appointments Appointment[]
+  slotReleases SlotReleaseEvent[]
   @@index([active,id])
 }
 
@@ -539,6 +542,7 @@ model Appointment {
   reservations SlotReservation[]
   history AppointmentHistory[]
   commands BookingCommand[]
+  slotReleases SlotReleaseEvent[]
   @@index([professionalId,startsAt,status])
   @@index([roomId,startsAt,status])
   @@index([patientId,specialtyId,startsAt,status])
@@ -570,4 +574,27 @@ model BookingCommand {
   actor User @relation(fields:[actorId],references:[id],onDelete:Restrict)
   appointment Appointment @relation(fields:[appointmentId],references:[id],onDelete:Restrict)
   @@index([appointmentId])
+}
+
+model SlotReleaseEvent {
+  id String @id @default(uuid()) @db.Uuid
+  appointmentId String @db.Uuid
+  changeVersion Int
+  professionalId String @db.Uuid
+  specialtyId String @db.Uuid
+  roomId String? @db.Uuid
+  modality AppointmentModality
+  startsAt DateTime @db.Timestamptz(3)
+  endsAt DateTime @db.Timestamptz(3)
+  kind String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  processedAt DateTime? @db.Timestamptz(3)
+  attempts Int @default(0)
+  nextAttemptAt DateTime @default(now()) @db.Timestamptz(3)
+  appointment Appointment @relation(fields:[appointmentId],references:[id],onDelete:Restrict)
+  professional ProfessionalProfile @relation(fields:[professionalId],references:[id],onDelete:Restrict)
+  specialty Specialty @relation(fields:[specialtyId],references:[id],onDelete:Restrict)
+  room Room? @relation(fields:[roomId],references:[id],onDelete:Restrict)
+  @@unique([appointmentId,changeVersion])
+  @@index([processedAt,nextAttemptAt,createdAt])
 }

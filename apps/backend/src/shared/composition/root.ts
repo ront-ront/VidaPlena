@@ -12,6 +12,7 @@ import type { AdministerAccess } from '../../application/use-cases/administer-ac
 import type { Authenticate } from '../../application/use-cases/authenticate'
 import type { Authorize } from '../../application/use-cases/authorize'
 import type { BookAppointment } from '../../application/use-cases/book-appointment'
+import type { CancelAppointment } from '../../application/use-cases/cancel-appointment'
 import type { DispatchNotifications } from '../../application/use-cases/dispatch-notifications'
 import type { FindAvailability } from '../../application/use-cases/find-availability'
 import type { ListMyAppointments } from '../../application/use-cases/list-my-appointments'
@@ -107,6 +108,7 @@ export async function composeBackendApplication(config: AppConfig) {
         scope.resolve<BookAppointment>(services.bookAppointment),
         scope.resolve<RescheduleAppointment>(services.rescheduleAppointment),
         scope.resolve<ListMyAppointments>(services.listMyAppointments),
+        scope.resolve<CancelAppointment>(services.cancelAppointment),
       ),
     )
     routes.use(

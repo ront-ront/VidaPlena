@@ -3,6 +3,8 @@ import {
   appointmentBody,
   appointmentParams,
   bookingResponse,
+  cancelBody,
+  cancelResponse,
   idempotencyHeader,
   myAppointmentsQuery,
   myAppointmentsResponse,
@@ -70,6 +72,16 @@ const command = (
   responses: { [patch ? '200' : '201']: response(result), ...errors },
 })
 export const catalogOpenApiPaths = {
+  '/appointments/{id}/cancel': {
+    post: {
+      operationId: 'cancelAppointment',
+      tags: ['Agenda'],
+      security,
+      requestParams: { path: appointmentParams, header: idempotencyHeader },
+      requestBody: { content: { 'application/json': { schema: cancelBody } } },
+      responses: { '200': response(cancelResponse), ...errors },
+    },
+  },
   '/me/appointments': {
     get: {
       operationId: 'listMyAppointments',

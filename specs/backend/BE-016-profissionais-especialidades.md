@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M1 Agenda
-- **Status:** base implementada localmente; critérios de consulta futura aguardam BE-021/022/023
+- **Status:** implementada localmente; resolução de impactos comprovada em BE-023
 - **Depende de:** BE-005, BE-007
 - **Requisitos cobertos:** RF-028, RN-002
 
@@ -25,14 +25,14 @@ Ler `specs/00-constitution.md`, `specs/shared/data-model.md#m1`, `specs/shared/a
 - [x] Dado registro profissional duplicado ou formato inválido, quando cadastrar, então 409/400 e nenhum perfil adicional persiste.
 - [x] Dada duração alterada, quando confirmar consulta nova, então usa a versão vigente; consulta anterior mantém duração/horário registrados.
 - [x] Dada especialidade sem modalidade remota, quando consultar catálogo, então remoto não é ofertado.
-- [ ] Dado profissional com consultas futuras, quando inativar sem resolução, então 409 lista impacto autorizado e status permanece ativo; com resolução registrada, histórico permanece referenciável.
+- [x] Dado profissional com consultas futuras, quando inativar sem resolução, então 409 lista impacto autorizado e status permanece ativo; com resolução registrada, histórico permanece referenciável.
 
 ## 6. Testes esperados
 Integração de unicidade, modalidades, duração imutável em consulta existente, RBAC, inativação com agenda futura e auditoria; lint backend.
 
 ## 7. Definition of Done
-- [ ] Migration/portas/adapters do catálogo, sem regra em controller; contrato compartilhado respeitado.
-- [ ] Testes pertinentes e lint passam; nenhuma exclusão física nem `tsc`.
+- [x] Migration/portas/adapters do catálogo, sem regra em controller; contrato compartilhado respeitado.
+- [x] Testes pertinentes e lint passam; nenhuma exclusão física nem `tsc`.
 
 ## 8. Suposições e pontos em aberto
 Consulta automática ao conselho e lista real das oito especialidades não estão documentadas; não criar integração nem catálogo fictício obrigatório. A resolução da agenda futura usa BE-022/023 após essas specs existirem.
@@ -42,3 +42,5 @@ Consulta automática ao conselho e lista real das oito especialidades não estã
 Migration `202611040016_catalog`, portas/use case/adapter Prisma, schemas Zod compartilhados com OpenAPI e rotas administrativas/públicas integradas ao composition root. Testes HTTP/PostgreSQL 2/2 aprovados: concorrência/duplicidade, duração positiva, versão antiga, PATCH parcial sem reativação implícita, RBAC, conta convidada versus ativa, conselho, modalidades, projeção sem conselho/contato e bloqueio de DELETE. Lint backend aprovado em 123 arquivos. P-22 documenta os detalhes técnicos. O teste de duração preservada em consulta e a guarda real de impacto permanecem pendentes até a criação de `Appointment` em BE-021; não estão comprovados por esses dois testes.
 
 **Integração BE-021 em 05/11/2026:** duração congelada e nova duração vigente foram comprovadas em consulta real. Inativação e retirada de modalidade consultam agendamentos ativos e devolvem impacto seguro, sem alterar catálogo ou reservas. Resolução por BE-022/023 ainda será exercitada.
+
+**Resolução exercitada em BE-023 — 05/11/2026:** teste HTTP criou profissional/especialidade/sala exclusivos com consulta futura; as três inativações foram recusadas com impacto. Após cancelamento explícito, as três inativações foram aceitas, e a consulta cancelada manteve todos os IDs/FKs históricos. Critérios de resolução local concluídos sem apagar ou alterar consultas anteriores.

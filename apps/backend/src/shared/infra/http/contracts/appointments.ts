@@ -79,3 +79,16 @@ export const rescheduleResponse = bookingResponse.extend({
     }),
   ),
 })
+export const cancelBody = z
+  .object({
+    reason: z.string().trim().min(1).max(1000).optional(),
+    origin: z.enum(['patient', 'reception', 'clinic']),
+    expectedVersion: z.int().positive(),
+  })
+  .strict()
+export const cancelResponse = bookingResponse.extend({
+  status: z.literal('cancelled'),
+  waitlistTriggered: z.literal(true),
+  origin: cancelBody.shape.origin,
+  alternatives: rescheduleResponse.shape.alternatives,
+})

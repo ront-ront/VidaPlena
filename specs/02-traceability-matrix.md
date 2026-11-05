@@ -157,16 +157,19 @@ A cobertura documental está completa. Ao implementar, atualizar por requisito s
 
 | Spec | Requisitos | Evidência | Limite |
 | --- | --- | --- | --- |
-| BE-016 | RF-028/RN-002 parcial | Catálogo versionado e seguro, duração antiga preservada e nova duração vigente comprovadas; impacto real de inativação/modalidade integrado; testes e lint | Resolução completa por BE-022/023 ainda será exercitada; FE-010 pendente |
-| BE-017 | RF-007/RF-008/RN-001 parcial | Sala unitária/versionada, unicidade/RBAC/auditoria; inativação com impacto recusada, sala inativa e ausência de sala livre recusadas em confirmação real | Resolução por BE-022/023 e FE-010 pendentes |
+| BE-016 | RF-028/RN-002 parcial | Catálogo versionado e seguro, duração antiga preservada e nova duração vigente comprovadas; impacto real de inativação/modalidade integrado; testes e lint | Resolução por cancelamento comprovada; FE-010 pendente |
+| BE-017 | RF-007/RF-008/RN-001 parcial | Sala unitária/versionada, unicidade/RBAC/auditoria; inativação com impacto recusada, sala inativa e ausência de sala livre recusadas em confirmação real | Resolução por cancelamento comprovada; FE-010 pendente |
 | BE-018 | RF-011/RN-002 parcial | Grade/fuso/versionamento/RBAC, bloqueio de edição incompatível, emergência preserva reservas e enfileira avisos idempotentes; testes e lint | Operação visual FE-011 pendente; resolução por BE-022/023 usa rotas próprias |
 | BE-019 | RF-006/RN-003/RNF-009 parcial | Disponibilidade por duração/modalidade, grade/bloqueios/salas e reservas reais; antecedência e próxima data verificadas; testes e lint | Ensaio formal BE-051 e front FE-012/015 pendentes |
 | BE-020 | RF-008/RN-001/RNF-010 parcial | Exclusões GiST profissional/sala, idempotência, hold/expiração e troca/rollback; fixtures corrigidas 5/5 e corrida HTTP comprovada | Encaixe BE-024 e carga BE-051 pendentes |
 | BE-021 | RF-007/RN-001/RN-002/RN-003/RN-006 parcial | Confirmação transacional/idempotente, consentimento/representação, duração, salas, impacto administrativo/emergencial e outbox; 9/9 integrações e lint | Front e lembretes BE-025 pendentes; homologação jurídica/operacional separada |
 | BE-022 | RF-009/RN-004 parcial | Reagendamento atômico/idempotente, listagem própria/dependentes, origem clínica, versões, prazo, representação e outbox; 9/9 testes HTTP/PostgreSQL; confirmação junto 18/18 e lint | Novos lembretes serão planejados por BE-025; FE-014/016 ainda pendentes |
+| BE-023 | RF-010/RN-004 parcial | Cancelamento/liberação/histórico/outbox e evento durável de oportunidade; 9/9 integrações, com reagendamento 18/18; prazo/representação/profissional próprio/revogação/corrida/rollback e inativação resolvida | Consumo de oferta BE-024, novos lembretes BE-025 e front pendentes; tratamento pós-revogação segue P-01 |
 
 **Verificação integrada em 05/11/2026:** suíte selecionada de M1 com 13/18 aprovações e cinco falhas em fixtures de BE-020 incompatíveis com a nova FK de consultas. Lint do monorepo aprovado; M1 permanece parcial. Detalhes em `_work/07-m1-implementation-progress.md`.
 
 **Continuação BE-021 em 05/11/2026:** os resultados 13/18 e cinco falhas acima são históricos. Fixtures corrigidas: reserva 5/5; confirmação e impactos de catálogo/salas/grade/emergência 9/9; testes Node 25/25, Vitest 2/2 e lint aprovados. Versão de notificação ampliada para BIGINT após dois overflows em regressão; autenticação/convites/confirmação 13/13 após correção. Regressão completa repetida em andamento. BE-021 implementada localmente; BE-016/017 aguardam exercício de resolução por BE-022/023; RNF-009/010 permanecem dependentes de BE-051.
 
 **Regressão completa até BE-022 — 05/11/2026:** 52/52 integrações backend, 25/25 testes Node e 2/2 Vitest passaram; lint backend aprovado em 159 arquivos. Este resultado substitui as falhas históricas relatadas acima. BE-023–029 e FE-010–020 permanecem pendentes.
+
+**Regressão completa até BE-023 — 05/11/2026:** 61/61 integrações backend, 25/25 testes Node e 2/2 Vitest passaram; lint backend aprovado em 162 arquivos. Resolução por cancelamento comprovou inativação de profissional/especialidade/sala com histórico preservado. Restam BE-024–029 e FE-010–020; M1 continua incompleto.

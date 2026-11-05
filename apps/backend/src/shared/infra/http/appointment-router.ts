@@ -2,11 +2,13 @@ import { Router } from 'express'
 import type { SessionVerifier } from '../../../application/ports/session-verifier'
 import type { Authorize } from '../../../application/use-cases/authorize'
 import type { BookAppointment } from '../../../application/use-cases/book-appointment'
+import type { CancelAppointment } from '../../../application/use-cases/cancel-appointment'
 import type { ListMyAppointments } from '../../../application/use-cases/list-my-appointments'
 import type { RescheduleAppointment } from '../../../application/use-cases/reschedule-appointment'
 import {
   appointmentBody,
   appointmentParams,
+  cancelBody,
   idempotencyHeader,
   myAppointmentsQuery,
   rescheduleBody,
@@ -19,8 +21,29 @@ export function createAppointmentRouter(
   service: BookAppointment,
   reschedule: RescheduleAppointment,
   list: ListMyAppointments,
+  cancel: CancelAppointment,
 ) {
   const router = Router()
+  router.post(
+    '/appointments/:id/cancel',
+    accessGuard(tokens, authorize, 'consent_management'),
+    async (req, res) => {
+      const { id } = parseInput(appointmentParams, req.params)
+      const { 'idempotency-key': key } = parseInput(
+        idempotencyHeader,
+        req.headers,
+      )
+      res.json(
+        await cancel.execute(
+          principalOf(res),
+          id,
+          parseInput(cancelBody, req.body),
+          key,
+          auditContext(req, res),
+        ),
+      )
+    },
+  )
   router.get(
     '/me/appointments',
     accessGuard(tokens, authorize, 'session'),

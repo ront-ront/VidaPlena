@@ -138,6 +138,7 @@ export class RescheduleAppointment {
           specialtyVersion: eligible.target.specialtyVersion,
         })
         await tx.invalidateNotifications(id)
+        await tx.slotReleased(row, changed.version, 'rescheduled')
         await tx.history(
           changed,
           currentActor,
