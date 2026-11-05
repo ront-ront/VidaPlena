@@ -33,6 +33,7 @@ model User {
   createdAt          DateTime              @default(now()) @db.Timestamptz(3)
   updatedAt          DateTime              @updatedAt @db.Timestamptz(3)
   patient            PatientProfile?
+  professional       ProfessionalProfile?
   dependents         GuardianLink[]
   roles              UserRoleAssignment[]  @relation("AssignedRoles")
   grantedRoles       UserRoleAssignment[]  @relation("RoleGrantor")
@@ -51,6 +52,10 @@ model User {
   submittedSubjectRequests DataSubjectRequest[] @relation("SubjectRequester")
   handledSubjectRequests DataSubjectRequest[] @relation("SubjectHandler")
   maintenanceWindows MaintenanceWindow[]
+  publishedSchedules ScheduleVersion[]
+  createdAppointments Appointment[] @relation("AppointmentCreator")
+  appointmentHistory AppointmentHistory[]
+  bookingCommands BookingCommand[]
 
   @@index([status])
   auditEvents AuditEvent[]
@@ -104,6 +109,8 @@ model PatientProfile {
   phone     String?
   email     String?
   status    String         @default("active")
+  autoBookingSuspendedUntil DateTime? @db.Timestamptz(3)
+  appointments Appointment[]
   createdAt DateTime       @default(now()) @db.Timestamptz(3)
   updatedAt DateTime       @updatedAt @db.Timestamptz(3)
   user      User?          @relation(fields: [userId], references: [id], onDelete: Restrict)
@@ -226,6 +233,8 @@ model Notification {
   patientId String? @db.Uuid
   category String
   templateKey String
+  aggregateId String?
+  aggregateVersion Int?
   payloadEncrypted String?
   destinationEncrypted String?
   deliveryStatus String @default("queued")
@@ -243,6 +252,7 @@ model Notification {
   @@index([deliveryStatus,scheduledAt])
   @@index([userId,id])
   @@index([needsReceptionAttention])
+  @@index([aggregateId,aggregateVersion])
 }
 
 model RefreshToken {
@@ -360,4 +370,203 @@ model MaintenanceWindow {
   createdBy String @db.Uuid
   creator User @relation(fields:[createdBy],references:[id],onDelete:Restrict)
   @@index([startsAt,endsAt])
+}
+
+enum AppointmentModality {
+  onsite
+  remote
+}
+
+model Specialty {
+  id String @id @default(uuid()) @db.Uuid
+  code String @unique
+  name String
+  active Boolean @default(true)
+  allowedModalities AppointmentModality[]
+  defaultMinutesFirst Int
+  defaultMinutesReturn Int
+  version Int @default(1)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  professionals ProfessionalSpecialty[]
+  appointments Appointment[]
+  @@index([active,id])
+}
+
+model ProfessionalProfile {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @unique @db.Uuid
+  councilType String
+  councilNumber String
+  councilRegion String
+  active Boolean @default(true)
+  modalities AppointmentModality[]
+  version Int @default(1)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  user User @relation(fields:[userId],references:[id],onDelete:Restrict)
+  specialties ProfessionalSpecialty[]
+  schedules ScheduleVersion[]
+  reservations SlotReservation[]
+  appointments Appointment[]
+  @@unique([councilType,councilRegion,councilNumber])
+  @@index([active,id])
+}
+
+model ProfessionalSpecialty {
+  professionalId String @db.Uuid
+  specialtyId String @db.Uuid
+  active Boolean @default(true)
+  linkedAt DateTime @default(now()) @db.Timestamptz(3)
+  professional ProfessionalProfile @relation(fields:[professionalId],references:[id],onDelete:Restrict)
+  specialty Specialty @relation(fields:[specialtyId],references:[id],onDelete:Restrict)
+  @@id([professionalId,specialtyId])
+  @@index([specialtyId,active])
+}
+
+model Room {
+  id String @id @default(uuid()) @db.Uuid
+  name String
+  active Boolean @default(true)
+  capacity Int @default(1)
+  version Int @default(1)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  reservations SlotReservation[]
+  appointments Appointment[]
+  @@index([active,id])
+}
+
+model ScheduleVersion {
+  professionalId String @db.Uuid
+  version Int
+  clinicTimeZone String
+  publishedBy String @db.Uuid
+  publishedAt DateTime @default(now()) @db.Timestamptz(3)
+  professional ProfessionalProfile @relation(fields:[professionalId],references:[id],onDelete:Restrict)
+  publisher User @relation(fields:[publishedBy],references:[id],onDelete:Restrict)
+  rules AvailabilityRule[]
+  blocks ScheduleBlock[]
+  @@id([professionalId,version])
+}
+
+model AvailabilityRule {
+  id String @id @default(uuid()) @db.Uuid
+  professionalId String @db.Uuid
+  publishedVersion Int
+  weekday Int
+  localStart String
+  localEnd String
+  effectiveFrom DateTime @db.Date
+  effectiveTo DateTime? @db.Date
+  modality AppointmentModality
+  schedule ScheduleVersion @relation(fields:[professionalId,publishedVersion],references:[professionalId,version],onDelete:Restrict)
+  @@index([professionalId,publishedVersion,weekday])
+}
+
+model ScheduleBlock {
+  id String @id @default(uuid()) @db.Uuid
+  professionalId String @db.Uuid
+  publishedVersion Int
+  startsAt DateTime @db.Timestamptz(3)
+  endsAt DateTime @db.Timestamptz(3)
+  kind String
+  reason String
+  schedule ScheduleVersion @relation(fields:[professionalId,publishedVersion],references:[professionalId,version],onDelete:Restrict)
+  @@index([professionalId,publishedVersion,startsAt,endsAt])
+}
+
+model SlotReservation {
+  id String @id @default(uuid()) @db.Uuid
+  professionalId String @db.Uuid
+  roomId String? @db.Uuid
+  modality AppointmentModality
+  startsAt DateTime @db.Timestamptz(3)
+  endsAt DateTime @db.Timestamptz(3)
+  state String
+  appointmentId String? @db.Uuid
+  offerId String? @db.Uuid
+  expiresAt DateTime? @db.Timestamptz(3)
+  requestKey String @unique
+  requestHash String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  professional ProfessionalProfile @relation(fields:[professionalId],references:[id],onDelete:Restrict)
+  room Room? @relation(fields:[roomId],references:[id],onDelete:Restrict)
+  appointment Appointment? @relation(fields:[appointmentId],references:[id],onDelete:Restrict)
+  @@index([professionalId,startsAt,endsAt])
+  @@index([roomId,startsAt,endsAt])
+  @@index([state,expiresAt])
+  @@index([appointmentId,state])
+}
+
+enum AppointmentStatus {
+  confirmed
+  waiting
+  in_service
+  completed
+  no_show
+  cancelled
+}
+
+model Appointment {
+  id String @id @default(uuid()) @db.Uuid
+  patientId String @db.Uuid
+  professionalId String @db.Uuid
+  specialtyId String @db.Uuid
+  roomId String? @db.Uuid
+  modality AppointmentModality
+  visitType String
+  startsAt DateTime @db.Timestamptz(3)
+  endsAt DateTime @db.Timestamptz(3)
+  durationMinutes Int
+  specialtyVersion Int
+  status AppointmentStatus @default(confirmed)
+  version Int @default(1)
+  bookingSource String
+  createdBy String @db.Uuid
+  parentAppointmentId String? @db.Uuid
+  reason String?
+  notificationAttention Boolean @default(false)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  patient PatientProfile @relation(fields:[patientId],references:[id],onDelete:Restrict)
+  professional ProfessionalProfile @relation(fields:[professionalId],references:[id],onDelete:Restrict)
+  specialty Specialty @relation(fields:[specialtyId],references:[id],onDelete:Restrict)
+  room Room? @relation(fields:[roomId],references:[id],onDelete:Restrict)
+  creator User @relation("AppointmentCreator",fields:[createdBy],references:[id],onDelete:Restrict)
+  parent Appointment? @relation("RescheduledAppointment",fields:[parentAppointmentId],references:[id],onDelete:Restrict)
+  children Appointment[] @relation("RescheduledAppointment")
+  reservations SlotReservation[]
+  history AppointmentHistory[]
+  commands BookingCommand[]
+  @@index([professionalId,startsAt,status])
+  @@index([roomId,startsAt,status])
+  @@index([patientId,specialtyId,startsAt,status])
+  @@index([startsAt,status,id])
+}
+
+model AppointmentHistory {
+  id String @id @default(uuid()) @db.Uuid
+  appointmentId String @db.Uuid
+  action String
+  previous Json?
+  next Json
+  actorUserId String? @db.Uuid
+  reason String?
+  occurredAt DateTime @default(now()) @db.Timestamptz(3)
+  appointment Appointment @relation(fields:[appointmentId],references:[id],onDelete:Restrict)
+  actor User? @relation(fields:[actorUserId],references:[id],onDelete:Restrict)
+  @@index([appointmentId,occurredAt,id])
+}
+
+model BookingCommand {
+  requestKey String @id
+  actorId String @db.Uuid
+  operation String
+  inputHash String
+  appointmentId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  actor User @relation(fields:[actorId],references:[id],onDelete:Restrict)
+  appointment Appointment @relation(fields:[appointmentId],references:[id],onDelete:Restrict)
+  @@index([appointmentId])
 }
