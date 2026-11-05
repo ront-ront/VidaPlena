@@ -36,6 +36,11 @@ export interface ScheduleTransaction {
     timeZone: string,
     actorId: string,
   ): Promise<void>
+  notifyImpacts(
+    ids: string[],
+    publicationVersion: number,
+    requestId: string,
+  ): Promise<void>
   audit: AuditWriter
 }
 export interface ScheduleStore {

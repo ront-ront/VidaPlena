@@ -9,6 +9,7 @@ import type {
 } from '../../../application/ports/catalog'
 import type { Prisma, PrismaClient } from '../../../generated/prisma/client'
 import { readPrincipal } from './access-store'
+import { futureAppointmentImpacts } from './appointment-impact'
 import { PrismaAuditWriter } from './audit-writer'
 
 const includeProfessional = {
@@ -203,7 +204,13 @@ export class PrismaCatalogStore implements CatalogStore {
             })
             return professional(saved)
           },
-          affectedAppointments: async () => [],
+          affectedAppointments: (kind, id) =>
+            futureAppointmentImpacts(
+              tx,
+              kind === 'specialty'
+                ? { specialtyId: id }
+                : { professionalId: id },
+            ),
           audit: new PrismaAuditWriter(tx),
         })
       })

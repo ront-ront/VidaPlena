@@ -279,7 +279,11 @@ test('cadastro presencial sem e-mail não cria conta; menor sem responsável é 
     where: { userId: invited.accountId, templateKey: 'account.invited' },
   })
   assert.ok(notice.payloadEncrypted)
-  assert.ok(!JSON.stringify(notice).includes(token))
+  assert.ok(
+    !JSON.stringify(notice, (_key, value) =>
+      typeof value === 'bigint' ? value.toString() : value,
+    ).includes(token),
+  )
   assert.equal(
     secret.open(
       notice.payloadEncrypted,

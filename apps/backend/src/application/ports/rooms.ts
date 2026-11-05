@@ -1,13 +1,13 @@
 import type { Principal } from '../../domain/rules/access'
 import type { AuditWriter } from './audit-writer'
-import type { CatalogQuery, Page } from './catalog'
+import type { CatalogQuery, Page, ResourceAppointmentImpact } from './catalog'
 
 export type RoomInput = { name: string; active: boolean }
 export type Room = RoomInput & { id: string; capacity: number; version: number }
 export interface RoomTransaction {
   principal(actor: Principal): Promise<Principal | null>
   get(id: string): Promise<Room | null>
-  futureAppointments(id: string): Promise<string[]>
+  futureAppointments(id: string): Promise<ResourceAppointmentImpact[]>
   save(input: RoomInput, id?: string): Promise<Room>
   audit: AuditWriter
 }

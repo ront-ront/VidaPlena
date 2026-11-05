@@ -25,7 +25,7 @@ Ler `specs/shared/data-model.md#m1`, `specs/shared/api-contracts.md#m1`, `specs/
 - [x] Dado gestor/admin, quando criar sala ativa, então ela entra no conjunto de salas elegíveis; outro perfil recebe 403 para mutação.
 - [x] Dado nome duplicado ativo, quando criar/renomear, então 409 sem duplicação.
 - [ ] Dada sala com consulta futura, quando inativar sem decisão, então 409 com impacto e reserva permanece; após resolução explícita, sala fica inativa e histórico preservado.
-- [ ] Dada sala inativa, quando tentar nova reserva presencial nela, então a confirmação é recusada.
+- [x] Dada sala inativa, quando tentar nova reserva presencial nela, então a confirmação é recusada.
 
 ## 6. Testes esperados
 CRUD sem DELETE, unicidade, RBAC, FK histórica, inativação com impacto e auditoria; lint backend.
@@ -40,3 +40,5 @@ Resolução operacional da consulta afetada ocorre via BE-022/023; esta spec ape
 ## Evidência local — 04/11/2026
 
 Migration `202611040017_rooms`, capacidade 1 protegida por CHECK, índice único parcial por nome ativo normalizado, DELETE bloqueado, CRUD sem DELETE com versão e auditoria. A suíte de catálogo passou 3/3 testes HTTP/PostgreSQL, incluindo concorrência de nomes, RBAC, reativação conflitante, capacidade e histórico preservado; lint aprovado em 128 arquivos. A porta de impacto será ligada a `Appointment` em BE-021, quando haverá evidência real de inativação com consulta futura e recusa de reserva em sala inativa.
+
+**Integração BE-021 em 05/11/2026:** inativação com consulta futura devolve impacto seguro e preserva status/reserva; confirmação recusa sala inativa e ausência de sala livre mesmo com profissional disponível. Resolução por BE-022/023 ainda será exercitada.

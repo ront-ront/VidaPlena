@@ -4,12 +4,12 @@ Objetivo autorizado em 04/11/2026: implementar integralmente M1 na ordem de `03-
 
 | Spec | Estado | Evidência / próxima verificação |
 | --- | --- | --- |
-| BE-016 | Base local testada | Migration de catálogo, API administrativa/pública, Zod/OpenAPI, DI, RBAC e auditoria; HTTP/PostgreSQL 2/2 e lint. Duração já confirmada e impacto de inativação aguardam BE-021/022/023. |
-| BE-017 | Base local testada | Migration de salas, capacidade 1, unicidade ativa, RBAC/auditoria, versão e DELETE bloqueado. Catálogo HTTP/PostgreSQL 3/3 e lint; impacto/reserva aguardam BE-020/021/022/023. |
-| BE-018 | Base local testada | Snapshots/regras/bloqueios imutáveis; API, versão, propriedade, auditoria, fuso Temporal e config Zod. Catálogo/grade 4/4 integrações e 2/2 regras, lint. Slots/impactos/avisos aguardam BE-019/021/023/025. |
-| BE-019 | Base local testada | API de disponibilidade sem cache, datas/fuso, duração, modalidades, bloqueios/salas, antecedência, lookahead verificado. Suíte M1 10/10 e lint; ocupação persistida BE-020/021 e p95 BE-051 pendentes. |
-| BE-020 | Barreira parcial; regressão de fixtures pendente | Exclusion constraints profissional/sala, idempotência, hold/expiração, troca/rollback e retry. Cinco testes passaram antes de BE-021; com a nova FK, os cinco precisam criar consultas válidas na mesma transação. Corrida HTTP de BE-021 passou. Encaixe BE-024 e carga BE-051 pendentes. |
-| BE-021 | Implementação parcial | Migration, confirmação transacional/idempotente, duração congelada, consentimento, suspensão, duplicidade, sala e outbox; 3/3 testes HTTP/PostgreSQL passaram. Guardas de impacto de catálogo/salas/grade e avisos emergenciais ainda não integrados; representação e demais critérios precisam de cobertura. |
+| BE-016 | Integrada a consultas | Catálogo versionado; duração nova preserva consulta anterior; inativação/modalidade com consulta futura bloqueada e impacto seguro. Resolução operacional será exercitada em BE-022/023. |
+| BE-017 | Integrada a consultas | Salas unitárias, unicidade/RBAC/auditoria; inativação com consulta futura bloqueada e sala inativa recusada na confirmação. Resolução operacional será exercitada em BE-022/023. |
+| BE-018 | Implementada localmente | Snapshot/fuso/versão/RBAC, impacto ordinário recusado, emergência mantém reservas e enfileira avisos por publicação. Catálogo/grade e confirmação aprovados; resolução operacional segue BE-022/023. |
+| BE-019 | Implementada localmente; desempenho pendente | Disponibilidade lê ocupação real, bloqueios, salas, duração, modalidade e antecedência. Carga/p95 permanece BE-051. |
+| BE-020 | Barreira integrada e testada | Cinco testes PostgreSQL passaram após adequar fixtures à FK, sem afrouxar constraints. Corrida HTTP, sala e rollback aprovados; encaixe BE-024 e carga BE-051 pendentes. |
+| BE-021 | Implementada localmente | 9/9 testes HTTP/PostgreSQL: confirmação/idempotência/duração, consentimento/representação, sala/modalidade, concorrência, outbox, rollback e impactos administrativos. Autenticação/convite/confirmação 13/13 após correção BIGINT; lint. |
 | BE-022 | Pendente | Reagendamento |
 | BE-023 | Pendente | Cancelamento |
 | BE-024 | Pendente | Lista de espera/encaixe |
@@ -44,3 +44,9 @@ P-22 registra modalidades `onsite/remote`, leitura administrativa privada, contr
 - Suíte selecionada de M1: `availability.test.ts`, `schedule.test.ts`, `integration/catalog.test.ts`, `integration/reservations.test.ts` e `integration/booking.test.ts`, com Node 22 e PostgreSQL 17 isolado: **13/18 passaram; 5/18 falharam**.
 - As cinco falhas estão em `reservations.test.ts`: fixtures anteriores a BE-021 referenciam UUIDs de consultas inexistentes. A FK e a consistência diferidas agora exigem consulta/reserva válidas na mesma transação. Adaptar criação, confirmação de hold e troca nas fixtures sem afrouxar constraints; repetir a suíte depois. O resultado histórico 15/15 não vale para o estado integrado atual.
 - Os commits registram o trabalho parcial existente. BE-022–029 e FE-010–020 continuam pendentes; não há conclusão do M1 nem regressão completa de M0 comprovada nesta rodada.
+
+## Continuação após os commits — 05/11/2026
+
+As cinco falhas de fixtures foram corrigidas com consulta/reserva na mesma transação real. Integrações de impacto de catálogo/sala/grade foram ligadas e testadas; bloqueio emergencial enfileira aviso e preserva reserva. Confirmação passou 9/9, e autenticação/convites/confirmação passaram 13/13 após migration BIGINT para versões de notificação por timestamp. Os 25 testes Node, 2 Vitest e lint passaram. A regressão completa inicial encontrou somente os dois overflows agora corrigidos (40/42); nova execução completa em andamento. Não confundir esse resultado histórico com falha atual. BE-022 será a próxima spec; M1 continua ativo e incompleto.
+
+Regressão completa após BIGINT: 42/43 integrações passaram. A única falha foi a asserção que serializava a linha Prisma inteira em `patient-registration.test.ts`; o teste foi adaptado para converter BIGINT em string preservando a checagem de ausência de token. Reteste desse arquivo: 2/2 aprovados. Nenhum endpoint serializa a linha bruta de notificação: listagem/atenção usam projeções, e a porta de entrega converte a versão. Falhas de produto detectadas nesta rodada foram corrigidas; o fechamento integral será reexecutado com os próximos módulos.

@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M1 Agenda
-- **Status:** base implementada localmente; ocupação persistida aguarda BE-020/021 e desempenho BE-051
+- **Status:** implementada localmente; desempenho formal aguarda BE-051
 - **Depende de:** BE-017, BE-018
 - **Requisitos cobertos:** RF-006, RN-003, RNF-009
 
@@ -22,7 +22,7 @@ Ler `specs/shared/api-contracts.md#m1`, `specs/shared/data-model.md#m1`, `specs/
 - `nearestAvailableAt` só aponta opção realmente elegível na consulta atual; cache, se usado, deve ser invalidado por reserva/bloqueio/cancelamento. BE-020 revalida tudo na confirmação.
 
 ## 5. Critérios de aceite
-- [ ] Dado slot ocupado, bloqueado ou sala indisponível, quando buscar, então ele não aparece para marcação presencial.
+- [x] Dado slot ocupado, bloqueado ou sala indisponível, quando buscar, então ele não aparece para marcação presencial.
 - [x] Dado paciente e início antes da antecedência RN-003, quando buscar, então não aparece; recepção tem fluxo operacional próprio.
 - [x] Dada especialidade sem horários, quando buscar, então `days` vazio e `nearestAvailableAt` só aparece se houver opção posterior verificada.
 - [ ] Dada massa/carga de `shared/performance-scenario.md`, quando medir p95, então a consulta atende `perf.availability_p95_ms`; resultado real fica pendente até BE-051.
@@ -31,8 +31,8 @@ Ler `specs/shared/api-contracts.md#m1`, `specs/shared/data-model.md#m1`, `specs/
 Intervalos adjacentes, bloqueios, modalidades, sala, antecedência, datas/fuso, filtros e integração com reserva concorrente; benchmark BE-051 posterior. Lint.
 
 ## 7. Definition of Done
-- [ ] Endpoint sem dados de ocupante; filtros/ordem determinísticos e contrato respeitado.
-- [ ] Testes/lint passam; desempenho ainda precisa ensaio formal BE-051, sem `tsc`.
+- [x] Endpoint sem dados de ocupante; filtros/ordem determinísticos e contrato respeitado.
+- [x] Testes/lint passam; desempenho ainda precisa ensaio formal BE-051, sem `tsc`.
 
 ## 8. Suposições e pontos em aberto
 Limite máximo da janela de busca é escolha técnica para proteger carga; documentar valor no contrato antes da implementação, sem tratá-lo como política clínica.
@@ -40,3 +40,5 @@ Limite máximo da janela de busca é escolha técnica para proteger carga; docum
 ## Evidência local — 04/11/2026
 
 Endpoint sem cache, leitura consistente de catálogo/grade/bloqueios/salas, geração por duração e modalidade, antecedência do portal, janela parametrizada e próxima data verificada. P-24 registra passo e limites técnicos. Suíte de 10/10: 5 integrações HTTP/PostgreSQL de catálogo/grade/disponibilidade, 3 regras de disponibilidade e 2 regras de grade/fuso; lint em 141 arquivos. Ocupação foi testada por porta explícita, mas a leitura de `SlotReservation` será integrada na BE-020 antes de alegar cobertura completa de conflito. Meta `perf.availability_p95_ms` segue pendente BE-051.
+
+**Integração BE-020/021 em 05/11/2026:** leitura de reservas reais e holds vigentes já conectada; conflito de confirmação devolve alternativas sem identidade de ocupante. Falta de salas foi testada com profissional livre. A meta de carga continua pendente BE-051.

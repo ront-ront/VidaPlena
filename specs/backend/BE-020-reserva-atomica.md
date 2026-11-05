@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M1 Agenda
-- **Status:** parcial; barreira integrada a BE-021 com atualização de fixtures pendente
+- **Status:** barreira implementada e testada localmente; encaixe BE-024 e carga BE-051 pendentes
 - **Depende de:** BE-017, BE-018, BE-019
 - **Requisitos cobertos:** RF-008, RN-001, RNF-010
 
@@ -22,7 +22,7 @@ Ler `specs/shared/data-model.md#m1` (`SlotReservation`), `specs/shared/api-contr
 - Hold de oferta expira/libera antes de reoferta; aceite converte o mesmo hold em confirmado atomicamente. Troca libera reserva antiga somente depois de garantir nova na mesma transação. Encaixe fora da grade não contorna a constraint.
 
 ## 5. Critérios de aceite
-- [ ] Dadas duas confirmações simultâneas do mesmo intervalo/profissional, quando executar, então exatamente uma confirma e a outra recebe 409, com zero registro parcial.
+- [x] Dadas duas confirmações simultâneas do mesmo intervalo/profissional, quando executar, então exatamente uma confirma e a outra recebe 409, com zero registro parcial.
 - [x] Dadas duas salas ou profissionais independentes, quando reservar intervalos iguais, então confirmações válidas coexistem somente se ambos recursos não colidem.
 - [x] Dado atendimento presencial sem sala livre, quando confirmar, então 409 mesmo que profissional esteja livre; remoto dispensa sala.
 - [ ] Dado encaixe fora da grade em intervalo ocupado, quando tentar, então 409 sem exceção; em intervalo livre com justificativa, a barreira permite ao caso de uso avançar.
@@ -32,8 +32,8 @@ Ler `specs/shared/data-model.md#m1` (`SlotReservation`), `specs/shared/api-contr
 Integração PostgreSQL real com barreira simultânea, colisão parcial, dois recursos, hold expirado, rollback, idempotência e migration reexecutável; ensaio BE-051 repete em carga. Lint.
 
 ## 7. Definition of Done
-- [ ] Constraint no banco e porta transacional; nenhuma lógica de exclusão só em memória/Redis.
-- [ ] Testes de concorrência e lint passam; erro estável no contrato, sem `tsc`.
+- [x] Constraint no banco e porta transacional; nenhuma lógica de exclusão só em memória/Redis.
+- [x] Testes de concorrência e lint passam; erro estável no contrato, sem `tsc`.
 
 ## 8. Suposições e pontos em aberto
 Política de timeout transacional é escolha técnica do ambiente e deve ser medida em BE-051. A redação alternativa original do RF-008 foi substituída por “horário fora da grade” (Q-06).
@@ -43,3 +43,5 @@ Política de timeout transacional é escolha técnica do ambiente e deve ser med
 Migration `202611040020_reservations` cria `btree_gist`, duas constraints de exclusão `[)` para profissional/sala, integridade de modalidade/estado e histórico sem DELETE/alteração de recursos. Porta transacional e `ReserveSlot` tratam idempotência, escolha de sala, conversão/expiração de hold e troca com rollback. P-25 registra contenção/retry. Cinco testes PostgreSQL passaram, incluindo duas transações sincronizadas sem locks da aplicação, colisão de sala, adjacência, recursos independentes, remoto, rollback, payload divergente, hold e troca. Suíte M1 15/15 e lint em 145 arquivos aprovados antes da parametrização adicional das tentativas. A disponibilidade já lê reservas reais; confirmação HTTP, vínculo FK da consulta e encaixe justificado continuam BE-021/024.
 
 **Reverificação integrada em 05/11/2026:** BE-021 adicionou a FK diferida de consulta e a consistência entre consulta ativa/reserva. A corrida HTTP passou, mas os cinco testes diretos acima falham porque suas fixtures usam consultas inexistentes. Atualizar fixtures para transações completas e repetir; o resultado 15/15 acima é histórico e não representa o estado atual. Suíte selecionada atual: 13/18; lint backend/frontend aprovado.
+
+**Correção da regressão em 05/11/2026:** fixtures agora criam consulta/reserva na mesma transação e atualizam a consulta durante troca; 5/5 testes PostgreSQL passaram, sem relaxar FK/constraints. A corrida HTTP de BE-021 também confirmou uma única efetivação com resposta 409 concorrente.

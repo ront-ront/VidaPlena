@@ -6,6 +6,7 @@ import type {
 } from '../../../application/ports/rooms'
 import type { PrismaClient } from '../../../generated/prisma/client'
 import { readPrincipal } from './access-store'
+import { futureAppointmentImpacts } from './appointment-impact'
 import { PrismaAuditWriter } from './audit-writer'
 
 export class PrismaRoomStore implements RoomStore {
@@ -32,7 +33,8 @@ export class PrismaRoomStore implements RoomStore {
           principal: (actor) =>
             readPrincipal(tx, actor.userId, actor.sessionId),
           get: (id) => tx.room.findUnique({ where: { id } }),
-          futureAppointments: async () => [],
+          futureAppointments: (id) =>
+            futureAppointmentImpacts(tx, { roomId: id }),
           save: (input, id) =>
             id
               ? tx.room.update({

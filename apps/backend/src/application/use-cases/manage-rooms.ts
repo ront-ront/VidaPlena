@@ -29,12 +29,17 @@ export class ManageRooms {
       if (current && current.version !== expectedVersion)
         throw new ApplicationError('CONFLICT')
       const data = { ...current, ...input } as RoomInput
-      if (
-        current &&
-        !data.active &&
-        (await tx.futureAppointments(current.id)).length
-      )
-        throw new ApplicationError('CONFLICT')
+      if (current && !data.active) {
+        const impacts = await tx.futureAppointments(current.id)
+        if (impacts.length)
+          throw new ApplicationError('SCHEDULE_IMPACT_REVIEW', undefined, {
+            affectedAppointments: impacts.map(({ id, startsAt, endsAt }) => ({
+              id,
+              startsAt,
+              endsAt,
+            })),
+          })
+      }
       const result = await tx.save(data, id)
       await tx.audit.append({
         ...context,

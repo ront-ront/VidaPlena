@@ -27,6 +27,13 @@ export type Professional = ProfessionalInput & {
 }
 export type CatalogQuery = { active?: boolean; cursor?: string }
 export type Page<T> = { items: T[]; nextCursor: string | null }
+export type ResourceAppointmentImpact = {
+  id: string
+  startsAt: string
+  endsAt: string
+  modality: Modality
+  specialtyId: string
+}
 export interface CatalogTransaction {
   principal(actor: Principal): Promise<Principal | null>
   professionalAccount(userId: string): Promise<boolean>
@@ -34,11 +41,10 @@ export interface CatalogTransaction {
   professional(id: string): Promise<Professional | null>
   saveSpecialty(input: SpecialtyInput, id?: string): Promise<Specialty>
   saveProfessional(input: ProfessionalInput, id?: string): Promise<Professional>
-  // BE-021 wires appointment impact after that entity exists.
   affectedAppointments(
     kind: 'specialty' | 'professional',
     id: string,
-  ): Promise<string[]>
+  ): Promise<ResourceAppointmentImpact[]>
   audit: AuditWriter
 }
 export interface CatalogStore {

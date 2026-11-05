@@ -53,7 +53,14 @@ export const consentAwareNotificationCheck: NotificationConsentCheck = async (
 ) => {
   if (await internalIdentityNotificationsOnly(tx, message)) return true
   if (message.templateKey.startsWith('appointment.')) {
-    if (!message.aggregateId || message.aggregateVersion == null) return false
+    if (
+      !message.aggregateId ||
+      !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(
+        message.aggregateId,
+      ) ||
+      message.aggregateVersion == null
+    )
+      return false
     const appointment = await tx.appointment.findUnique({
       where: { id: message.aggregateId },
       include: {
@@ -171,7 +178,11 @@ export class PrismaNotificationStore implements NotificationStore {
           row.scheduledAt > now
         )
           return
-        const message = row as NotificationMessage
+        const message = {
+          ...row,
+          aggregateVersion:
+            row.aggregateVersion == null ? null : Number(row.aggregateVersion),
+        } as NotificationMessage
         const identity = [
           'account.invited',
           'auth.password_reset',
@@ -331,6 +342,8 @@ export async function enqueueNotification(
   encrypted: string | null,
   destinationEncrypted: string | null = null,
 ) {
+  if (!Number.isSafeInteger(input.version) || input.version < 0)
+    throw new ApplicationError('VALIDATION_ERROR')
   const idempotencyKey = createHash('sha256')
     .update(
       JSON.stringify([
@@ -338,6 +351,7 @@ export async function enqueueNotification(
         input.aggregateId,
         input.version,
         input.userId,
+        ...(input.deduplicationKey ? [input.deduplicationKey] : []),
       ]),
     )
     .digest('hex')
@@ -349,7 +363,7 @@ export async function enqueueNotification(
       patientId: input.patientId,
       templateKey: input.type,
       aggregateId: input.aggregateId,
-      aggregateVersion: input.version,
+      aggregateVersion: BigInt(input.version),
       category: notificationCategory(input.type),
       payloadEncrypted: encrypted,
       destinationEncrypted,

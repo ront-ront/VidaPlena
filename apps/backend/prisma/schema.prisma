@@ -234,7 +234,7 @@ model Notification {
   category String
   templateKey String
   aggregateId String?
-  aggregateVersion Int?
+  aggregateVersion BigInt?
   payloadEncrypted String?
   destinationEncrypted String?
   deliveryStatus String @default("queued")

@@ -43,6 +43,7 @@ export async function enqueueAppointmentNotification(
   row: AppointmentRecord,
   type: NotificationTemplate,
   requestId: string,
+  deduplicationKey?: string,
 ): Promise<'queued' | 'unreachable'> {
   const patientRecipients = await patientNotificationRecipients(
     tx,
@@ -62,6 +63,7 @@ export async function enqueueAppointmentNotification(
         userId,
         patientId: row.patientId,
         requestId,
+        deduplicationKey,
       },
       null,
     )

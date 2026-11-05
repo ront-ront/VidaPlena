@@ -63,15 +63,21 @@ export class ManageCatalog {
       if (current && current.version !== expectedVersion)
         throw new ApplicationError('CONFLICT')
       const data = { ...current, ...input } as SpecialtyInput
-      if (
-        current &&
-        (!data.active ||
-          current.allowedModalities.some(
-            (m) => !data.allowedModalities.includes(m),
-          )) &&
-        (await tx.affectedAppointments('specialty', current.id)).length
-      )
-        throw new ApplicationError('CONFLICT')
+      if (current) {
+        const impacts = (
+          await tx.affectedAppointments('specialty', current.id)
+        ).filter(
+          (a) => !data.active || !data.allowedModalities.includes(a.modality),
+        )
+        if (impacts.length)
+          throw new ApplicationError('SCHEDULE_IMPACT_REVIEW', undefined, {
+            affectedAppointments: impacts.map(({ id, startsAt, endsAt }) => ({
+              id,
+              startsAt,
+              endsAt,
+            })),
+          })
+      }
       const result = await tx.saveSpecialty(data, id)
       await tx.audit.append({
         ...context,
@@ -135,14 +141,24 @@ export class ManageCatalog {
               'Confira as especialidades ativas e modalidades compativeis.',
           },
         ])
-      if (
-        current &&
-        (!data.active ||
-          current.specialtyIds.some((s) => !data.specialtyIds.includes(s)) ||
-          current.modalities.some((m) => !data.modalities.includes(m))) &&
-        (await tx.affectedAppointments('professional', current.id)).length
-      )
-        throw new ApplicationError('CONFLICT')
+      if (current) {
+        const impacts = (
+          await tx.affectedAppointments('professional', current.id)
+        ).filter(
+          (a) =>
+            !data.active ||
+            !data.specialtyIds.includes(a.specialtyId) ||
+            !data.modalities.includes(a.modality),
+        )
+        if (impacts.length)
+          throw new ApplicationError('SCHEDULE_IMPACT_REVIEW', undefined, {
+            affectedAppointments: impacts.map(({ id, startsAt, endsAt }) => ({
+              id,
+              startsAt,
+              endsAt,
+            })),
+          })
+      }
       const result = await tx.saveProfessional(data, id)
       await tx.audit.append({
         ...context,

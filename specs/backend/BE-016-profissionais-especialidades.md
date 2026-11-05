@@ -23,7 +23,7 @@ Ler `specs/00-constitution.md`, `specs/shared/data-model.md#m1`, `specs/shared/a
 
 ## 5. Critérios de aceite
 - [x] Dado registro profissional duplicado ou formato inválido, quando cadastrar, então 409/400 e nenhum perfil adicional persiste.
-- [ ] Dada duração alterada, quando confirmar consulta nova, então usa a versão vigente; consulta anterior mantém duração/horário registrados.
+- [x] Dada duração alterada, quando confirmar consulta nova, então usa a versão vigente; consulta anterior mantém duração/horário registrados.
 - [x] Dada especialidade sem modalidade remota, quando consultar catálogo, então remoto não é ofertado.
 - [ ] Dado profissional com consultas futuras, quando inativar sem resolução, então 409 lista impacto autorizado e status permanece ativo; com resolução registrada, histórico permanece referenciável.
 
@@ -40,3 +40,5 @@ Consulta automática ao conselho e lista real das oito especialidades não estã
 ## Evidência local — 04/11/2026
 
 Migration `202611040016_catalog`, portas/use case/adapter Prisma, schemas Zod compartilhados com OpenAPI e rotas administrativas/públicas integradas ao composition root. Testes HTTP/PostgreSQL 2/2 aprovados: concorrência/duplicidade, duração positiva, versão antiga, PATCH parcial sem reativação implícita, RBAC, conta convidada versus ativa, conselho, modalidades, projeção sem conselho/contato e bloqueio de DELETE. Lint backend aprovado em 123 arquivos. P-22 documenta os detalhes técnicos. O teste de duração preservada em consulta e a guarda real de impacto permanecem pendentes até a criação de `Appointment` em BE-021; não estão comprovados por esses dois testes.
+
+**Integração BE-021 em 05/11/2026:** duração congelada e nova duração vigente foram comprovadas em consulta real. Inativação e retirada de modalidade consultam agendamentos ativos e devolvem impacto seguro, sem alterar catálogo ou reservas. Resolução por BE-022/023 ainda será exercitada.

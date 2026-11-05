@@ -2,13 +2,16 @@ import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { randomBytes, randomUUID } from 'node:crypto'
 import { after, before, test } from 'node:test'
+import { ApplicationError } from '../../src/application/errors/application-error'
 import type { ReservationInput } from '../../src/application/ports/reservations'
 import { ReserveSlot } from '../../src/application/use-cases/reserve-slot'
+import type { Prisma } from '../../src/generated/prisma/client'
 import { createPrismaClient } from '../../src/infrastructure/persistence/prisma/client'
 import {
   isExclusionConflict,
   isReservationRetryConflict,
   PrismaReservationStore,
+  reservationTransaction,
 } from '../../src/infrastructure/persistence/prisma/reservation-store'
 import { loadConfig } from '../../src/shared/config/environment'
 
@@ -37,7 +40,10 @@ let created = false,
   pro2 = '',
   pro3 = '',
   room1 = '',
-  room2 = ''
+  room2 = '',
+  patientId = '',
+  specialtyId = '',
+  creatorId = ''
 before(async () => {
   await control.$executeRawUnsafe(`CREATE DATABASE "${databaseName}"`)
   created = true
@@ -58,6 +64,7 @@ before(async () => {
         roles: { create: { roleCode: 'professional' } },
       },
     })
+    creatorId = user.id
     ids.push(
       (
         await db.professionalProfile.create({
@@ -75,6 +82,26 @@ before(async () => {
   ;[pro1, pro2, pro3] = ids
   room1 = (await db.room.create({ data: { name: 'Sala Um' } })).id
   room2 = (await db.room.create({ data: { name: 'Sala Dois' } })).id
+  patientId = (
+    await db.patientProfile.create({
+      data: {
+        cpf: '12345678909',
+        fullName: 'Paciente Fictício',
+        birthDate: new Date('1990-01-01'),
+      },
+    })
+  ).id
+  specialtyId = (
+    await db.specialty.create({
+      data: {
+        code: 'TEST',
+        name: 'Especialidade Fictícia',
+        allowedModalities: ['onsite', 'remote'],
+        defaultMinutesFirst: 60,
+        defaultMinutesReturn: 60,
+      },
+    })
+  ).id
 })
 after(async () => {
   await db.$disconnect()
@@ -98,8 +125,78 @@ function slot(
     appointmentId: randomUUID(),
   }
 }
-const reserve = (input: ReservationInput) =>
-  store.transaction((tx) => new ReserveSlot(tx).reserve(input))
+// Since BE-021, confirmed reservations and their appointments must commit together.
+// Keep fixtures inside the same real PostgreSQL transaction; never relax the constraints.
+async function appointment(
+  tx: Prisma.TransactionClient,
+  row: {
+    appointmentId: string | null
+    professionalId: string
+    roomId: string | null
+    modality: 'onsite' | 'remote'
+    startsAt: Date
+    endsAt: Date
+  },
+) {
+  assert.ok(row.appointmentId)
+  if (await tx.appointment.findUnique({ where: { id: row.appointmentId } }))
+    return
+  await tx.appointment.create({
+    data: {
+      id: row.appointmentId,
+      patientId,
+      specialtyId,
+      createdBy: creatorId,
+      professionalId: row.professionalId,
+      roomId: row.roomId,
+      modality: row.modality,
+      startsAt: row.startsAt,
+      endsAt: row.endsAt,
+      durationMinutes: (row.endsAt.getTime() - row.startsAt.getTime()) / 60_000,
+      specialtyVersion: 1,
+      visitType: 'first',
+      bookingSource: 'reception',
+    },
+  })
+}
+async function write<T>(run: (tx: Prisma.TransactionClient) => Promise<T>) {
+  try {
+    return await db.$transaction(run)
+  } catch (error) {
+    if (isExclusionConflict(error))
+      throw new ApplicationError('SLOT_UNAVAILABLE')
+    throw error
+  }
+}
+const reserve = (input: ReservationInput, now = () => new Date()) =>
+  write(async (tx) => {
+    const row = await new ReserveSlot(reservationTransaction(tx), now).reserve(
+      input,
+    )
+    if (row.state === 'confirmed') await appointment(tx, row)
+    return row
+  })
+const replace = (id: string, input: ReservationInput) =>
+  write(async (tx) => {
+    const row = await new ReserveSlot(reservationTransaction(tx)).replace(
+      id,
+      input,
+    )
+    assert.ok(row.appointmentId)
+    await tx.appointment.update({
+      where: { id: row.appointmentId },
+      data: {
+        professionalId: row.professionalId,
+        roomId: row.roomId,
+        modality: row.modality,
+        startsAt: row.startsAt,
+        endsAt: row.endsAt,
+        durationMinutes:
+          (row.endsAt.getTime() - row.startsAt.getTime()) / 60_000,
+      },
+    })
+    return row
+  })
 
 test('BE-020: PostgreSQL exclui sobreposição mesmo sem lock da aplicação, com duas transações na barreira', async () => {
   let ready = 0,
@@ -114,9 +211,11 @@ test('BE-020: PostgreSQL exclui sobreposição mesmo sem lock da aplicação, co
         if (ready === 2) release()
         await barrier
         const input = slot(1)
-        return tx.slotReservation.create({
+        const row = await tx.slotReservation.create({
           data: { ...input, roomId: room1, requestHash: 'raw-database-test' },
         })
+        await appointment(tx, row)
+        return row
       }),
     ),
   )
@@ -209,11 +308,12 @@ test('BE-020: hold expirado libera antes de nova reserva; aceite converte o mesm
     ),
     { code: 'OFFER_EXPIRED' },
   )
-  await store.transaction((tx) =>
-    new ReserveSlot(tx, () => now).reserve({
+  await reserve(
+    {
       ...slot(5),
       requestKey: randomUUID(),
-    }),
+    },
+    () => now,
   )
   assert.equal(
     (await db.slotReservation.findUniqueOrThrow({ where: { id: held.id } }))
@@ -230,9 +330,14 @@ test('BE-020: hold expirado libera antes de nova reserva; aceite converte o mesm
     }),
   )
   const appointmentId = randomUUID()
-  const confirmed = await store.transaction((tx) =>
-    new ReserveSlot(tx, () => now).confirmHold(next.id, appointmentId),
-  )
+  const confirmed = await write(async (tx) => {
+    const row = await new ReserveSlot(
+      reservationTransaction(tx),
+      () => now,
+    ).confirmHold(next.id, appointmentId)
+    await appointment(tx, row)
+    return row
+  })
   assert.equal(confirmed.id, next.id)
   assert.equal(confirmed.state, 'confirmed')
   assert.equal(confirmed.expiresAt, null)
@@ -250,9 +355,7 @@ test('BE-020: troca falha preserva original; troca válida é atômica e idempot
   const original = await reserve(slot(7))
   await reserve(slot(8))
   await assert.rejects(
-    store.transaction((tx) =>
-      new ReserveSlot(tx).replace(original.id, slot(8)),
-    ),
+    replace(original.id, { ...slot(8), appointmentId: original.appointmentId }),
     { code: 'SLOT_UNAVAILABLE' },
   )
   assert.equal(
@@ -261,22 +364,13 @@ test('BE-020: troca falha preserva original; troca válida é atômica e idempot
     'confirmed',
   )
   const input = { ...slot(9), appointmentId: original.appointmentId }
-  const next = await store.transaction((tx) =>
-    new ReserveSlot(tx).replace(original.id, input),
-  )
+  const next = await replace(original.id, input)
   assert.equal(
     (await db.slotReservation.findUniqueOrThrow({ where: { id: original.id } }))
       .state,
     'released',
   )
-  assert.equal(
-    (
-      await store.transaction((tx) =>
-        new ReserveSlot(tx).replace(original.id, input),
-      )
-    ).id,
-    next.id,
-  )
+  assert.equal((await replace(original.id, input)).id, next.id)
   await assert.rejects(
     db.slotReservation.delete({ where: { id: original.id } }),
   )

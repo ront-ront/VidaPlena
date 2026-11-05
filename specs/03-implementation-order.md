@@ -7,7 +7,7 @@
 | Milestone | Valor verificável | Situação documental |
 | --- | --- | --- |
 | M0 — Fundação | Ambiente, identidade, cadastro, consentimento, autorização, auditoria, arquivos e base operacional. | 25/25 specs redigidas e escopo implementável de M0 concluído localmente; API, front, worker e PostgreSQL integrados; 24/24 integrações, 20/20 testes Node, 2/2 Vitest, 3/3 front API, lint e build aprovados. Portões jurídicos/operacionais P-01/P-03/P-07/P-08 e revisão manual de acessibilidade permanecem antes de produção; arquivo genérico P-20 só ativa com recurso M2/M3. |
-| M1 — Agenda | Catálogo, grade, salas, reserva concorrente, consultas, lista de espera, lembretes, recepção e CSV. | 25/25 specs redigidas; BE-016–020 parciais e BE-021 em implementação. Verificação integrada atual: 13/18 testes passaram, 5 fixtures de reserva precisam de atualização para a FK de consultas; lint aprovado. Demais specs pendentes. |
+| M1 — Agenda | Catálogo, grade, salas, reserva concorrente, consultas, lista de espera, lembretes, recepção e CSV. | 25/25 specs redigidas; BE-016–021 integradas localmente, com resolução operacional BE-022/023 e encaixe/carga posteriores. Fixtures corrigidas: reservas 5/5, confirmação 9/9; autenticação/convites/confirmação 13/13 após correção BIGINT; lint aprovado. Regressão completa em andamento. Demais specs pendentes. |
 | M2 — Prontuário | Vínculo, histórico, evolução/adendo, alertas, documentos, acesso de urgência e projeção do paciente. | 25/25 specs redigidas; implementação e portões P-02/P-06/P-11/P-13 pendentes. |
 | M3 — Teleconsulta | Termo, vídeo P2P, arquivos e gravação revogável. | 11/11 specs redigidas; RNF-014 parcial e portões P-03/P-04/P-10 pendentes. |
 | M4 — Gestão | Indicadores, relatórios, auditoria consultável e ensaios de desempenho. | 9/9 specs redigidas; produção depende de P-07/P-14. |
@@ -65,8 +65,8 @@ flowchart LR
 | 27 | M1 | [BE-017](backend/BE-017-salas.md) | Cadastro e inativação de salas | back | BE-005, BE-016 | Base local testada; impacto e reserva aguardam BE-020/021/022/023 |
 | 28 | M1 | [BE-018](backend/BE-018-grade-bloqueios.md) | Grade, férias e bloqueios do profissional | back | BE-016, BE-004 | Base local testada; slots/impactos/avisos aguardam BE-019/021/023/025 |
 | 29 | M1 | [BE-019](backend/BE-019-disponibilidade.md) | Consulta de disponibilidade e antecedência | back | BE-017, BE-018 | Base local testada; ocupação BE-020/021 e desempenho BE-051 pendentes |
-| 30 | M1 | [BE-020](backend/BE-020-reserva-atomica.md) | Reserva atômica sem sobreposição | back | BE-017, BE-018, BE-019 | Barreira parcial; cinco fixtures precisam acompanhar a FK BE-021; encaixe BE-024 pendente |
-| 31 | M1 | [BE-021](backend/BE-021-confirmacao-consulta.md) | Confirmação de consulta e alocação de sala | back | BE-010, BE-011, BE-020, BE-006 | Parcial; confirmação HTTP 3/3, integração de impactos e demais critérios pendentes |
+| 30 | M1 | [BE-020](backend/BE-020-reserva-atomica.md) | Reserva atômica sem sobreposição | back | BE-017, BE-018, BE-019 | Barreira integrada/testada; fixtures corrigidas 5/5, corrida HTTP comprovada; encaixe BE-024 pendente |
+| 31 | M1 | [BE-021](backend/BE-021-confirmacao-consulta.md) | Confirmação de consulta e alocação de sala | back | BE-010, BE-011, BE-020, BE-006 | Implementada localmente; confirmação 9/9 e impactos administrativos integrados |
 | 32 | M1 | [BE-022](backend/BE-022-reagendamento.md) | Reagendamento transacional | back | BE-020, BE-021 | Redigida |
 | 33 | M1 | [BE-023](backend/BE-023-cancelamento.md) | Cancelamento e liberação de horário | back | BE-021, BE-006 | Redigida |
 | 34 | M1 | [BE-024](backend/BE-024-espera-encaixe.md) | Espera, oferta e encaixe fora da grade | back | BE-020, BE-023, BE-006 | Redigida |

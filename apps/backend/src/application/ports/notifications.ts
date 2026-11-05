@@ -14,6 +14,7 @@ export interface NotificationEvent {
   patientId?: string
   requestId: string
   token?: string
+  deduplicationKey?: string
 }
 export interface NotificationMessage {
   id: string

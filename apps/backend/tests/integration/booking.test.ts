@@ -239,6 +239,16 @@ test('BE-021: consentimento, sujeito alheio, suspensão, duplicidade e remoto s�
     pending = await patient(false)
   await book(p.token, input(foreign.patientId, 1)).expect(404)
   assert.equal(
+    (
+      await book(p.token, {
+        ...input(p.patientId),
+        startsAt: new Date(Date.now() + 3_600_000).toISOString(),
+      }).expect(409)
+    ).body.error.code,
+    'BOOKING_LEAD_TIME',
+  )
+  await book(professional.token, input(p.patientId, 1)).expect(403)
+  assert.equal(
     (await book(reception.token, input(pending.patientId, 1)).expect(409)).body
       .error.code,
     'CONSENT_REQUIRED',
@@ -318,4 +328,399 @@ test('BE-021: duas confirmações concorrem sem agendamento/reserva parcial e re
     }),
     'Banco não deve aceitar consulta ativa sem reserva correspondente',
   )
+})
+
+test('BE-021: responsável agenda dependente consentido; terceiro, revogação do vínculo e escolha indevida de sala são negados', async () => {
+  const guardian = await patient(),
+    outsider = await patient()
+  const dependent = await ctx.db.patientProfile.create({
+    data: {
+      fullName: 'Dependente Fictício',
+      cpf: fictitiousCpf(),
+      birthDate: new Date('2020-01-01'),
+    },
+  })
+  const link = await ctx.db.guardianLink.create({
+    data: {
+      guardianUserId: guardian.user.id,
+      patientId: dependent.id,
+      relationship: 'mãe',
+    },
+  })
+  await ctx.db.consentEvent.create({
+    data: {
+      patientId: dependent.id,
+      documentVersionId: documentId,
+      action: 'accept',
+      source: 'portal',
+      actorUserId: guardian.user.id,
+      consentingPersonName: guardian.user.fullName,
+      guardianLinkId: link.id,
+    },
+  })
+  const room = await ctx.db.room.findFirstOrThrow({ where: { active: true } })
+  await book(guardian.token, {
+    ...input(dependent.id, 3),
+    roomId: room.id,
+  }).expect(403)
+  const booked = await book(guardian.token, input(dependent.id, 3)).expect(201)
+  assert.equal(
+    await ctx.db.notification.count({
+      where: {
+        aggregateId: booked.body.appointment.id,
+        userId: guardian.user.id,
+      },
+    }),
+    1,
+  )
+  await book(outsider.token, input(dependent.id, 4)).expect(404)
+  await ctx.db.guardianLink.update({
+    where: { id: link.id },
+    data: { status: 'inactive', endedAt: new Date() },
+  })
+  await book(guardian.token, input(dependent.id, 4)).expect(404)
+  assert.equal(
+    await ctx.db.appointment.count({ where: { patientId: dependent.id } }),
+    1,
+  )
+})
+
+test('BE-021: falta de sala recusa mesmo com profissional livre; recepção escolhe sala e remoto exige modalidade habilitada', async () => {
+  const p = await patient()
+  const rooms = await ctx.db.room.findMany({ where: { active: true } })
+  for (const room of rooms) {
+    const account = await ctx.account('professional')
+    const profile = await ctx.db.professionalProfile.create({
+      data: {
+        userId: account.user.id,
+        councilType: 'CRM',
+        councilRegion: 'CE',
+        councilNumber: randomUUID()
+          .replaceAll('-', '')
+          .slice(0, 20)
+          .toUpperCase(),
+        modalities: ['onsite'],
+      },
+    })
+    await ctx.db.slotReservation.create({
+      data: {
+        professionalId: profile.id,
+        roomId: room.id,
+        modality: 'onsite',
+        startsAt: new Date(at(5, '08:00')),
+        endsAt: new Date(at(5, '09:00')),
+        state: 'held',
+        expiresAt: new Date(Date.now() + 3_600_000),
+        offerId: randomUUID(),
+        requestKey: randomUUID(),
+        requestHash: 'fixture',
+      },
+    })
+  }
+  assert.equal(
+    await ctx.db.slotReservation.count({
+      where: { professionalId, startsAt: new Date(at(5, '08:00')) },
+    }),
+    0,
+  )
+  assert.equal(
+    (await book(p.token, input(p.patientId, 5)).expect(409)).body.error.code,
+    'SLOT_UNAVAILABLE',
+  )
+  const onsite = await ctx.db.specialty.create({
+    data: {
+      code: 'ONSITE',
+      name: 'Somente presencial',
+      allowedModalities: ['onsite'],
+      defaultMinutesFirst: 40,
+      defaultMinutesReturn: 30,
+    },
+  })
+  await ctx.db.professionalSpecialty.create({
+    data: { professionalId, specialtyId: onsite.id },
+  })
+  await book(p.token, {
+    ...input(p.patientId, 5, '13:00'),
+    specialtyId: onsite.id,
+    modality: 'remote',
+  }).expect(400)
+  const chosen = await book(reception.token, {
+    ...input(p.patientId, 6),
+    roomId: rooms[0].id,
+  }).expect(201)
+  assert.equal(chosen.body.appointment.roomId, rooms[0].id)
+  const inactive = await ctx.db.room.create({
+    data: { name: 'Sala inativa', active: false },
+  })
+  assert.equal(
+    (
+      await book(reception.token, {
+        ...input(p.patientId, 10),
+        roomId: inactive.id,
+        confirmDuplicateSpecialty: true,
+      }).expect(409)
+    ).body.error.code,
+    'SLOT_UNAVAILABLE',
+  )
+})
+
+test('BE-021: consulta assistida sem conta digital sinaliza atenção sem perder reserva', async () => {
+  const profile = await ctx.db.patientProfile.create({
+    data: {
+      fullName: 'Paciente Assistido Fictício',
+      cpf: fictitiousCpf(),
+      birthDate: new Date('1980-01-01'),
+    },
+  })
+  const evidence = await ctx.db.fileObject.create({
+    data: {
+      category: 'attachment',
+      ownerPatientId: profile.id,
+      uploadedBy: reception.user.id,
+      linkedResourceType: 'ConsentEvidence',
+      linkedResourceId: profile.id,
+      storageKey: randomUUID(),
+      contentTypeDetected: 'application/pdf',
+      size: 10n,
+      sha256: '0'.repeat(64),
+      encryptionKeyRef: 'test',
+      scanStatus: 'skipped_dev',
+    },
+  })
+  await ctx.db.consentEvent.create({
+    data: {
+      patientId: profile.id,
+      documentVersionId: documentId,
+      action: 'accept',
+      source: 'onsite',
+      signedFileId: evidence.id,
+      actorUserId: reception.user.id,
+      consentingPersonName: profile.fullName,
+    },
+  })
+  const response = await book(reception.token, input(profile.id, 11)).expect(
+    201,
+  )
+  assert.equal(response.body.notificationState, 'unreachable')
+  assert.equal(response.body.appointment.notificationAttention, true)
+  assert.equal(
+    await ctx.db.slotReservation.count({
+      where: {
+        appointmentId: response.body.appointment.id,
+        state: 'confirmed',
+      },
+    }),
+    1,
+  )
+  assert.equal(
+    await ctx.db.notification.count({
+      where: { aggregateId: response.body.appointment.id },
+    }),
+    1,
+  )
+})
+
+test('BE-021: inativação ou remoção de modalidade com consulta futura exige resolver os impactos', async () => {
+  const p = await patient()
+  const booked = (await book(p.token, input(p.patientId, 7)).expect(201)).body
+    .appointment
+  const resources = [
+    {
+      route: `/v1/admin/specialties/${specialtyId}`,
+      version: (
+        await ctx.db.specialty.findUniqueOrThrow({ where: { id: specialtyId } })
+      ).version,
+    },
+    {
+      route: `/v1/admin/professionals/${professionalId}`,
+      version: (
+        await ctx.db.professionalProfile.findUniqueOrThrow({
+          where: { id: professionalId },
+        })
+      ).version,
+    },
+    {
+      route: `/v1/admin/rooms/${booked.roomId}`,
+      version: (
+        await ctx.db.room.findUniqueOrThrow({ where: { id: booked.roomId } })
+      ).version,
+    },
+  ]
+  for (const resource of resources) {
+    const result = await request(runtime.app)
+      .patch(resource.route)
+      .set('Authorization', admin.token)
+      .send({ expectedVersion: resource.version, active: false })
+      .expect(409)
+    assert.equal(result.body.error.code, 'SCHEDULE_IMPACT_REVIEW')
+    assert.ok(
+      result.body.error.affectedAppointments.some(
+        (a: { id: string }) => a.id === booked.id,
+      ),
+    )
+    assert.deepEqual(
+      Object.keys(result.body.error.affectedAppointments[0]).sort(),
+      ['endsAt', 'id', 'startsAt'],
+    )
+  }
+  assert.equal(
+    (await ctx.db.room.findUniqueOrThrow({ where: { id: booked.roomId } }))
+      .active,
+    true,
+  )
+  const modality = await request(runtime.app)
+    .patch(`/v1/admin/specialties/${specialtyId}`)
+    .set('Authorization', admin.token)
+    .send({
+      expectedVersion: resources[0].version,
+      allowedModalities: ['remote'],
+    })
+    .expect(409)
+  assert.ok(
+    modality.body.error.affectedAppointments.some(
+      (a: { id: string }) => a.id === booked.id,
+    ),
+  )
+  assert.equal(
+    (await ctx.db.specialty.findUniqueOrThrow({ where: { id: specialtyId } }))
+      .active,
+    true,
+  )
+  assert.equal(
+    (
+      await ctx.db.professionalProfile.findUniqueOrThrow({
+        where: { id: professionalId },
+      })
+    ).active,
+    true,
+  )
+})
+
+test('BE-021: grade ordinária preserva consultas; bloqueio emergencial mantém reserva e enfileira aviso idempotente', async () => {
+  const p = await patient()
+  const booked = (await book(p.token, input(p.patientId, 8)).expect(201)).body
+    .appointment
+  const route = `/v1/professionals/${professionalId}/schedule`
+  const snapshot = (
+    await request(runtime.app)
+      .get(route)
+      .set('Authorization', admin.token)
+      .query({ from: day.toString(), to: day.add({ days: 15 }).toString() })
+      .expect(200)
+  ).body
+  const publish = (body: object) =>
+    request(runtime.app).put(route).set('Authorization', admin.token).send(body)
+  const blocked = await publish({
+    expectedVersion: snapshot.version,
+    rules: [],
+    blocks: [],
+  }).expect(409)
+  assert.equal(blocked.body.error.code, 'SCHEDULE_IMPACT_REVIEW')
+  assert.equal(
+    await ctx.db.scheduleVersion.count({ where: { professionalId } }),
+    1,
+  )
+  const body = {
+    expectedVersion: snapshot.version,
+    rules: snapshot.rules,
+    blocks: [
+      {
+        startsAt: at(8, '08:00'),
+        endsAt: at(8, '09:00'),
+        kind: 'emergency',
+        reason: 'Indisponibilidade emergencial fictícia',
+      },
+    ],
+  }
+  const published = await publish(body).expect(200)
+  assert.equal(published.body.affectedAppointmentsResolved, false)
+  assert.ok(
+    published.body.affectedAppointments.some(
+      (a: { id: string }) => a.id === booked.id,
+    ),
+  )
+  assert.equal(
+    (await ctx.db.appointment.findUniqueOrThrow({ where: { id: booked.id } }))
+      .status,
+    'confirmed',
+  )
+  assert.equal(
+    await ctx.db.slotReservation.count({
+      where: { appointmentId: booked.id, state: 'confirmed' },
+    }),
+    1,
+  )
+  const notices = await ctx.db.notification.count({
+    where: {
+      aggregateId: booked.id,
+      templateKey: 'appointment.schedule_changed',
+    },
+  })
+  assert.equal(notices, 2)
+  await publish(body).expect(409)
+  assert.equal(
+    await ctx.db.notification.count({
+      where: {
+        aggregateId: booked.id,
+        templateKey: 'appointment.schedule_changed',
+      },
+    }),
+    notices,
+  )
+  const after = (
+    await request(runtime.app)
+      .get(route)
+      .set('Authorization', admin.token)
+      .query({
+        from: day.add({ days: 8 }).toString(),
+        to: day.add({ days: 8 }).toString(),
+      })
+      .expect(200)
+  ).body
+  assert.deepEqual(
+    after.affectedAppointments.map((a: { id: string }) => a.id),
+    [booked.id],
+  )
+})
+
+test('BE-021: falha de auditoria reverte consulta, reserva, histórico, comando e outbox', async () => {
+  const p = await patient()
+  await ctx.db.$executeRawUnsafe(
+    `CREATE FUNCTION test_reject_booking_audit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW."action"='appointment.confirmed' THEN RAISE EXCEPTION 'test audit failure'; END IF; RETURN NEW; END; $$`,
+  )
+  await ctx.db.$executeRawUnsafe(
+    `CREATE TRIGGER test_reject_booking_audit BEFORE INSERT ON "AuditEvent" FOR EACH ROW EXECUTE FUNCTION test_reject_booking_audit()`,
+  )
+  try {
+    await book(p.token, input(p.patientId, 9)).expect(500)
+    assert.equal(
+      await ctx.db.appointment.count({ where: { patientId: p.patientId } }),
+      0,
+    )
+    assert.equal(
+      await ctx.db.slotReservation.count({
+        where: { professionalId, startsAt: new Date(at(9, '08:00')) },
+      }),
+      0,
+    )
+    assert.equal(
+      await ctx.db.notification.count({ where: { patientId: p.patientId } }),
+      0,
+    )
+    assert.equal(
+      await ctx.db.bookingCommand.count({ where: { actorId: p.user.id } }),
+      0,
+    )
+    assert.equal(
+      await ctx.db.appointmentHistory.count({
+        where: { actorUserId: p.user.id },
+      }),
+      0,
+    )
+  } finally {
+    await ctx.db.$executeRawUnsafe(
+      `DROP TRIGGER test_reject_booking_audit ON "AuditEvent"`,
+    )
+    await ctx.db.$executeRawUnsafe(`DROP FUNCTION test_reject_booking_audit()`)
+  }
 })

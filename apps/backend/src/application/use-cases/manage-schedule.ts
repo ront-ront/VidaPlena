@@ -100,9 +100,13 @@ export class ManageSchedule {
             new Date(b.startsAt) < window.endsAt &&
             new Date(b.endsAt) > window.startsAt,
         ),
-        affectedAppointments: impacts.map(
-          ({ emergencyOnly: _, ...impact }) => impact,
-        ),
+        affectedAppointments: impacts
+          .filter(
+            (i) =>
+              new Date(i.startsAt) < window.endsAt &&
+              new Date(i.endsAt) > window.startsAt,
+          )
+          .map(({ emergencyOnly: _, ...impact }) => impact),
       }
     })
   }
@@ -140,6 +144,12 @@ export class ManageSchedule {
         })
       const version = expectedVersion + 1
       await tx.publish(id, version, input, this.timeZone, actor.userId)
+      if (impacts.length)
+        await tx.notifyImpacts(
+          impacts.map((i) => i.id),
+          version,
+          context.requestId,
+        )
       await tx.audit.append({
         ...context,
         actorUserId: actor.userId,
