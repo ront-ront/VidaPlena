@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M1 Agenda
-- **Status:** pendente
+- **Status:** implementação parcial; impactos e cobertura complementar pendentes
 - **Depende de:** BE-010, BE-011, BE-020, BE-006
 - **Requisitos cobertos:** RF-007, RN-001, RN-002, RN-003, RN-006
 
@@ -37,3 +37,7 @@ Consentimento/representação, suspensão, duplicidade, modalidades, sala auto/t
 
 ## 8. Suposições e pontos em aberto
 Critério de desempate entre salas é decisão técnica documentada pelo implementador, sem prioridade clínica presumida. P-01 regula representação/consentimento em produção.
+
+## Evidência parcial — 05/11/2026
+
+Migration `202611050021_appointments`, endpoint de confirmação e unidade de trabalho persistem consulta, reserva, histórico, comando idempotente, auditoria e outbox. Três testes HTTP/PostgreSQL passaram com duração congelada, falha posterior do canal, consentimento/sujeito alheio, suspensão, duplicidade, remoto e concorrência sem parcial. Lint aprovado. Guardas de impacto de catálogo/salas/grade e avisos emergenciais ainda não estão ligados às consultas; representação e demais critérios precisam de testes complementares. Cinco fixtures diretas de BE-020 precisam acompanhar a FK e as constraints novas. Esta evidência não conclui BE-021 nem M1.

@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M1 Agenda
-- **Status:** pendente
+- **Status:** base implementada localmente; impacto e recusa de reserva aguardam BE-020/021/022/023
 - **Depende de:** BE-005, BE-016
 - **Requisitos cobertos:** RF-007, RF-008, RN-001
 
@@ -22,8 +22,8 @@ Ler `specs/shared/data-model.md#m1`, `specs/shared/api-contracts.md#m1`, `specs/
 - `GET /v1/rooms` é leitura operacional; paciente não escolhe sala e profissional não troca sala.
 
 ## 5. Critérios de aceite
-- [ ] Dado gestor/admin, quando criar sala ativa, então ela entra no conjunto de salas elegíveis; outro perfil recebe 403 para mutação.
-- [ ] Dado nome duplicado ativo, quando criar/renomear, então 409 sem duplicação.
+- [x] Dado gestor/admin, quando criar sala ativa, então ela entra no conjunto de salas elegíveis; outro perfil recebe 403 para mutação.
+- [x] Dado nome duplicado ativo, quando criar/renomear, então 409 sem duplicação.
 - [ ] Dada sala com consulta futura, quando inativar sem decisão, então 409 com impacto e reserva permanece; após resolução explícita, sala fica inativa e histórico preservado.
 - [ ] Dada sala inativa, quando tentar nova reserva presencial nela, então a confirmação é recusada.
 
@@ -36,3 +36,7 @@ CRUD sem DELETE, unicidade, RBAC, FK histórica, inativação com impacto e audi
 
 ## 8. Suposições e pontos em aberto
 Resolução operacional da consulta afetada ocorre via BE-022/023; esta spec apenas exige a decisão e impede a inativação destrutiva até a operação existir.
+
+## Evidência local — 04/11/2026
+
+Migration `202611040017_rooms`, capacidade 1 protegida por CHECK, índice único parcial por nome ativo normalizado, DELETE bloqueado, CRUD sem DELETE com versão e auditoria. A suíte de catálogo passou 3/3 testes HTTP/PostgreSQL, incluindo concorrência de nomes, RBAC, reativação conflitante, capacidade e histórico preservado; lint aprovado em 128 arquivos. A porta de impacto será ligada a `Appointment` em BE-021, quando haverá evidência real de inativação com consulta futura e recusa de reserva em sala inativa.

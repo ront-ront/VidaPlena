@@ -152,3 +152,16 @@ A cobertura documental está completa. Ao implementar, atualizar por requisito s
 | FE-008 | RF-004/RF-005/RNF-016 parcial | Histórico/pedido e reaceite de termo novo no browser/backend; contato, revogação e confirmação em browser com API simulada; auth/consent PostgreSQL, 360 px, lint/build | Revisão manual com leitor de tela e P-01 pendentes |
 | FE-009 | RF-029/RNF-012 parcial | Listagem e convite/ativação real no browser/backend; papéis, DPO, conflito e gestor em browser com API simulada; AccessStore PostgreSQL, 360 px, lint/build | Revisão manual com leitor de tela e P-08 pendentes |
 | FE-039 | RF-001/RF-004 parcial | Menor/guardião/termo/upload/recibo no browser/backend, CPF e arquivo inválido em mock, PostgreSQL 2/2, 360 px, lint/build | Revisão manual com leitor de tela e P-01 pendentes |
+
+## Cobertura implementada de M1
+
+| Spec | Requisitos | Evidência | Limite |
+| --- | --- | --- | --- |
+| BE-016 | RF-028/RN-002 parcial | Catálogo versionado, conselho único, modalidade efetiva, RBAC/auditoria, projeção pública, migration; HTTP/PostgreSQL 2/2 e lint | Preservação da duração e impacto de inativação em consulta futura aguardam BE-021/022/023 |
+| BE-017 | RF-007/RF-008/RN-001 parcial | Salas versionadas, capacidade 1, nome ativo único, DELETE bloqueado, RBAC/auditoria; suíte de catálogo HTTP/PostgreSQL 3/3 e lint | Impacto de consulta e reserva em sala inativa aguardam BE-020/021/022/023 |
+| BE-018 | RF-011/RN-002 parcial | Snapshots/grade/bloqueios imutáveis, versão concorrente, RBAC próprio, negativa auditada, Temporal/fuso/DST; 4/4 integrações catálogo/grade, 2/2 regras e lint | Retirada de slots em BE-019; impacto/avisos de consultas aguardam BE-021/023/025 |
+| BE-019 | RF-006/RN-003/RNF-009 parcial | Disponibilidade por duração/modalidade, grade/bloqueios/salas, antecedência e próxima data verificada; suíte M1 10/10 e lint | Ocupação persistida BE-020/021 e carga formal BE-051 pendentes |
+| BE-020 | RF-008/RN-001/RNF-010 parcial | Exclusões GiST por profissional/sala, idempotência, hold/expiração e troca/rollback; testes isolados anteriores passaram e corrida HTTP BE-021 passou | Após integrar a FK BE-021, cinco fixtures de reserva falham e precisam de atualização; encaixe BE-024 e carga BE-051 pendentes |
+| BE-021 | RF-007/RN-001/RN-002/RN-003/RN-006 parcial | Confirmação transacional, idempotência, duração congelada, consentimento, suspensão, duplicidade, remoto e outbox; 3/3 testes HTTP/PostgreSQL e lint | Guardas de impacto de catálogo/salas/grade e avisos emergenciais ainda sem integração; demais critérios e regressão completa pendentes |
+
+**Verificação integrada em 05/11/2026:** suíte selecionada de M1 com 13/18 aprovações e cinco falhas em fixtures de BE-020 incompatíveis com a nova FK de consultas. Lint do monorepo aprovado; M1 permanece parcial. Detalhes em `_work/07-m1-implementation-progress.md`.

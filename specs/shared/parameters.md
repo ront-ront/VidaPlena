@@ -35,6 +35,13 @@ Todos os defaults deste quadro foram autorizados como **provisórios e aguardand
 
 | Chave | Default provisório | Origem | Quem decide / observação |
 | --- | --- | --- | --- |
+| `clinic.time_zone` | `America/Fortaleza` | RF-011, P-23 | Clínica; padrão técnico local, aguardando confirmação da localização |
+| `schedule.max_window_days` | 93 | RF-006/011, P-23 | Equipe técnica; limite de janela, aguardando medição |
+| `availability.max_window_days` | 31 | RF-006, P-24 | Equipe técnica; limite de consulta, aguardando medição |
+| `availability.lookahead_days` | 30 | RF-006, P-24 | Equipe técnica; busca posterior verificada, aguardando medição |
+| `reservation.transaction_timeout_ms` | 10000 | RF-008/BE-020 | Equipe técnica; timeout da unidade de trabalho, aguardando BE-051 |
+| `reservation.transaction_max_wait_ms` | 5000 | RF-008/BE-020 | Equipe técnica; espera por conexão, aguardando BE-051 |
+| `reservation.transaction_retry_attempts` | 3 | RF-008/BE-020, P-25 | Equipe técnica; deadlock/serialização, aguardando BE-051 |
 | `waitlist.offer_ttl_minutes` | 30 | RF-012 | Clínica/gestor; oferta passa ao próximo |
 | `reminder.schedule_hours_before` | `[24, 2]` | RF-013, RN-005 | Clínica/gestor; no máximo 2 envios; 2 h adição Q-16 |
 | `appointment.late_tolerance_minutes` | 15 | RF-014 | Clínica/gestor |

@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M1 Agenda
-- **Status:** pendente
+- **Status:** base implementada localmente; impacto e avisos de consultas aguardam BE-021/023/025
 - **Depende de:** BE-016, BE-004
 - **Requisitos cobertos:** RF-011, RN-002
 
@@ -22,10 +22,10 @@ Ler `specs/shared/data-model.md#m1`, `specs/shared/api-contracts.md#m1`, DRS §3
 - Se uma alteração afetar consultas confirmadas, `SCHEDULE_IMPACT_REVIEW` exige resolução individual explícita; publicar versão só após consistência, preservando versões/auditoria.
 
 ## 5. Critérios de aceite
-- [ ] Dadas faixas sobrepostas ou invertidas, quando publicar, então 400/409 e versão anterior permanece.
+- [x] Dadas faixas sobrepostas ou invertidas, quando publicar, então 400/409 e versão anterior permanece.
 - [ ] Dada grade com consulta confirmada afetada, quando remover faixa sem decisão, então 409 mostra consultas autorizadas e nenhuma reserva é perdida.
 - [ ] Dado bloqueio de férias, quando consultar disponibilidade futura, então slots cobertos desaparecem sem alterar prontuários/agendamentos passados.
-- [ ] Dado profissional tentando grade alheia, quando chamar API, então 403 e evento de negativa auditado.
+- [x] Dado profissional tentando grade alheia, quando chamar API, então 403 e evento de negativa auditado.
 
 ## 6. Testes esperados
 Versão concorrente, fuso/DST quando aplicável, sobreposição, impacto e permissões, auditoria de publicação; lint.
@@ -36,3 +36,7 @@ Versão concorrente, fuso/DST quando aplicável, sobreposição, impacto e permi
 
 ## 8. Suposições e pontos em aberto
 Calendário concreto de feriados/localidade não foi fornecido; bloquear apenas datas informadas pela clínica, sem importar calendário externo presumido.
+
+## Evidência local — 04/11/2026
+
+Migration `202611040018_schedule` cria snapshots imutáveis, regras de vigência civil e bloqueios UTC; GET/PUT autenticados e auditados usam versão otimista, propriedade da grade e schemas únicos Zod/OpenAPI. `@js-temporal/polyfill` 0.5.1 converte fuso, incluindo recusa de DST ambíguo/inexistente; configuração Zod e P-23 registram os parâmetros. Suíte de catálogo/grade: 4/4 integrações PostgreSQL e 2/2 testes de regra/fuso; lint aprovado em 135 arquivos. Retirada efetiva de slots por bloqueio será verificada em BE-019, e impactos/avisos de consultas existentes serão ligados em BE-021/023/025.

@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M1 Agenda
-- **Status:** pendente
+- **Status:** base implementada localmente; ocupação persistida aguarda BE-020/021 e desempenho BE-051
 - **Depende de:** BE-017, BE-018
 - **Requisitos cobertos:** RF-006, RN-003, RNF-009
 
@@ -23,8 +23,8 @@ Ler `specs/shared/api-contracts.md#m1`, `specs/shared/data-model.md#m1`, `specs/
 
 ## 5. Critérios de aceite
 - [ ] Dado slot ocupado, bloqueado ou sala indisponível, quando buscar, então ele não aparece para marcação presencial.
-- [ ] Dado paciente e início antes da antecedência RN-003, quando buscar, então não aparece; recepção tem fluxo operacional próprio.
-- [ ] Dada especialidade sem horários, quando buscar, então `days` vazio e `nearestAvailableAt` só aparece se houver opção posterior verificada.
+- [x] Dado paciente e início antes da antecedência RN-003, quando buscar, então não aparece; recepção tem fluxo operacional próprio.
+- [x] Dada especialidade sem horários, quando buscar, então `days` vazio e `nearestAvailableAt` só aparece se houver opção posterior verificada.
 - [ ] Dada massa/carga de `shared/performance-scenario.md`, quando medir p95, então a consulta atende `perf.availability_p95_ms`; resultado real fica pendente até BE-051.
 
 ## 6. Testes esperados
@@ -36,3 +36,7 @@ Intervalos adjacentes, bloqueios, modalidades, sala, antecedência, datas/fuso, 
 
 ## 8. Suposições e pontos em aberto
 Limite máximo da janela de busca é escolha técnica para proteger carga; documentar valor no contrato antes da implementação, sem tratá-lo como política clínica.
+
+## Evidência local — 04/11/2026
+
+Endpoint sem cache, leitura consistente de catálogo/grade/bloqueios/salas, geração por duração e modalidade, antecedência do portal, janela parametrizada e próxima data verificada. P-24 registra passo e limites técnicos. Suíte de 10/10: 5 integrações HTTP/PostgreSQL de catálogo/grade/disponibilidade, 3 regras de disponibilidade e 2 regras de grade/fuso; lint em 141 arquivos. Ocupação foi testada por porta explícita, mas a leitura de `SlotReservation` será integrada na BE-020 antes de alegar cobertura completa de conflito. Meta `perf.availability_p95_ms` segue pendente BE-051.
