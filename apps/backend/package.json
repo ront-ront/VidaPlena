@@ -24,6 +24,7 @@
     "backup:files": "tsx ops/backup/file-snapshots.ts"
   },
   "dependencies": {
+    "@js-temporal/polyfill": "^0.5.1",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "@prometheus-io/client": "^0.16.1",

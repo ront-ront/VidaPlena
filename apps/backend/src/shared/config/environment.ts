@@ -30,6 +30,22 @@ export const environmentSchema = z
     DATA_REGION_COUNTRY: requiredText.optional(),
     HOST: requiredText.default('127.0.0.1'),
     PORT: integer(3333, 1, 65535),
+    CLINIC_TIME_ZONE: requiredText
+      .refine((value) => {
+        try {
+          new Intl.DateTimeFormat('pt-BR', { timeZone: value })
+          return value.includes('/') || value === 'UTC'
+        } catch {
+          return false
+        }
+      })
+      .default('America/Fortaleza'),
+    SCHEDULE_MAX_WINDOW_DAYS: integer(93, 1, 366),
+    AVAILABILITY_MAX_WINDOW_DAYS: integer(31, 1, 93),
+    AVAILABILITY_LOOKAHEAD_DAYS: integer(30, 0, 93),
+    RESERVATION_TX_TIMEOUT_MS: integer(10000, 1000, 60000),
+    RESERVATION_TX_MAX_WAIT_MS: integer(5000, 100, 30000),
+    RESERVATION_TX_RETRY_ATTEMPTS: integer(3, 1, 10),
     AUTH_PASSWORD_MIN_LENGTH: integer(10, 1, 72),
     AUTH_PASSWORD_COMMON_LIST_ENABLED: z
       .enum(['true', 'false'])
@@ -129,6 +145,13 @@ export const environmentSchema = z
       environmentId: env.ENVIRONMENT_ID ?? `${env.APP_ENV}-local`,
       host: env.HOST,
       port: env.PORT,
+      clinicTimeZone: env.CLINIC_TIME_ZONE,
+      scheduleMaxWindowDays: env.SCHEDULE_MAX_WINDOW_DAYS,
+      availabilityMaxWindowDays: env.AVAILABILITY_MAX_WINDOW_DAYS,
+      availabilityLookaheadDays: env.AVAILABILITY_LOOKAHEAD_DAYS,
+      reservationTxTimeoutMs: env.RESERVATION_TX_TIMEOUT_MS,
+      reservationTxMaxWaitMs: env.RESERVATION_TX_MAX_WAIT_MS,
+      reservationTxRetryAttempts: env.RESERVATION_TX_RETRY_ATTEMPTS,
       passwordMinLength: env.AUTH_PASSWORD_MIN_LENGTH,
       passwordCommonListEnabled: env.AUTH_PASSWORD_COMMON_LIST_ENABLED,
       bcryptRounds: env.AUTH_BCRYPT_ROUNDS,
