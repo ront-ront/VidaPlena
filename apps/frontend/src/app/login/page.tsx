@@ -12,6 +12,7 @@ import {
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { QRCodeSVG } from 'qrcode.react'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/components/auth-provider'
 import { Button } from '@/components/ui/button'
@@ -230,11 +231,29 @@ export default function LoginPage() {
                       <li>
                         Abra um aplicativo autenticador compatível com TOTP.
                       </li>
-                      <li>Adicione uma conta e informe a chave abaixo.</li>
+                      <li>
+                        Adicione uma conta escaneando o QR code ou informe a
+                        chave manual abaixo.
+                      </li>
                       <li>
                         Use o código exibido pelo aplicativo para confirmar.
                       </li>
                     </ol>
+                    <div className="mt-4 flex justify-center">
+                      <QRCodeSVG
+                        aria-label="QR code para configurar o autenticador"
+                        className="h-auto max-w-full rounded-lg"
+                        level="M"
+                        marginSize={4}
+                        role="img"
+                        size={200}
+                        title="Escaneie com seu aplicativo autenticador"
+                        value={enrollment.otpauthUri}
+                      />
+                    </div>
+                    <p className="mt-4 font-semibold">
+                      Ou copie a chave para configurar manualmente:
+                    </p>
                     <code className="mt-3 block break-all rounded-lg bg-card px-3 py-2 font-mono text-base tracking-wider text-card-foreground">
                       {enrollment.secret}
                     </code>
