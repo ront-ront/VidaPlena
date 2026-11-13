@@ -7,6 +7,7 @@ import type {
   NotificationMessage,
   NotificationStore,
 } from '../../../application/ports/notifications'
+import { renderReminderContent } from '../../../application/ports/reminder-content'
 import type { SecretBox } from '../../../application/ports/secret-box'
 import {
   defaultNotificationPreferences,
@@ -15,12 +16,15 @@ import {
   safeNotificationText,
 } from '../../../domain/rules/notifications'
 import type { Prisma, PrismaClient } from '../../../generated/prisma/client'
+import { readBookingRestriction } from './absence-policy'
 import { PrismaAuditWriter } from './audit-writer'
 import { dataConsentState, userDataConsentState } from './consent-state'
+import { lockAppointmentDelivery } from './reminder-planning'
 
 export type NotificationConsentCheck = (
   tx: Prisma.TransactionClient,
   message: NotificationMessage,
+  now?: Date,
 ) => Promise<boolean>
 
 // BE-011 replaces this gate with current consent reads, under the same recipient lock.
@@ -50,7 +54,29 @@ export const internalIdentityNotificationsOnly: NotificationConsentCheck =
 export const consentAwareNotificationCheck: NotificationConsentCheck = async (
   tx,
   message,
+  now = new Date(),
 ) => {
+  if (message.templateKey === 'patient.auto_booking_suspended') {
+    if (!message.patientId || message.aggregateId !== message.patientId)
+      return false
+    const patient = await tx.patientProfile.findUnique({
+      where: { id: message.patientId },
+    })
+    return (
+      !!patient &&
+      patient.autoBookingPolicyVersion === message.aggregateVersion &&
+      (await dataConsentState(tx, patient.id, now)) !== 'revoked' &&
+      !!(await readBookingRestriction(tx, patient.id, now)).suspendedUntil &&
+      !!(await tx.userRoleAssignment.findFirst({
+        where: {
+          userId: message.userId,
+          roleCode: 'receptionist',
+          revokedAt: null,
+        },
+        select: { id: true },
+      }))
+    )
+  }
   if (await internalIdentityNotificationsOnly(tx, message)) return true
   if (message.templateKey === 'waitlist.offered') {
     // Serialize delivery with offer acceptance/withdrawal until this transaction commits.
@@ -86,7 +112,7 @@ export const consentAwareNotificationCheck: NotificationConsentCheck = async (
     })
     if (
       offer?.status !== 'active' ||
-      offer.expiresAt <= new Date() ||
+      offer.expiresAt <= now ||
       offer.entry.status !== 'offered' ||
       offer.reservation.state !== 'held' ||
       offer.entry.patientId !== message.patientId ||
@@ -140,7 +166,7 @@ export const consentAwareNotificationCheck: NotificationConsentCheck = async (
       appointment.status !== 'confirmed'
     )
       return false
-    if ((await dataConsentState(tx, appointment.patientId)) !== 'active')
+    if ((await dataConsentState(tx, appointment.patientId, now)) !== 'active')
       return false
     if (appointment.professional.userId === message.userId)
       return !!(await tx.userRoleAssignment.findFirst({
@@ -191,11 +217,11 @@ export const consentAwareNotificationCheck: NotificationConsentCheck = async (
     select: { id: true },
   })
   if (!patientRole) return false
-  if ((await userDataConsentState(tx, message.userId)) !== 'active')
+  if ((await userDataConsentState(tx, message.userId, now)) !== 'active')
     return false
   return (
     !message.patientId ||
-    (await dataConsentState(tx, message.patientId)) === 'active'
+    (await dataConsentState(tx, message.patientId, now)) === 'active'
   )
 }
 
@@ -240,9 +266,16 @@ export class PrismaNotificationStore implements NotificationStore {
         await tx.$executeRaw`SELECT pg_advisory_xact_lock_shared(775001)`
         const owner = await tx.notification.findUnique({
           where: { id },
-          select: { userId: true },
+          select: { userId: true, aggregateId: true, templateKey: true },
         })
         if (!owner) return
+        if (owner.templateKey.startsWith('appointment.') && owner.aggregateId)
+          await lockAppointmentDelivery(tx, owner.aggregateId)
+        if (
+          owner.templateKey === 'patient.auto_booking_suspended' &&
+          owner.aggregateId
+        )
+          await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${owner.aggregateId},662021))`
         await lockNotificationRecipient(tx, owner.userId)
         const row = await tx.notification.findUniqueOrThrow({
           where: { id },
@@ -284,9 +317,34 @@ export class PrismaNotificationStore implements NotificationStore {
               ? !!this.destinationSecrets
               : !!row.user.email) &&
             (identity || !!row.user.emailVerifiedAt),
-          isAllowed: async () =>
-            row.user.status !== 'inactive' &&
-            (await this.consentCheck(tx, message)),
+          isAllowed: async () => {
+            if (row.templateKey === 'appointment.reminder') {
+              if (!row.reminderJobId) return false
+              const job = await tx.reminderJob.findUnique({
+                where: { id: row.reminderJobId },
+                include: { appointment: true },
+              })
+              if (
+                !job ||
+                !['enqueued', 'completed'].includes(job.status) ||
+                job.appointmentId !== row.aggregateId ||
+                job.appointmentVersion !== message.aggregateVersion ||
+                job.appointment.startsAt <= now ||
+                (!job.firstSuccessfulAt &&
+                  (await tx.reminderJob.count({
+                    where: {
+                      appointmentId: job.appointmentId,
+                      firstSuccessfulAt: { not: null },
+                    },
+                  })) >= 2)
+              )
+                return false
+            }
+            return (
+              row.user.status !== 'inactive' &&
+              (await this.consentCheck(tx, message, now))
+            )
+          },
           save: async (result) => {
             await tx.notification.update({
               where: { id },
@@ -297,11 +355,14 @@ export class PrismaNotificationStore implements NotificationStore {
                   nonEssentialOptOut:
                     result.preferenceSnapshot.nonEssentialOptOut,
                 },
-                payloadEncrypted: ['sent', 'suppressed', 'failed'].includes(
-                  result.deliveryStatus,
-                )
-                  ? null
-                  : row.payloadEncrypted,
+                payloadEncrypted:
+                  result.deliveryStatus === 'sent' && row.reminderJobId
+                    ? row.payloadEncrypted
+                    : ['sent', 'suppressed', 'failed'].includes(
+                          result.deliveryStatus,
+                        )
+                      ? null
+                      : row.payloadEncrypted,
                 destinationEncrypted: ['sent', 'suppressed', 'failed'].includes(
                   result.deliveryStatus,
                 )
@@ -309,6 +370,44 @@ export class PrismaNotificationStore implements NotificationStore {
                   : row.destinationEncrypted,
               },
             })
+            if (row.reminderJobId) {
+              const job = await tx.reminderJob.findUniqueOrThrow({
+                where: { id: row.reminderJobId },
+              })
+              if (result.deliveryStatus === 'sent' && !job.firstSuccessfulAt) {
+                await tx.reminderJob.update({
+                  where: { id: job.id },
+                  data: {
+                    firstSuccessfulAt: result.sentAt ?? now,
+                    status: 'completed',
+                  },
+                })
+              } else if (
+                result.deliveryStatus !== 'retry' &&
+                !job.firstSuccessfulAt &&
+                !(await tx.notification.count({
+                  where: {
+                    reminderJobId: job.id,
+                    deliveryStatus: { in: ['queued', 'retry'] },
+                  },
+                }))
+              ) {
+                await tx.reminderJob.update({
+                  where: { id: job.id },
+                  data: {
+                    status:
+                      result.deliveryStatus === 'failed'
+                        ? 'failed'
+                        : 'suppressed',
+                  },
+                })
+              }
+              if (result.needsReceptionAttention)
+                await tx.appointment.update({
+                  where: { id: job.appointmentId },
+                  data: { notificationAttention: true },
+                })
+            }
           },
           audit: new PrismaAuditWriter(tx),
         })
@@ -356,37 +455,58 @@ export class PrismaNotificationStore implements NotificationStore {
   }
 
   async list(userId: string, cursor?: string) {
-    if (
-      cursor &&
-      !(await this.db.notification.findFirst({
-        where: { id: cursor, userId },
-        select: { id: true },
-      }))
-    )
-      throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
-    const rows = await this.db.notification.findMany({
-      where: { userId, deliveryStatus: 'sent' },
-      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-      orderBy: { id: 'asc' },
-      take: 51,
-      select: {
-        id: true,
-        category: true,
-        channel: true,
-        sentAt: true,
-        deliveryStatus: true,
-        templateKey: true,
-      },
+    return this.db.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock_shared(775001)`
+      await lockNotificationRecipient(tx, userId)
+      if (
+        cursor &&
+        !(await tx.notification.findFirst({
+          where: { id: cursor, userId },
+          select: { id: true },
+        }))
+      )
+        throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
+      const rows = await tx.notification.findMany({
+        where: { userId, deliveryStatus: 'sent' },
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+        orderBy: { id: 'asc' },
+        take: 51,
+      })
+      const items = []
+      for (const row of rows.slice(0, 50)) {
+        let text = safeNotificationText(
+          row.templateKey as NotificationMessage['templateKey'],
+        )
+        if (
+          row.reminderJobId &&
+          row.payloadEncrypted &&
+          this.destinationSecrets &&
+          (await this.consentCheck(tx, {
+            ...row,
+            aggregateVersion:
+              row.aggregateVersion == null
+                ? null
+                : Number(row.aggregateVersion),
+          } as NotificationMessage))
+        ) {
+          text = renderReminderContent(
+            this.destinationSecrets.open(
+              row.payloadEncrypted,
+              `notification:${userId}:${row.templateKey}`,
+            ),
+          )
+        }
+        items.push({
+          id: row.id,
+          category: row.category,
+          channel: row.channel,
+          sentAt: row.sentAt,
+          deliveryStatus: row.deliveryStatus,
+          text,
+        })
+      }
+      return { items, nextCursor: rows.length > 50 ? rows[49].id : null }
     })
-    return {
-      items: rows.slice(0, 50).map(({ templateKey, ...row }) => ({
-        ...row,
-        text: safeNotificationText(
-          templateKey as NotificationMessage['templateKey'],
-        ),
-      })),
-      nextCursor: rows.length > 50 ? rows[49].id : null,
-    }
   }
 
   async attention(cursor?: string) {
@@ -439,6 +559,7 @@ export async function enqueueNotification(
       templateKey: input.type,
       aggregateId: input.aggregateId,
       aggregateVersion: BigInt(input.version),
+      reminderJobId: input.reminderJobId,
       category: notificationCategory(input.type),
       payloadEncrypted: encrypted,
       destinationEncrypted,

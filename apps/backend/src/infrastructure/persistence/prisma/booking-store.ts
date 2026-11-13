@@ -7,13 +7,19 @@ import type {
 import { appointmentSummary } from '../../../application/ports/booking'
 import type {
   Appointment,
+  AttendanceResponse,
   Prisma,
   PrismaClient,
 } from '../../../generated/prisma/client'
+import { readBookingRestriction } from './absence-policy'
 import { readPrincipal } from './access-store'
 import { enqueueAppointmentNotification } from './appointment-notifications'
 import { PrismaAuditWriter } from './audit-writer'
 import { dataConsentState } from './consent-state'
+import {
+  lockAppointmentDelivery,
+  planAppointmentReminders,
+} from './reminder-planning'
 import {
   isExclusionConflict,
   isReservationRetryConflict,
@@ -21,10 +27,21 @@ import {
 } from './reservation-store'
 import { readCurrentSchedule } from './schedule-snapshot'
 
-export const appointmentRecord = (row: Appointment): AppointmentRecord => ({
+export const appointmentRecord = (
+  row: Appointment & { attendanceResponses?: AttendanceResponse[] },
+): AppointmentRecord => ({
   ...row,
   visitType: row.visitType as AppointmentRecord['visitType'],
   bookingSource: row.bookingSource as AppointmentRecord['bookingSource'],
+  attendanceResponse:
+    row.attendanceResponses?.[0]?.appointmentVersion === row.version
+      ? {
+          response: row.attendanceResponses[0].response as
+            | 'confirm'
+            | 'cannot_attend',
+          respondedAt: row.attendanceResponses[0].occurredAt,
+        }
+      : null,
 })
 export type BookingPersistencePolicy = {
   maxWaitMs: number
@@ -32,12 +49,22 @@ export type BookingPersistencePolicy = {
   retryAttempts: number
   internalMinutes: number
   patientMinutes: number
+  reminderScheduleHours: number[]
 }
 export function bookingTransaction(
   tx: Prisma.TransactionClient,
   policy: BookingPersistencePolicy,
 ): BookingTransaction {
   return {
+    checkIn: (id, version) =>
+      tx.checkIn.findUnique({
+        where: {
+          appointmentId_appointmentVersion: {
+            appointmentId: id,
+            appointmentVersion: version,
+          },
+        },
+      }),
     lock: async (key, patientId) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`booking:${key}`},662021))`
       await tx.$executeRaw`SELECT pg_advisory_xact_lock_shared(775001)`
@@ -64,7 +91,8 @@ export function bookingTransaction(
             active: row.status === 'active',
             owned: row.userId === actor.userId || row.guardians.length > 0,
             consentState: await dataConsentState(tx, id, now),
-            suspendedUntil: row.autoBookingSuspendedUntil,
+            suspendedUntil: (await readBookingRestriction(tx, id, now))
+              .suspendedUntil,
           }
         : null
     },
@@ -125,7 +153,12 @@ export function bookingTransaction(
       })
     },
     appointment: async (id) => {
-      const row = await tx.appointment.findUnique({ where: { id } })
+      const row = await tx.appointment.findUnique({
+        where: { id },
+        include: {
+          attendanceResponses: { orderBy: { sequence: 'desc' }, take: 1 },
+        },
+      })
       return row ? appointmentRecord(row) : null
     },
     duplicateAppointments: (patientId, specialtyId, now, exceptId) =>
@@ -140,15 +173,38 @@ export function bookingTransaction(
         select: { id: true, startsAt: true },
         orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
       }),
-    create: async (input) =>
-      appointmentRecord(await tx.appointment.create({ data: input })),
-    update: async (id, version, input) =>
-      appointmentRecord(
-        await tx.appointment.update({
-          where: { id, version },
-          data: { ...input, version: { increment: 1 } },
-        }),
-      ),
+    create: async (input) => {
+      const row = await tx.appointment.create({ data: input })
+      await planAppointmentReminders(tx, row, policy.reminderScheduleHours)
+      return appointmentRecord(row)
+    },
+    update: async (id, version, input) => {
+      await lockAppointmentDelivery(tx, id)
+      const row = await tx.appointment.update({
+        where: { id, version },
+        data: { ...input, version: { increment: 1 } },
+      })
+      await planAppointmentReminders(tx, row, policy.reminderScheduleHours)
+      return appointmentRecord(row)
+    },
+    attendanceResponse: async (row, actor, response, now) => {
+      const previous = await tx.attendanceResponse.findFirst({
+        where: { appointmentId: row.id, appointmentVersion: row.version },
+        orderBy: { sequence: 'desc' },
+      })
+      if (previous?.response === response)
+        return { respondedAt: previous.occurredAt, created: false }
+      await tx.attendanceResponse.create({
+        data: {
+          appointmentId: row.id,
+          appointmentVersion: row.version,
+          actorUserId: actor.userId,
+          response,
+          occurredAt: now,
+        },
+      })
+      return { respondedAt: now, created: true }
+    },
     confirmedReservation: (appointmentId) =>
       tx.slotReservation.findFirst({
         where: { appointmentId, state: 'confirmed' },
@@ -175,6 +231,7 @@ export function bookingTransaction(
       })
     },
     invalidateNotifications: async (appointmentId) => {
+      await lockAppointmentDelivery(tx, appointmentId)
       await tx.notification.updateMany({
         where: {
           aggregateId: appointmentId,
@@ -248,6 +305,9 @@ export function bookingTransaction(
         },
         orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
         take: 31,
+        include: {
+          attendanceResponses: { orderBy: { sequence: 'desc' }, take: 1 },
+        },
       })
       return {
         items: rows.slice(0, 30).map(appointmentRecord),

@@ -11,11 +11,11 @@ Objetivo autorizado em 04/11/2026: implementar integralmente M1 na ordem de `03-
 | BE-020 | Barreira integrada e testada | Cinco testes PostgreSQL passaram após adequar fixtures à FK, sem afrouxar constraints. Corrida HTTP, sala e rollback aprovados; encaixe BE-024 comprovado; carga BE-051 pendente. |
 | BE-021 | Implementada localmente | 9/9 testes HTTP/PostgreSQL: confirmação/idempotência/duração, consentimento/representação, sala/modalidade, concorrência, outbox, rollback e impactos administrativos. Autenticação/convite/confirmação 13/13 após correção BIGINT; lint. |
 | BE-022 | Implementada localmente | Reagendamento/listagem própria; 9/9 HTTP/PostgreSQL, com confirmação 18/18; origem clínica, limite RN-004/RN-003, corrida/rollback, transferência, representação e paginação. Planejamento de novos lembretes integra BE-025. |
-| BE-023 | Implementada localmente | Cancelamento, origem clínica, autorização, prazo, liberação e outbox de oportunidade; 9/9 testes, com reagendamento 18/18. Consumo da vaga BE-024 comprovado; jobs BE-025 pendentes. |
+| BE-023 | Implementada localmente | Cancelamento, origem clínica, autorização, prazo, liberação e outbox de oportunidade; 9/9 testes, com reagendamento 18/18. Consumo da vaga BE-024 comprovado; jobs BE-025 integrados. |
 | BE-024 | Implementada localmente | Fila/oferta/hold/aceite/worker/encaixe; 17/17 integrações pertinentes; regressão completa 78/78 integrações, 25/25 Node, 2/2 Vitest e lint. P-29 detalha decisões e integrações assistidas. |
-| BE-025 | Pendente | Lembretes |
-| BE-026 | Pendente | Check-in/fila |
-| BE-027 | Pendente | No-show/suspensão |
+| BE-025 | Implementada localmente | 14/14 específicas, regressão final 101/101, Node 25/25, Vitest 2/2 e lint. |
+| BE-026 | Implementada localmente | 9/9 específicas, paginação de 32 consultas, regressão final 101/101 e lint. |
+| BE-027 | Implementada localmente | 10/10 integrações específicas, calendário 1/1; regressão 111/111, Node 26/26, Vitest 2/2 e lint. |
 | BE-028 | Pendente | CSV de pacientes |
 | BE-029 | Pendente | CSV de agenda |
 | FE-010 | Pendente | Catálogo/salas |
@@ -32,7 +32,7 @@ Objetivo autorizado em 04/11/2026: implementar integralmente M1 na ordem de `03-
 
 ## Ambiente de verificação
 
-PostgreSQL 17 descartável `vp-m1-postgres-test`, publicado só em loopback na porta aleatória 32774; base `vidaplena_m1_test`. Os testes de catálogo criam, migram e removem uma base por arquivo. Nenhum dado real foi usado. Node 22.22.0 necessário para Prisma instalado. O container permanece ativo durante M1 e deve ser removido ao encerrar os ensaios.
+PostgreSQL 17 descartável `vp-m1-postgres-test`, publicado só em loopback na porta atual 32768 (anterior 32774 removida); base `vidaplena_m1_test`. Os testes de catálogo criam, migram e removem uma base por arquivo. Nenhum dado real foi usado. Node 22.22.0 necessário para Prisma instalado. O container permanece ativo durante M1 e deve ser removido ao encerrar os ensaios.
 
 ## Decisões e auditoria de conclusão
 
@@ -87,3 +87,45 @@ M1 ainda não concluído: faltam BE-025–029 e FE-010–020. Próxima spec: BE-
 - M0 já oferece outbox, retry, preferência/canal no envio, caixa dev e método `DispatchNotifications.deliver(id)`. Revalidar versão/status/consentimento antes do envio e impedir lembrete de horário antigo, inclusive sob corrida com alteração da consulta.
 - Não usar `payloadEncrypted` de lembrete como token de recuperação: hoje o dispatcher interpreta conteúdo cifrado como token. Payload de agenda deve ter contrato próprio, contendo apenas informações administrativas mínimas, sem dados clínicos; endereço real da clínica ainda não foi fornecido e precisa constar como pendência/parâmetro, nunca ser inventado.
 - Publicação de convite/reset e aviso de oferta não devem mudar. Novos jobs do CSV devem respeitar Q-19 (importação não dispara notificações). M3 não está autorizado como parte do M1; não simular sala/preparo de vídeo operacional.
+
+
+## Fechamento local BE-025 — 12/11/2026
+
+Jobs por consulta/versão/antecedência são persistidos junto à confirmação/remarcação; cancelamento invalida o planejamento. Reconciliação e worker retomam sem duplicação. Dispatcher revalida consentimento, preferências e destinatário, serializa alteração de consulta e preserva o teto de dois eventos bem-sucedidos por consulta mesmo após remarcações. Conteúdo administrativo cifrado é renderizado como mensagem, separado de tokens de identidade. Fallback/falha sinaliza atenção à recepção. Resposta `confirm/cannot_attend` preserva histórico append-only com sequência monotônica, não muda check-in nem libera reserva; cancelamento efetivo mantém a oportunidade de BE-024. Listagem própria retorna declaração da versão atual.
+
+**13/13 integrações específicas; regressão completa 91/91 integrações, 25/25 Node, 2/2 Vitest e lint backend em 180 arquivos aprovados; nenhum tsc.** Logs em `/tmp/vidaplena-be025-*.log`. Primeiro checkpoint 10/11 teve apenas expectativa 403 incompatível com a invalidação prévia de sessão (401) após revogação; corrigida e regressão refeita. Testes genéricos M0 do dispatcher usam aviso essencial sem simular lembrete desacoplado de consulta/job.
+
+Container antigo não existia na retomada. Novo PostgreSQL 17 descartável `vp-m1-postgres-test` está em `127.0.0.1:32768`, banco `vidaplena_m1_test`, trust local; URL `postgresql://postgres@127.0.0.1:32768/vidaplena_m1_test`. Base sem usuários foi recriada durante ajuste da migration ainda não commitada; todos os testes usam dados fictícios e bancos isolados. Node 22.22.0 é necessário. A pedido do usuário, **não criar commits**; ao terminar/atingir limite, gerar somente mensagem de commit sugerida. HEAD continua `0db50bd`.
+
+M1 permanece incompleto: faltam BE-026–029 e FE-010–020. Próxima spec BE-026; não iniciar M2.
+
+
+## BE-026 e revisão final do dispatcher — 12/11/2026
+
+Check-in presencial imutável por versão, status/histórico/reserva/auditoria/avisos transacionais, agenda administrativa paginada e fila própria estão implementados. **9/9 integrações específicas aprovadas**. Extensão P-31 permite apenas remarcação assistida justificada de espera do dia atual, preservando chegada anterior e criando novo ciclo `confirmed`. Não concede remarcação de espera pelo portal, reabertura de dia anterior ou acesso clínico. Spec BE-026 foi lida integralmente (38 linhas originais); DRS RF-014, modelo/contratos/parâmetro e política de acesso (45 linhas) conferidos do início ao fim.
+
+Checkpoint completo de **100/100 integrações, 25/25 Node, 2/2 Vitest e lint em 188 arquivos**. Revisão posterior encontrou dispatcher escolhendo e-mail mesmo sem adaptador ativo; corrigido para fallback portal/atenção e teste acrescido (agora 14 testes BE-025). A seleção explícita de e-mail para confirmar contato também passa a exigir consentimento permitido; teste real de paciente revogado cobre a exceção. Regressão final em andamento: `/tmp/vidaplena-be026-final-integration.log`, sessão exec `28297`. Não reiniciar sem consultar o handle/processo. Lint/Node/Vitest finais já passaram nos arquivos `-final-*`. Nenhum commit criado; HEAD `0db50bd`.
+
+M1 segue incompleto: faltam BE-027–029 e FE-010–020. BE-027 lida integralmente (38 linhas), ainda não implementada: registrar ausência manual após parâmetro, três injustificadas em 12 meses suspendem somente portal, correção auditada recalcula e virada de janela reverte suspensão. Antes de código, reler RN-006/DRS RF-015 e decidir no contrato a expiração derivada da janela, sem inventar suspensão fixa. Continuar uma spec por vez e sem commits; gerar mensagem de commit ao encerrar/atingir limite.
+
+
+## Fechamento verificado BE-025/026 — 12/11/2026
+
+A sessão `28297` terminou com exit 0: **101/101 integrações backend**, incluindo 14 de lembretes e 9 de check-in. Logs finais `/tmp/vidaplena-be026-final-integration.log`, `-unit.log` (25/25), `-vitest.log` (2/2), `-lint.log` (188 arquivos). Nenhum `tsc`; `git diff --check` aprovado. Os avisos intencionais de rollback em testes foram sanitizados; não são falhas da suíte. Esta evidência substitui os checkpoints de 91/100 e a revalidação pendente acima.
+
+BE-025 e BE-026 estão concluídas no escopo local; a revisão corrigiu canal desativado e a exceção de verificação de contato após revogação, com teste real. Matriz, ordem, specs e P-30/P-31 atualizados. **M1 não está concluído: faltam BE-027–029 e FE-010–020.** Próxima ação: BE-027 (38 linhas já lidas; reler DRS/RN-006/contratos antes de código). Não iniciar M2.
+
+**Não criar commits:** instrução mais recente do usuário. HEAD permanece `0db50bd`, índice vazio e alterações disponíveis no worktree. Mensagem sugerida ao encerrar deve cobrir lembretes/respostas/check-in/agenda e testes; não declarar M1 completo. PostgreSQL descartável continua ativo em `127.0.0.1:32768`; confirmar estado/porta na retomada. Não há processos de teste ativos após este fechamento.
+
+
+## Fechamento verificado BE-027 — 12/11/2026
+
+Implementados registro/correção de ausência, origem e revisões imutáveis, justificativa cifrada, conferência na agenda, encerramento de ocupação com reserva histórica preservada e política dinâmica RN-006. P-32 define deadline a partir do início por Q-16, expiração no aniversário de 12 meses no fuso, estado/cache e aviso dirigido à recepção. Não há marcação automática ou punição fixa; sem exclusão, cancelamento retroativo ou oferta de ausência. Portal/aceite da espera consultam fatos atuais; correção, expiração e papéis/consentimento são revalidados no envio de aviso. As duas fixtures anteriores de suspensão manual foram substituídas por fatos históricos consistentes de ausência; não preservar campo/cache como autoridade paralela.
+
+**10/10 integrações BE-027 e teste de calendário 1/1 aprovados; consumidores de confirmação/check-in/espera 35/35. Regressão final: 111/111 integrações backend, 26/26 Node, 2/2 Vitest, lint em 198 arquivos e `git diff --check` aprovados; nenhum tsc.** Sessão de regressão `19387` terminou exit 0. Logs `/tmp/vidaplena-be027-{full-integration,unit,vitest,lint,absence-final,consumers}.log`. Instalação local mantém Node 22.22.0 e PostgreSQL 17 descartável `vp-m1-postgres-test`, porta 32768, base `vidaplena_m1_test`; confirmar container/porta antes de usar. Nenhum teste ficou em execução no fechamento.
+
+Constituição (48 linhas), visão geral (47), ordem (145), matriz então com 185 e spec BE-027 original (38) lidas de início ao fim, além de RF-015/RN-006 e seções compartilhadas indicadas. `booking-store.ts` então com 378 linhas foi lido em blocos sequenciais até o fim. Fonte da janela permanece DRS; escolhas de borda estão identificadas em P-32 e aguardam clínica, sem presumir parecer jurídico P-01.
+
+**Próxima spec: BE-028**, lida integralmente (38 linhas); `shared/import-templates.md` tem 40 linhas e ainda precisa ser lido, junto aos contratos/modelo/decisão Q-19, antes de implementar. CSV é demonstrativo, preview não grava pacientes, confirmação revalida e importa linhas aptas, rejeita duplicidades de CPF, reimportação idempotente por chave externa; sem criar User/consentimento/notificações. BE-029 e FE-010–020 também permanecem pendentes. M1 não está concluído; não iniciar M2.
+
+Última instrução continua: **não criar commits**, apenas mensagem sugerida ao encerrar/atingir limite. HEAD segue `0db50bd`; mudanças acumuladas desde esse commit abrangem BE-025/026/027 e ficam no worktree. Não repetir verificações já concluídas sem nova mudança/falha; nenhuma execução de `tsc` autorizada.

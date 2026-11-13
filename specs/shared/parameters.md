@@ -139,3 +139,17 @@ Senhas aceitas têm no máximo 72 bytes UTF-8, limite do bcrypt; excedentes são
 | `auth.requests_per_minute` | 30 por origem | RNF-013, RF-002 | Equipe técnica; provisório |
 
 TOTP: seis dígitos, SHA-1, período de 30 s e tolerância de um passo, parâmetros interoperáveis do adaptador; passo já usado não é aceito novamente. Recuperação de dispositivo MFA perdido não autoriza bypass; procedimento operacional futuro precisa de definição explícita.
+
+## Planejamento de lembretes (BE-025)
+
+| Chave | Default provisório | Origem | Dono / estado |
+| --- | --- | --- | --- |
+| `reminder.poll_seconds` | 5 | RF-013, BE-025 | Equipe técnica; aguardando decisão |
+| `reminder.worker_batch_size` | 50 | RF-013, BE-025 | Equipe técnica; aguardando decisão |
+| `clinic.onsite_address` | Endereço a confirmar com a recepção | RF-013, P-30 | Clínica/gestor; aguardando decisão antes da operação real |
+
+`reminder.schedule_hours_before` usa `REMINDER_SCHEDULE_HOURS_BEFORE` (JSON de um ou dois números positivos distintos); demais chaves usam `REMINDER_POLL_SECONDS`, `REMINDER_WORKER_BATCH_SIZE` e `CLINIC_ONSITE_ADDRESS`. Instantes passados na criação da versão são registrados como `skipped`. Até dois eventos bem-sucedidos por consulta inteira, sem reiniciar a contagem ao remarcar; cada evento pode alcançar paciente e responsáveis elegíveis. Retry mantém a mesma chave e não cria novo evento. Mudança de configuração afeta novos planejamentos; não reescreve eventos históricos.
+
+`appointment.late_tolerance_minutes` usa `APPOINTMENT_LATE_TOLERANCE_MINUTES` (inteiro não negativo, validado com Zod). O registro de chegada preserva a tolerância vigente; alterar configuração não muda `lateFlag` histórico. Default Q-16 continua aguardando decisão clínica. Check-in não marca no-show automaticamente.
+
+`appointment.noshow_after_minutes` usa `APPOINTMENT_NOSHOW_AFTER_MINUTES`, default Q-16 provisório, inteiro não negativo. A contagem começa no início marcado (P-32). Limite de três ocorrências e janela de 12 meses são RN-006 do DRS, não parâmetros livres de punição; o instante exato de saída da janela respeita calendário/fuso registrado. Não há marcação automática nem suspensão fixa em dias.

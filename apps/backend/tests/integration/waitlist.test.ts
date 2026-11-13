@@ -14,6 +14,7 @@ import {
 } from '../../src/infrastructure/persistence/prisma/notification-store'
 import { PrismaWaitlistStore } from '../../src/infrastructure/persistence/prisma/waitlist-store'
 import { AesSecretBox } from '../../src/infrastructure/security/aes-secret-box'
+import { seedAbsenceFacts } from '../support/m1-absences'
 import { createBookingFixture } from '../support/m1-bookings'
 import { fictitiousCpf } from '../support/m1-database'
 
@@ -28,6 +29,7 @@ before(async () => {
     retryAttempts: ctx.config.reservationTxRetryAttempts,
     internalMinutes: ctx.config.internalIdleMinutes,
     patientMinutes: ctx.config.patientIdleMinutes,
+    reminderScheduleHours: ctx.config.reminderScheduleHoursBefore,
   })
 })
 after(async () => {
@@ -684,9 +686,11 @@ test('BE-024: sem conta digital ativa mantém prioridade com contato e aceite as
 test('BE-024: suspensão limita aceite online e preserva interesse/aceite pela recepção', async () => {
   const source = await busy(12),
     p = await ctx.patient()
-  await ctx.db.patientProfile.update({
-    where: { id: p.patientId },
-    data: { autoBookingSuspendedUntil: new Date(Date.now() + 86_400_000) },
+  await seedAbsenceFacts(ctx.db, {
+    patientId: p.patientId,
+    professionalId: ctx.professionalIds[0],
+    specialtyId: ctx.specialtyId,
+    actorId: ctx.reception.user.id,
   })
   await enter(p, 12).expect(201)
   const event = await release(source)

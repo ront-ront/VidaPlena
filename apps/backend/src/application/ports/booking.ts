@@ -1,6 +1,7 @@
 import type { Principal } from '../../domain/rules/access'
 import type { AuditWriter } from './audit-writer'
 import type { Modality } from './catalog'
+import type { CheckInRecord } from './check-in'
 import type { ReservationTransaction } from './reservations'
 import type { ScheduleSnapshot } from './schedule'
 export type AppointmentStatus =
@@ -29,6 +30,10 @@ export type AppointmentRecord = {
   parentAppointmentId: string | null
   reason: string | null
   notificationAttention: boolean
+  attendanceResponse?: {
+    response: 'confirm' | 'cannot_attend'
+    respondedAt: Date
+  } | null
 }
 export type BookInput = {
   patientId: string
@@ -84,6 +89,7 @@ export type BookingPatient = {
   suspendedUntil: Date | null
 }
 export interface BookingTransaction {
+  checkIn(id: string, version: number): Promise<CheckInRecord | null>
   lock(key: string, patientId: string): Promise<void>
   principal(actor: Principal): Promise<Principal | null>
   patient(
@@ -134,6 +140,12 @@ export interface BookingTransaction {
   ): Promise<AppointmentRecord>
   confirmedReservation(appointmentId: string): Promise<{ id: string } | null>
   invalidateNotifications(appointmentId: string): Promise<void>
+  attendanceResponse(
+    row: AppointmentRecord,
+    actor: Principal,
+    response: 'confirm' | 'cannot_attend',
+    now: Date,
+  ): Promise<{ respondedAt: Date; created: boolean }>
   slotReleased(
     previous: AppointmentRecord,
     changeVersion: number,
@@ -186,4 +198,10 @@ export const appointmentSummary = (row: AppointmentRecord) => ({
   bookingSource: row.bookingSource,
   parentAppointmentId: row.parentAppointmentId,
   notificationAttention: row.notificationAttention,
+  attendanceResponse: row.attendanceResponse
+    ? {
+        response: row.attendanceResponse.response,
+        respondedAt: row.attendanceResponse.respondedAt.toISOString(),
+      }
+    : null,
 })

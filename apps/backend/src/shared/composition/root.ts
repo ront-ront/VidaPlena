@@ -17,6 +17,8 @@ import type { CancelAppointment } from '../../application/use-cases/cancel-appoi
 import type { DispatchNotifications } from '../../application/use-cases/dispatch-notifications'
 import type { FindAvailability } from '../../application/use-cases/find-availability'
 import type { ListMyAppointments } from '../../application/use-cases/list-my-appointments'
+import type { ManageAbsences } from '../../application/use-cases/manage-absences'
+import type { ManageArrivals } from '../../application/use-cases/manage-arrivals'
 import type { ManageCatalog } from '../../application/use-cases/manage-catalog'
 import type { ManageConsent } from '../../application/use-cases/manage-consent'
 import type { ManageFiles } from '../../application/use-cases/manage-files'
@@ -25,16 +27,20 @@ import type { ManageRooms } from '../../application/use-cases/manage-rooms'
 import type { ManageSchedule } from '../../application/use-cases/manage-schedule'
 import type { ManageSubjectRequests } from '../../application/use-cases/manage-subject-requests'
 import type { ManageWaitlist } from '../../application/use-cases/manage-waitlist'
+import type { ProcessReminders } from '../../application/use-cases/process-reminders'
 import type { ProcessWaitlist } from '../../application/use-cases/process-waitlist'
 import type { ProvisionAccounts } from '../../application/use-cases/provision-accounts'
 import type { RecoverAccess } from '../../application/use-cases/recover-access'
 import type { RescheduleAppointment } from '../../application/use-cases/reschedule-appointment'
+import type { RespondAttendance } from '../../application/use-cases/respond-attendance'
 import { ConsentEvidenceReconciler } from '../../infrastructure/jobs/consent-evidence-reconciler'
 import { startNotificationWorker } from '../../infrastructure/jobs/notification-worker'
+import { startReminderWorker } from '../../infrastructure/jobs/reminder-worker'
 import { startWaitlistWorker } from '../../infrastructure/jobs/waitlist-worker'
 import { OperationalTelemetry } from '../../infrastructure/observability/operational-telemetry'
 import { createPrismaClient } from '../../infrastructure/persistence/prisma/client'
 import type { AppConfig } from '../config/environment'
+import { createAbsenceRouter } from '../infra/http/absence-router'
 import { createAccessRouter } from '../infra/http/access-router'
 import { createApp } from '../infra/http/app'
 import { createAppointmentRouter } from '../infra/http/appointment-router'
@@ -51,6 +57,7 @@ import {
 } from '../infra/http/middleware/access'
 import { createNotificationRouter } from '../infra/http/notification-router'
 import { registerApiDocumentation } from '../infra/http/openapi'
+import { createOperationalRouter } from '../infra/http/operational-router'
 import { parseInput } from '../infra/http/parse-input'
 import { createPatientRouter } from '../infra/http/patient-router'
 import { createProvisioningRouter } from '../infra/http/provisioning-router'
@@ -107,6 +114,20 @@ export async function composeBackendApplication(config: AppConfig) {
     const routes = Router()
     registerApiDocumentation(routes)
     routes.use(
+      createAbsenceRouter(
+        tokens,
+        authorize,
+        scope.resolve<ManageAbsences>(services.manageAbsences),
+      ),
+    )
+    routes.use(
+      createOperationalRouter(
+        tokens,
+        authorize,
+        scope.resolve<ManageArrivals>(services.manageArrivals),
+      ),
+    )
+    routes.use(
       createWaitlistRouter(
         tokens,
         authorize,
@@ -123,6 +144,7 @@ export async function composeBackendApplication(config: AppConfig) {
         scope.resolve<RescheduleAppointment>(services.rescheduleAppointment),
         scope.resolve<ListMyAppointments>(services.listMyAppointments),
         scope.resolve<CancelAppointment>(services.cancelAppointment),
+        scope.resolve<RespondAttendance>(services.respondAttendance),
       ),
     )
     routes.use(
@@ -303,12 +325,18 @@ export async function composeBackendApplication(config: AppConfig) {
       config.waitlistPollSeconds,
       (status, count) => telemetry.jobResult('waitlist_process', status, count),
     )
+    const reminderWorker = startReminderWorker(
+      scope.resolve<ProcessReminders>(services.processReminders),
+      config.reminderPollSeconds,
+      (status, count) => telemetry.jobResult('reminder_process', status, count),
+    )
     return composeApplication(
       config,
       [
         { close: async () => clearInterval(timer) },
         {
           close: async () => {
+            await reminderWorker.close()
             await waitlistWorker.close()
             await notificationWorker.close()
             await db.$disconnect()
