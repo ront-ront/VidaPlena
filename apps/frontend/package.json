@@ -9,14 +9,19 @@
     "start": "next start",
     "lint": "biome check",
     "lint:fix": "biome check --write",
-    "format": "biome format --write"
+    "format": "biome format --write",
+    "test:e2e": "playwright test",
+    "test:schedule": "tsx --test src/lib/schedule-validation.test.ts",
+    "test:booking": "tsx --test src/lib/booking-command.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
+    "@js-temporal/polyfill": "^0.5.1",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
     "lucide-react": "^1.48.0",
     "next": "16.3.6",
+    "qrcode.react": "^4.2.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "shadcn": "^4.21.0",
@@ -25,12 +30,14 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.14",
+    "@playwright/test": "1.64.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vida-plena/biome-config": "1.0.0",
     "babel-plugin-react-compiler": "1.0.0",
+    "jsqr": "^1.4.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   },

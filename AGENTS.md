@@ -29,6 +29,10 @@
 | Lint do monorepo | `yarn lint` |
 | Lint por aplicação | `yarn workspace vida-plena-backend lint` ou `yarn workspace vida-plena-frontend lint` |
 | Testes backend existentes | `yarn workspace vida-plena-backend test` e `yarn workspace vida-plena-backend test:integration` (com `TEST_DATABASE_URL` de banco isolado `_test`) |
+| Testes de fuso/validação da grade frontend | `yarn workspace vida-plena-frontend test:schedule` |
+| Testes do cliente HTTP frontend | `yarn workspace vida-plena-frontend test:api` |
+| Testes de idempotência do agendamento frontend | `yarn workspace vida-plena-frontend test:booking` |
+| Testes funcionais frontend | `yarn workspace vida-plena-frontend test:e2e` (Playwright/Firefox; servidor isolado na porta 3400, APIs simuladas) |
 | Testes HTTP novos | `yarn workspace vida-plena-backend test:vitest` |
 | Ciclo de backup operacional | `yarn workspace vida-plena-backend backup:cycle full` ou `backup:cycle incremental` (ambiente protegido; runbook em `apps/backend/ops/backup/README.md`) |
 | Restauração de arquivos | `yarn workspace vida-plena-backend backup:files restore <repo> <diretório-vazio>` |

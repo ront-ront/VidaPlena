@@ -1,3 +1,5 @@
+name: vida-plena
+
 services:
   postgres:
     image: postgres:17-alpine
@@ -10,7 +12,7 @@ services:
     ports:
       - "15435:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - vp_pgdata:/var/lib/postgresql/data
     networks:
       - vp-network
 
@@ -21,7 +23,7 @@ services:
     ports:
       - "26379:6379"
     volumes:
-      - redisdata:/data
+      - vp_redisdata:/data
     command: redis-server --appendonly yes
     networks:
       - vp-network
@@ -32,7 +34,7 @@ networks:
     name: vp-network
 
 volumes:
-  pgdata:
+  vp_pgdata:
     driver: local
-  redisdata:
+  vp_redisdata:
     driver: local
