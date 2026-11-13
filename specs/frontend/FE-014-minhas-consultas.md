@@ -2,7 +2,7 @@
 
 - **Software:** front
 - **Milestone:** M1 Agenda
-- **Status:** pendente
+- **Status:** implementada localmente; ensaio com usuários/leitor de tela pendente
 - **Depende de:** FE-013, BE-022, BE-023
 - **Requisitos cobertos:** RF-009, RF-010, RN-004
 
@@ -22,17 +22,23 @@ Ler `specs/frontend/screens-map.md` (M1), `specs/frontend/design-system.md`, `sp
 - Loading/vazio/erro/sucesso, ações disabled e 360 px sem scroll horizontal; dados de dependente só se vínculo ativo. Notificações são resultado do backend, não promessa local.
 
 ## 5. Critérios de aceite
-- [ ] Dado prazo RN-004 ultrapassado, quando paciente abrir consulta, então ação online não prossegue e contato da recepção é indicado.
-- [ ] Dado conflito na nova reserva, quando API devolver 409, então consulta antiga continua com data/status originais.
-- [ ] Dado cancelamento confirmado, quando recarregar, então item segue no histórico como cancelado e horário não aparece como ocupado pela consulta.
-- [ ] Dado dependente sem vínculo, quando forçar URL/ID, então nenhum detalhe é exibido e API nega.
+- [x] Dado prazo RN-004 ultrapassado, quando paciente abrir consulta, então ação online não prossegue e contato da recepção é indicado.
+- [x] Dado conflito na nova reserva, quando API devolver 409, então consulta antiga continua com data/status originais.
+- [x] Dado cancelamento confirmado, quando recarregar, então item segue no histórico como cancelado e horário não aparece como ocupado pela consulta.
+- [x] Dado dependente sem vínculo, quando forçar URL/ID, então nenhum detalhe é exibido e API nega.
 
 ## 6. Testes esperados
 Prazo, rebooking/cancelamento, conflito, histórico, dependente/IDOR, estados e 360 px; lint.
 
 ## 7. Definition of Done
-- [ ] Fluxo usa FE-004/012 e contrato único, sem estado otimista incorreto.
-- [ ] Testes/lint passam, sem `tsc`.
+- [x] Fluxo usa FE-004/012 e contrato único, sem estado otimista incorreto.
+- [x] Testes/lint passam, sem `tsc`.
 
 ## 8. Suposições e pontos em aberto
 Texto/canal de contato da recepção depende da configuração operacional da clínica, sem número inventado na spec.
+
+## Evidência local — 13/11/2026
+
+Abas/view, paginação, sujeitos vinculados, detalhe/origem, prazo P-41 com expiração em tela e diálogos acessíveis implementados; busca FE-012 preserva especialidade/tipo original. Cancelamento/remarcação só atualizam após200 válido, nonce escopado e expectedVersion; conflitos preservam original. Resposta perdida orienta conferir a lista antes de repetir. Recibo FE-013 agora tem caminho Minhas consultas.
+
+Firefox com API simulada9/9 específicas; regressão37/37, seguida de17/17 dos fluxos afetados pela mensagem de rede; nonce3/3; lint backend216/front72 e build Next aprovados. Escape/restauração do foco, prazo aberto, cancelamento após recarga, paginação/dependente, erro/ID arbitrário e360px cobertos. Primeira36/37 corrigiu apenas locator do card oculto pela modalidade. Conferência visual360px feita. Liberação real do horário/IDOR verificados no PostgreSQL por BE-022/023/P-41, não pelo mock de browser. Leitura original38 linhas da primeira à última; revisão manual de leitor de tela/ensaio com usuários permanece. Sem tsc/commit.

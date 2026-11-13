@@ -2,7 +2,7 @@
 
 - **Software:** front
 - **Milestone:** M1 Agenda
-- **Status:** pendente
+- **Status:** implementada localmente; caminho Minhas consultas integrado por FE-014; ensaio com usuários e leitor de tela pendentes
 - **Depende de:** FE-007, FE-012, BE-021
 - **Requisitos cobertos:** RF-007, RF-008, RNF-001, RNF-021, RNF-004
 
@@ -22,9 +22,9 @@ Ler `specs/frontend/screens-map.md` (`/agendar`), `specs/frontend/design-system.
 - Loading bloqueia duplo envio; sucesso mostra número/estado e caminho Minhas consultas. FE-012+013 têm no máximo quatro interações principais, a verificar em protótipo e teste RNF-001.
 
 ## 5. Critérios de aceite
-- [ ] Dado duplo clique/refresh na confirmação, quando API processar, então uma única consulta aparece na UI.
-- [ ] Dado horário tomado, quando receber `SLOT_UNAVAILABLE`, então mensagem menciona indisponibilidade, preserva filtros e oferece horários alternativos.
-- [ ] Dada consulta futura na mesma especialidade, quando receber aviso, então não reenvia sem ciência explícita.
+- [x] Dado duplo clique/refresh na confirmação, quando API processar, então uma única consulta aparece na UI.
+- [x] Dado horário tomado, quando receber `SLOT_UNAVAILABLE`, então mensagem menciona indisponibilidade, preserva filtros e oferece horários alternativos.
+- [x] Dada consulta futura na mesma especialidade, quando receber aviso, então não reenvia sem ciência explícita.
 - [ ] Dado fluxo completo FE-012+013, quando testar navegação, então no máximo quatro interações principais; 90% em até três minutos sem auxílio requer ensaio com usuários.
 - [ ] Dado 360 px e leitor de tela, quando confirmar, então resumo/erro/sucesso são utilizáveis em WCAG 2.1 AA.
 
@@ -32,8 +32,14 @@ Ler `specs/frontend/screens-map.md` (`/agendar`), `specs/frontend/design-system.
 Idempotência, duplicidade, conflito, consentimento, dependente, modalidades, 360 px/teclado; ensaio RNF-001 com participantes e relatório.
 
 ## 7. Definition of Done
-- [ ] Nenhum estado de sucesso antes do 201 da API; mensagens em pt-BR.
-- [ ] Testes/lint passam; dados clínicos não aparecem, sem `tsc`.
+- [x] Nenhum estado de sucesso antes do 201 da API; mensagens em pt-BR.
+- [x] Testes/lint passam; dados clínicos não aparecem, sem `tsc`.
 
 ## 8. Suposições e pontos em aberto
 Medição de RNF-004 inclui recepção/profissional em FE-015/FE-021 após treinamento, não é provada por esta tela isolada.
+
+## Evidência local — 13/11/2026
+
+Revisão/sujeitos/duplicidade/alternativas/recibo e nonce implementados conforme P-40. Firefox com API simulada8/8 específicas e regressão28/28; cliente HTTP6/6; nonce2/2; lint backend214/frontend69 e build Next aprovados. Screenshot360px inspecionada. Teste de resposta perdida/refresh prova UUID reutilizado e um único registro no servidor simulado; barreira real PostgreSQL está verificada em BE-020/021. Não equivale a ensaio RNF-001 com pessoas ou leitor de tela manual. Minhas consultas e verificação autoritativa visual integram FE-014 na sequência. Documentos lidos integralmente: FE-01339 linhas originais, guia Next Server/Client604 linhas; RF-009/010 e RNF-001/004 relidos para próxima etapa. Sem tsc/commit.
+
+Integração FE-014 concluída: recibo aponta para Minhas consultas e falha de rede orienta conferir a lista antes de repetir. Regressão37/37 e revisão dos fluxos17/17 aprovadas, sem promessa de ausência de gravação após resposta perdida.
