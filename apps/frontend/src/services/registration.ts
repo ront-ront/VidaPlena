@@ -1,11 +1,9 @@
 import { apiClient } from './api-client'
 
-export type ConsentDocument = {
-  id: string
-  version: string
-  body: string
-  effectiveAt: string
-}
+export {
+  type ConsentDocument,
+  currentConsentDocument,
+} from './consent-documents'
 
 export type RegistrationPayload = {
   mode: 'self' | 'dependent'
@@ -19,14 +17,6 @@ export type RegistrationPayload = {
   password?: string
   guardianRelationship?: string
   consent: { versionId: string; accepted: true }
-}
-
-export function currentConsentDocument() {
-  return apiClient.request<ConsentDocument>(
-    '/v1/consent-documents/current?kind=data',
-    {},
-    { authenticated: false },
-  )
 }
 
 export function registerPatient(payload: RegistrationPayload) {

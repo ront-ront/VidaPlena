@@ -1,14 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { type FormEvent, useCallback, useEffect, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/components/auth-provider'
+import { ConsentTermState } from '@/components/consent-term-state'
 import { Button } from '@/components/ui/button'
-import {
-  ErrorState,
-  LoadingState,
-  SuccessNotice,
-} from '@/components/ui/feedback'
+import { SuccessNotice } from '@/components/ui/feedback'
 import { FieldError, FieldHelp, TextField } from '@/components/ui/field'
 import {
   fieldErrors,
@@ -43,20 +40,36 @@ export default function RegistrationPage() {
     Partial<Record<keyof RegistrationForm, string>>
   >({})
   const [term, setTerm] = useState<ConsentDocument | null>(null)
-  const [termError, setTermError] = useState(false)
+  const [termError, setTermError] = useState<'missing' | 'error' | null>(null)
+  const lastVersion = useRef<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(false)
   const [duplicateCpf, setDuplicateCpf] = useState(false)
   const [message, setMessage] = useState('')
 
-  const loadTerm = useCallback(async () => {
-    setTermError(false)
-    try {
-      setTerm(await currentConsentDocument())
-    } catch {
-      setTermError(true)
+  const receiveTerm = useCallback((next: ConsentDocument) => {
+    if (lastVersion.current && lastVersion.current !== next.id) {
+      setForm((current) => ({ ...current, accepted: false }))
+      setErrors((current) => ({ ...current, accepted: undefined }))
+      setMessage(
+        'O termo foi atualizado. Leia a nova versão e confirme seu aceite.',
+      )
     }
+    lastVersion.current = next.id
+    setTerm(next)
   }, [])
+
+  const loadTerm = useCallback(async () => {
+    setTermError(null)
+    setTerm(null)
+    try {
+      receiveTerm(await currentConsentDocument())
+    } catch (cause) {
+      setTermError(
+        cause instanceof ApiError && cause.status === 404 ? 'missing' : 'error',
+      )
+    }
+  }, [receiveTerm])
 
   useEffect(() => {
     void loadTerm()
@@ -127,7 +140,7 @@ export default function RegistrationPage() {
         try {
           const latest = await currentConsentDocument()
           if (latest.id !== term.id) {
-            setTerm(latest)
+            receiveTerm(latest)
             change('accepted', false)
             setMessage(
               'O termo foi atualizado. Leia a nova versão e confirme seu aceite.',
@@ -138,7 +151,13 @@ export default function RegistrationPage() {
               'Este CPF já pode estar cadastrado. Confira ou recupere o acesso.',
             )
           }
-        } catch {
+        } catch (termFailure) {
+          setTerm(null)
+          setTermError(
+            termFailure instanceof ApiError && termFailure.status === 404
+              ? 'missing'
+              : 'error',
+          )
           setMessage(cause.message)
         }
       } else {
@@ -195,15 +214,11 @@ export default function RegistrationPage() {
         </p>
       </header>
 
-      {!term && !termError ? (
+      {!term ? (
         <div className="mt-8">
-          <LoadingState label="Carregando o termo vigente…" />
-        </div>
-      ) : termError ? (
-        <div className="mt-8">
-          <ErrorState
-            title="Cadastro indisponível por enquanto"
-            nextStep="Não foi possível carregar o termo vigente. Tente novamente ou contate a clínica."
+          <ConsentTermState
+            state={termError ?? 'loading'}
+            admin={!!user?.roles.includes('admin')}
             onRetry={() => void loadTerm()}
           />
         </div>

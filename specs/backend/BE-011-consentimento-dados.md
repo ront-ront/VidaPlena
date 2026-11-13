@@ -17,7 +17,8 @@ Registrar manifestação de dados pessoais/sensíveis por paciente ou responsáv
 Ler `specs/shared/data-model.md` (`Consent*`), `specs/shared/api-contracts.md` (cadastro/consentimento), `specs/shared/business-rules.md` (revogação), `specs/shared/access-policy.md`, DRS §3.1.4 e Q-05/Q-09.
 
 ## 4. Detalhamento
-- Guardar `ConsentDocumentVersion` com texto/referência e vigência; `ConsentEvent` com paciente, ator registrador, nome e parentesco do responsável consentinte como snapshot, data/hora, ação, versão, origem e evidência assinada quando presencial. Versão antiga e eventos nunca são sobrescritos. Publicação por admin é suposição técnica pendente de confirmação DPO.
+- Guardar `ConsentDocumentVersion` com texto/referência e vigência; `ConsentEvent` com paciente, ator registrador, nome e parentesco do responsável consentinte como snapshot, data/hora, ação, versão, origem e evidência assinada quando presencial. Versão antiga e eventos nunca são sobrescritos. Publicação por admin com MFA foi aprovada em P-12/P-52; a validação jurídica do texto permanece em P-01.
+- Complemento P-52 aprovado em 13/11/2026: publicação por admin com MFA permite omitir `effectiveAt` para vigência imediata pelo servidor; data explícita permanece compatível. Texto não é inventado nem inserido automaticamente. Tela administrativa em FE-042, sem mock ou mudança de aceite/evidência.
 - `POST /v1/patient-registrations`/`patients` conclui paciente e aceite na mesma transação de banco; recusa do termo bloqueia conclusão digital e orienta atendimento presencial. `POST /v1/patients/{id}/onsite-consents` registra aceite presencial posterior em paciente já cadastrado. Em ambos os fluxos presenciais, arquivo `signedTerm` é obrigatório no multipart: BE-013 valida/cifra, o `signedFileId` resultante liga-se ao evento; falha de banco descarta o upload, e reconciliação limpa órfãos após interrupção abrupta. Não concluir sem anexo verificável.
 - Revogar registra evento, invalida acesso digital e bloqueia notificações/tratamentos só consentidos; preserva prontuário/identificação mínima/auditoria/consentimentos/dados fiscais conforme Q-09, com acesso restrito. Os prazos vêm de `privacy.clinical_retention_years`, `privacy.audit_retention_years`, `privacy.min_identity_retention_years`, `privacy.consent_evidence_retention_years` e `privacy.fiscal_retention_years`; as três últimas chaves aguardam P-01. Nova versão requer novo aceite no acesso seguinte.
 
@@ -38,8 +39,12 @@ Integração de transação cadastro+aceite, versão, recusa, revogação imedia
 - [x] Contrato compartilhado respeitado, sem `tsc`.
 
 ## 8. Suposições e pontos em aberto
-Base legal e retenção pós-revogação são proposta provisória sujeita a DPO/jurídico (P-01). Publicador do termo e regras de responsável maior de idade exigem decisão; não afirmar conformidade LGPD final.
+Base legal e retenção pós-revogação são proposta provisória sujeita a DPO/jurídico (P-01). Regras legais de responsável maior de idade exigem decisão; não afirmar conformidade LGPD final.
 
 ### Evidência local em 30/10/2026
 
 Migrations `202610290009_consent` a `202610300013_consent_evidence_trigger_update` aplicadas no banco de teste; versões e eventos protegidos contra UPDATE/DELETE/TRUNCATE, evidência vinculada imutável, estado derivado pela sequência de eventos. Cadastro digital/presencial, aceite posterior, recusa, revogação, autorização por paciente, atualização de versão e bloqueio de notificações foram integrados ao runtime. Multipart cifra e valida o termo antes de associá-lo; falha descarta o arquivo e reconciliador remove órfãos antigos. Regressão 22/22 integrações, 15/15 testes Node, 2/2 Vitest e lint; após adicionar o caso de nova versão presencial, o arquivo de integração da BE-011 passou 2/2. P-01 segue portão jurídico, e o endpoint genérico `POST /v1/files` da BE-013 permanece sem publicação até existir recurso autorizável próprio.
+
+### Complemento P-52 — 13/11/2026
+
+Vigência imediata por omissão de effectiveAt implementada no HTTP; schema Zod/OpenAPI é a fonte única. Compatibilidade com data explícita preservada, sem migração. **5/5 integrações HTTP/PostgreSQL aprovadas** (3 publicação+2 consentimento anterior): vazio/primeiro termo, relógio do servidor, auditoria, imutabilidade, papéis/MFA, validação, duplicidade, vigência futura e cadastro/aceite/revogação/evidência presencial. Banco isolado `_test`, sem publicar no banco de desenvolvimento. Logs `/tmp/vidaplena-consent-publication-backend.log`; implementação da tela segue em FE-042.

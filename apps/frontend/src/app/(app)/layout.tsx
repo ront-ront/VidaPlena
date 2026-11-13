@@ -16,6 +16,7 @@ const availableRoutes = new Set<string>([
   '/gestao/catalogo',
   '/minha-conta',
   '/admin/usuarios',
+  '/admin/termos',
   '/recepcao/pacientes/novo',
 ])
 

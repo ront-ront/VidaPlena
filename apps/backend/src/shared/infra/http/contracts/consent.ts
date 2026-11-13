@@ -29,7 +29,10 @@ export const publishConsentDocumentBody = z.object({
   kind: z.literal('data'),
   version: z.string().trim().min(1).max(50),
   bodyReference: z.string().trim().min(1).max(200_000),
-  effectiveAt: z.iso.datetime(),
+  effectiveAt: z.iso
+    .datetime()
+    .optional()
+    .describe('Omitir para vigência imediata pelo relógio do servidor.'),
 })
 export const currentConsentQuery = z.object({ kind: z.literal('data') })
 export const onsiteRegistrationData = z.object({

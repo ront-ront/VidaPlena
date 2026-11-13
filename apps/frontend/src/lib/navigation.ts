@@ -46,6 +46,11 @@ export const navigationDestinations: readonly NavigationDestination[] = [
     roles: ['manager', 'admin'],
   },
   {
+    href: '/admin/termos',
+    label: 'Termos de consentimento',
+    roles: ['admin'],
+  },
+  {
     href: '/recepcao/pacientes/novo',
     label: 'Cadastrar paciente',
     roles: ['receptionist', 'admin'],

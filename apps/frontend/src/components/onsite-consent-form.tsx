@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { type FormEvent, useCallback, useEffect, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/components/auth-provider'
+import { ConsentTermState } from '@/components/consent-term-state'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -63,7 +64,10 @@ export function OnsiteConsentForm({ mode, patientId }: Props) {
     Partial<Record<keyof PatientInput, string>>
   >({})
   const [term, setTerm] = useState<ConsentDocument | null>(null)
-  const [termError, setTermError] = useState(false)
+  const [termError, setTermError] = useState<'missing' | 'error' | null>(null)
+  const lastVersion = useRef<string | null>(null)
+  const fileInput = useRef<HTMLInputElement>(null)
+  const fileValidation = useRef(0)
   const [existingCpf, setExistingCpf] = useState('')
   const [existingMatch, setExistingMatch] = useState<{
     patientId: string
@@ -108,11 +112,27 @@ export function OnsiteConsentForm({ mode, patientId }: Props) {
   const needGuardian = minor || representing
 
   const loadTerm = useCallback(async () => {
-    setTermError(false)
+    setTermError(null)
+    setTerm(null)
     try {
-      setTerm(await currentConsentDocument())
-    } catch {
-      setTermError(true)
+      const next = await currentConsentDocument()
+      if (lastVersion.current && lastVersion.current !== next.id) {
+        fileValidation.current++
+        setAccepted(false)
+        setAcceptedError('')
+        setFile(null)
+        setFileError('')
+        if (fileInput.current) fileInput.current.value = ''
+        setMessage(
+          'O termo foi atualizado. Leia a nova versão, confira a assinatura e anexe o novo termo assinado.',
+        )
+      }
+      lastVersion.current = next.id
+      setTerm(next)
+    } catch (cause) {
+      setTermError(
+        cause instanceof ApiError && cause.status === 404 ? 'missing' : 'error',
+      )
     }
   }, [])
   const loadReceipts = useCallback(async () => {
@@ -181,14 +201,26 @@ export function OnsiteConsentForm({ mode, patientId }: Props) {
   }
 
   async function pickFile(filePicked: File | null) {
+    const attempt = ++fileValidation.current
+    const versionId = lastVersion.current
     setFile(null)
     setFileError('')
     if (!filePicked) return
     try {
       const problem = await checkSignedTerm(filePicked)
+      if (
+        attempt !== fileValidation.current ||
+        versionId !== lastVersion.current
+      )
+        return
       if (problem) setFileError(problem)
       else setFile(filePicked)
     } catch {
+      if (
+        attempt !== fileValidation.current ||
+        versionId !== lastVersion.current
+      )
+        return
       setFileError('Não foi possível ler o arquivo. Escolha outro.')
     }
   }
@@ -336,14 +368,6 @@ export function OnsiteConsentForm({ mode, patientId }: Props) {
         </Button>
       )}
       {message && <FieldError>{message}</FieldError>}
-      {termError && (
-        <ErrorState
-          title="Termo vigente indisponível"
-          nextStep="Publique ou recarregue o termo antes do cadastro."
-          onRetry={() => void loadTerm()}
-        />
-      )}
-
       <Card>
         <CardHeader>
           <CardTitle>Localizar cadastro existente</CardTitle>
@@ -554,7 +578,11 @@ export function OnsiteConsentForm({ mode, patientId }: Props) {
                 />
               </>
             ) : (
-              <LoadingState label="Carregando termo…" />
+              <ConsentTermState
+                state={termError ?? 'loading'}
+                admin={user.roles.includes('admin')}
+                onRetry={() => void loadTerm()}
+              />
             )}
             <TextField
               id="consenting-name"
@@ -570,6 +598,7 @@ export function OnsiteConsentForm({ mode, patientId }: Props) {
               <input
                 type="checkbox"
                 checked={accepted}
+                disabled={busy || !term}
                 onChange={(event) => {
                   setAccepted(event.target.checked)
                   setAcceptedError('')
@@ -585,7 +614,9 @@ export function OnsiteConsentForm({ mode, patientId }: Props) {
               </label>
               <input
                 id="signed-term"
+                ref={fileInput}
                 type="file"
+                disabled={busy || !term}
                 accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                 onChange={(event) =>
                   void pickFile(event.target.files?.[0] ?? null)

@@ -58,7 +58,9 @@ export function createConsentRouter(
         {
           version: input.version,
           bodyReference: input.bodyReference,
-          effectiveAt: new Date(input.effectiveAt),
+          effectiveAt: input.effectiveAt
+            ? new Date(input.effectiveAt)
+            : new Date(),
         },
         auditContext(req, res),
       )
