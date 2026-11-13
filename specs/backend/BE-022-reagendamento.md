@@ -44,3 +44,11 @@ Arquivo original lido integralmente, da primeira à última das 38 linhas. P-27 
 Nove testes HTTP/PostgreSQL passaram: troca presencial/remota, ID/versão/histórico e idempotência; concorrência preservando original; motivo assistido, autoria e origem; transferência com avisos ao profissional anterior/novo; IDOR/origem forjada/cursor alheio; limite exato RN-004 e RN-003; rollback total após falha de auditoria; responsável/dependente com perda imediata de acesso; paginação 30+1 sem duplicação e filtros civis. Regressão de confirmação 9/9 junto: 18/18. Lint aprovado. Novos jobs de lembrete e resolução completa de inativação por cancelamento ficam nas specs próprias.
 
 **Regressão completa ao concluir:** 52/52 integrações backend, 25/25 testes Node e 2/2 Vitest aprovados, com lint em 159 arquivos.
+
+### Integração de chegada tardia BE-026/P-31
+
+A alternativa de RF-014 estende a remarcação assistida a `waiting` com check-in efetivo do dia atual, somente pelos operadores já autorizados (recepção/admin), com motivo obrigatório. O original pode já ter iniciado, mas a nova reserva continua futura e passa por BE-020. Retorna `confirmed`, preserva o check-in/histórico anterior e exige nova chegada na nova versão. Portal não altera consulta em espera; dias anteriores não são reabertos. Não há bypass de consentimento, sala, grade, versão ou auditoria. Cobertura acrescentada em `tests/integration/checkin.test.ts`.
+
+### Correção de projeção P-41 — 13/11/2026
+
+Lista própria acrescenta fuso/relógio, política derivada da mesma função RN-004 das mutações e última origem administrativa, sem motivo/autor/snapshots. Filtro view separa futuras/histórico antes do cursor, incluindo canceladas futuras no histórico. Correção isolada verificada: lote inicial22/22 (P-41, confirmação/projeção, cancelamento e remarcação); complemento view12/12 (3 novas +9 remarcação), lint216 arquivos. Sem migração ou ampliação de permissões.

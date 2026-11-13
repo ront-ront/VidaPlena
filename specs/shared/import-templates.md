@@ -25,6 +25,8 @@ external_id;patient_cpf;professional_external_id;specialty_code;room_name;starts
 A-001;12345678909;PRO-001;CARDIO;Sala 1;2026-11-02T09:00:00-03:00;2026-11-02T09:30:00-03:00;onsite;first;confirmed;planilha_ficticia
 ```
 
+Na demonstração BE-029/P-34, `professional_external_id` deve conter o UUID de `ProfessionalProfile.id` previamente cadastrado, não o placeholder `PRO-001`; integração de chaves legadas reais depende de P-07.
+
 Campos obrigatórios: `external_id`, `patient_cpf`, `professional_external_id`, `specialty_code`, `starts_at`, `ends_at`, `modality`, `visit_type`, `status`, `source_system`; `room_name` é obrigatório se `onsite`, vazio se `remote`. Valores de modalidade `onsite/remote`, tipo `first/return`, status `confirmed/cancelled/completed`. Profissional/especialidade/sala devem existir e estar aptos; horário e duração são validados contra RN-001/RN-002. Uma linha cancelada é preservada para histórico, sem reservar slot. Idempotência não altera silenciosamente registro anteriormente importado.
 
 ## Histórico clínico manual

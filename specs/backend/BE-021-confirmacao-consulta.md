@@ -47,3 +47,15 @@ Migration `202611050021_appointments`, endpoint de confirmação e unidade de tr
 As guardas agora consultam agendamentos ativos reais: inativação de sala/profissional/especialidade ou retirada incompatível de modalidade devolve `SCHEDULE_IMPACT_REVIEW` com somente ID e intervalo; alteração ordinária da grade também preserva a versão e as reservas. Emergência mantém reservas e enfileira aviso idempotente por publicação. As fixtures de BE-020 criam consulta/reserva na mesma transação sem relaxar as constraints; 5/5 passaram. Confirmação: 9/9 testes HTTP/PostgreSQL, incluindo responsável/dependente, vínculo encerrado, falta de sala com profissional livre, sala inativa, escolha pela recepção, antecedência e rollback de todas as gravações quando a auditoria falha. Consulta assistida sem conta digital retorna `unreachable` e mantém reserva.
 
 A regressão de autenticação/convites detectou overflow de versão de notificação: a migration complementar `202611050021_notification_versions` usa `BIGINT`, preservando timestamps já usados por M0. Autenticação, seed/convite e confirmação passaram 13/13 após a correção; 25/25 testes Node, 2/2 Vitest e lint aprovados. Regressão completa continua registrada no diário M1. Escolha de sala segue Q-07; respostas 404 para sujeito alheio seguem `shared/access-policy.md`.
+
+## Projeção administrativa para FE-013 — 13/11/2026
+
+P-39 acrescenta nomes atuais de profissional/especialidade/sala ao resumo autorizado, com joins na infraestrutura e schema Zod/OpenAPI compartilhado. Não abre cadastro de salas ao paciente nem altera IDs, duração, versão histórica ou permissão; remoto tem roomName=null. **2/2 integrações específicas aprovadas**: confirmação/replay/lista própria, isolamento de paciente, omissão de conselho/contato e consistência após renomear catálogo. Regressão integral em execução no diário; sem migração ou tsc. Esta correção habilita a revisão FE-013 sem renderizar UUID como nome de sala.
+
+Verificação P-39 concluída em13/11/2026: 2/2 específicas e regressão integral143/143; Node26/26, Vitest2/2 e lint. Banco de teste recriado recebeu migrations antes da repetição; sem alteração em banco de desenvolvimento.
+
+### Opções de sala P-45 — 13/11/2026
+
+GET administrativo retorna salas livres/sugestão derivadas de duração/grade, sem ocupantes ou reserva implícita. Revalida MFA/papel/versão; remarcação exclui apenas o atendimento informado e associa auditoria ao paciente/consulta. Holds expirados não contam na leitura e permanecem imutáveis até o processo normal de liberação. Sem migração.
+
+13/13 integrações no lote (9 confirmação+4 novas), mais4/4 após reforço da auditoria por sujeito, Node26/26, Vitest2/2 e lint backend219/front76 aprovados. Primeiro12/13 falhou porque o teste tentava alterar validade de hold imutável; fixture corrigida usando relógio injetado, sem alterar trigger/regra de produção. Regressão integral147/147 citada anteriormente é anterior a P-45; não declarar151/151 sem executar. Front FE-016 permanece pendente.

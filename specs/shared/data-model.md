@@ -117,3 +117,31 @@ RNF-022/Q-08 exigem que identificadores e relações possam ser mapeados para FH
 - `ImportBatch` referencia layout de `import-templates.md`, origem, data, responsável, linhas aceitas/rejeitadas e chave idempotente. Nenhuma importação cria `User` de acesso ou dispara `Notification` (Q-19).
 - `ImportedHistory` exibe origem, importador e “conferido por” quando houver; não equivale a evolução assinada, é imutável com correção por adendo.
 - `ClinicalRecord`/documentos clínicos preservam-se por `privacy.clinical_retention_years` nunca abaixo de RN-012; `AuditEvent` por `privacy.audit_retention_years`. Identificação mínima, prova de consentimento e dados fiscais usam respectivamente `privacy.min_identity_retention_years`, `privacy.consent_evidence_retention_years` e `privacy.fiscal_retention_years`, sem default até P-01; nenhuma rotina de exclusão dessas categorias deve rodar antes da decisão jurídica. Gravação usa `recording.retention_days`, separada do prontuário (Q-11).
+
+### Lembretes e presença declarada — BE-025/P-30
+
+`ReminderJob`: consulta, versão, antecedência, scheduledAt, status (`pending/enqueued/completed/cancelled/suppressed/failed/skipped`), firstSuccessfulAt e createdAt; único por consulta/versão/antecedência, sem exclusão de histórico. `Notification.reminderJobId` referencia o evento para deduplicar destinatários e contar sucesso uma vez. Payload administrativo cifrado de lembrete entregue permanece disponível para a projeção do portal; tokens de identidade continuam descartados ao terminar.
+
+`AttendanceResponse`: consulta/versão, ator, resposta e data; append-only, com sequência monotônica para ordenar respostas mesmo com timestamps iguais. A projeção vigente usa a última resposta da versão atual, sem modificar Appointment.status ou reservas. Correções e declaração após remarcação criam novos registros; nunca sobrescrevem evidência anterior.
+
+### Check-in por versão de consulta — BE-026/P-31
+
+`CheckIn`: id, appointmentId, appointmentVersion efetiva após chegada, arrivedAt, recordedAt, recordedBy, lateFlag, toleranceMinutes e clinicTimeZone. Único por consulta/versão; append-only. Registro e mudança a `waiting`, histórico, auditoria e invalidação de avisos são transacionais; reserva confirmada permanece. Reagendamento assistido de espera preserva o check-in anterior e cria nova versão `confirmed`, para novo ciclo de chegada; nunca atualiza/exclui o registro original. A projeção de fila usa a chegada da versão vigente. Não cria `CareLink` ou ausência.
+
+### Ausência e revisão — BE-027/P-32
+
+`Absence`: consulta única, patientId, occurredAt (início marcado), penaltyExpiresAt (12 meses no calendário/fuso registrado), clinicTimeZone, kind atual, explanationEncrypted, recordedBy/recordedAt, decidedBy/decidedAt e version. Origem/ocorrência/gravação não são alteradas. `AbsenceRevision`: absenceId, version, classificação anterior/nova, justificativa cifrada, ator e instante; append-only, única por ausência/versão, incluindo decisão inicial. FK ao paciente/consulta e restrições preservam histórico; nenhuma exclusão física.
+
+`PatientProfile.autoBookingPolicyVersion` identifica transições da política para deduplicar avisos; `autoBookingSuspendedUntil` é cache derivado dos fatos atuais, sem autoridade para penalidade manual. Consultas de elegibilidade usam as ocorrências injustificadas ainda válidas; correção grava novo histórico e recalcula, mantendo dados antigos. A ausência encerra a ocupação ativa (`SlotReservation.released`), preservando consulta, reserva e histórico. Não cria `SlotReleaseEvent` de cancelamento.
+
+### Importação de pacientes — BE-028/P-33
+
+`ImportBatch`: kind, sourceSystem, fileHash, fileEncrypted, status, fileErrors, createdBy/createdAt, expiresAt, cutoffDate snapshot opcional, confirmedAt. Origem/arquivo/hash/autor/data são imutáveis; somente passagem de preview para confirmed e metadados finais são alteráveis. `ImportRow` identifica tentativa por batch/linha, guarda previewStatus/previewErrors e resultado final/erros/target, preservando a prévia; evidência pessoal deriva do arquivo cifrado, não de JSON em claro.
+
+`ImportIdentity`: sourceSystem, kind, externalId únicos; hash do conteúdo canônico, patientId único e batch/autor/data originais. É a chave de reimportação, distinta das linhas de tentativa; imutável, com FK para paciente/lote. `ImportCommand` registra chave de confirmação escopada ao ator e hash da requisição, sem sobrescrita. Cadastro importado preserva os campos de origem (nome, nascimento, CPF, e-mail, telefone); estado operacional, vínculo de conta/representação e suspensão são separados. Correção direta de original é recusada, conforme Q-19; adendo cadastral não é criado implicitamente.
+
+### Importação de agenda — BE-029/P-34
+
+`ImportIdentity` aceita alvo exclusivo por tipo: `patientId` para patients, `appointmentId` para appointments, ambos com FK e unicidade; a chave `sourceSystem+kind+externalId` continua única e imutável. `ImportRow.appointmentId` referencia consulta, separado do alvo paciente; API projeta ambos em `targetId` conforme tipo. `ImportBatch` de agenda admite `preview → processing → confirmed`; a passagem a processing e comando idempotente são atômicos, cada resultado de linha é finalizado uma única vez. Arquivo/autor/origem/datas/prévia e resultados concluídos permanecem imutáveis. Falha em linha não reverte outras já concluídas; retry não regrava resultados. Confirmação final requer todas as linhas finalizadas.
+
+Consulta importada tem `bookingSource=imported`, duração e versão de especialidade vigentes, histórico inicial `imported` e identidade externa ligada ao lote original. Consulta confirmed possui uma reserva ativa consistente; completed/cancelled nenhuma reserva ativa. Dados anteriores ao corte são classificados pelo início no fuso da clínica; corte ausente produz undated, sem usar data de nascimento/cadastro como aproximação. Original cifrado/identidade/histórico inicial são preservados ao operar consulta; reimportação nunca sobrescreve. Importação não cria User, ConsentEvent, Notification, ReminderJob, CheckIn ou evolução clínica.

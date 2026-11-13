@@ -35,7 +35,7 @@
 
 ## 5. Contratos e convenções de spec
 
-- IDs: RF-001…032; RNF-001…025; RN-001…012; UI-001…016; BE-001…054; FE-001…041. FE-039 cobre cadastro presencial; FE-040, upload de resultado; FE-041, tipos documentais. A matriz mapeia requisito → spec e estado total/parcial/pendente.
+- IDs: RF-001…032; RNF-001…025; RN-001…012; UI-001…016; BE-001…054; FE-001…042. FE-039 cobre cadastro presencial; FE-040, upload de resultado; FE-041, tipos documentais; FE-042, publicação administrativa do termo (complemento aprovado em 13/11/2026). A matriz mapeia requisito → spec e estado total/parcial/pendente.
 - Cada arquivo BE/FE usa as oito seções do template do pedido: Objetivo, Escopo, Contexto necessário, Detalhamento, Critérios de aceite, Testes esperados, Definition of Done, Suposições e pontos em aberto; metadados de software, milestone, status, dependências e requisitos.
 - Critérios: Dado/Quando/Então ou checklist objetivo com atores, dados, erro e persistência observável. Um valor sem fonte deve vir de parâmetro identificado ou ficar pendente.
 - “Status: pendente” significa que a spec não foi implementada. “Cobertura planejada” na matriz não deve ser confundida com código entregue. Requisitos parciais explicitam a parte faltante.

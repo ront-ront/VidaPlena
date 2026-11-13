@@ -13,6 +13,7 @@
 | `/cadastro` | Dados do paciente, identificação de responsável/dependente, senha, termo versionado, aceite. | Autocadastro adulto ou dependente; falha CPF, validações e recusa. | RF-001/004, Q-05; FE-007 |
 | `/minha-conta` | Dados/contatos, dependentes, consentimentos, pedidos de titular. | Editar contato → confirmação; revogar → portal restrito. | RF-004/005; FE-008 |
 | `/admin/usuarios` | Lista, perfis/status/último acesso, convite, bloqueio, concessão `privacy.dpo`. | Criar/alterar/inativar; impedir último admin; alertar DPO ausente. | RF-029, Q-20; FE-009 |
+| `/admin/termos` | Admin consulta termo vigente e publica versão/texto com vigência imediata; revisão antes de confirmar. | Sem termo → publicar → cadastro pode carregar; erro/retry e versões imutáveis. | RF-004/RNF-016, P-12/P-52; FE-042 |
 | `/recepcao/pacientes/novo` | Dados de paciente/responsável, versão do termo e upload obrigatório do termo assinado. | Recepção cadastra presencialmente; erro de arquivo/CPF preserva formulário; sucesso mostra ID e status de acesso. | RF-001/004, Q-05; FE-039 |
 | `/recepcao/pacientes/[id]/consentimento` | Versão vigente, dados do consentinte e novo termo assinado para paciente existente. | Recepção registra aceite posterior sem alterar cadastro nem apagar o termo anterior. | RF-004, Q-05; FE-039 |
 

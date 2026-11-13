@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M1 Agenda
-- **Status:** pendente
+- **Status:** implementada localmente; dados reais e adendo cadastral pendentes P-01/P-07/P-33
 - **Depende de:** BE-010, BE-011, BE-004
 - **Requisitos cobertos:** RF-001, RF-016, RNF-016
 
@@ -22,17 +22,21 @@ Ler `specs/shared/import-templates.md` (CSV pacientes), `specs/shared/api-contra
 - Data anterior a `migration.cutoff_date` recebe marca de histórico importado; data de corte real pendente P-07. CSV demonstrativo usa dados fictícios, nunca supõe fonte legada existente.
 
 ## 5. Critérios de aceite
-- [ ] Dado cabeçalho/encoding inválido, quando pré-visualizar, então relatório mostra erro e zero pacientes são gravados.
-- [ ] Dado CPF duplicado no arquivo/base, quando confirmar, então linha é rejeitada com motivo e paciente anterior não é sobrescrito.
-- [ ] Dado mesmo lote confirmado novamente, quando reimportar, então contagem de novos pacientes é zero.
-- [ ] Dado paciente importado, quando consultar, então origem/data/importador aparecem e não há conta, consentimento ou aviso criado automaticamente.
+- [x] Dado cabeçalho/encoding inválido, quando pré-visualizar, então relatório mostra erro e zero pacientes são gravados.
+- [x] Dado CPF duplicado no arquivo/base, quando confirmar, então linha é rejeitada com motivo e paciente anterior não é sobrescrito.
+- [x] Dado mesmo lote confirmado novamente, quando reimportar, então contagem de novos pacientes é zero.
+- [x] Dado paciente importado, quando consultar, então origem/data/importador aparecem e não há conta, consentimento ou aviso criado automaticamente.
 
 ## 6. Testes esperados
 Layout, UTF-8, CPF/duplicidade, preview sem writes, confirmação parcial segura, idempotência, RBAC e auditoria; lint.
 
 ## 7. Definition of Done
-- [ ] Relatório reproduzível e source key única; sem histórico clínico fabricado.
-- [ ] Testes/lint passam; data de corte real fica P-07, sem `tsc`.
+- [x] Relatório reproduzível e source key única; sem histórico clínico fabricado.
+- [x] Testes/lint passam; data de corte real fica P-07, sem `tsc`.
 
 ## 8. Suposições e pontos em aberto
 Existência/formato de dados legados e corte definitivo são P-07. Paciente importado sem e-mail/telefone pode permanecer cadastro administrativo incompleto para revisão assistida.
+
+## Evidência local — 12/11/2026
+
+Migration `202611120028_patient_imports`, parser `csv-parse`, schemas Zod/OpenAPI, arquivo cifrado, prévia/relatório por dono e confirmação parcial transacional implementados. Origem administrativa e evidência imutáveis; sem User/consentimento/mensagem. P-33 registra data original desconhecida (`undated`), limites configuráveis e adendo cadastral ainda sem endpoint. **12/12 integrações específicas aprovadas**, incluindo lotes concorrentes e revalidação de papel/MFA; consentimento M0 revalidado 2/2 após incluir `importOrigin:null` na asserção de contrato. Node 26/26, Vitest 2/2 e lint aprovados. Regressão completa em acompanhamento no diário; sem `tsc` ou commits.

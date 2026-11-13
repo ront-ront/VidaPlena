@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M1 Agenda
-- **Status:** implementada localmente; carga formal e front permanecem nas specs próprias
+- **Status:** implementada localmente, com FE-017 integrada; carga formal permanece em BE-051
 - **Depende de:** BE-020, BE-023, BE-006
 - **Requisitos cobertos:** RF-012, RN-001, RN-003
 
@@ -42,3 +42,13 @@ Default do TTL é provisório Q-16. A escolha de marcar uma oferta como recusada
 Arquivo original lido integralmente, da primeira à última das 38 linhas. P-29 detalha preferências/tipo de visita, identificação de duplicado, política de repetição por oportunidade, prazo efetivo limitado por RN-003 e aceite assistido. Migration `202611050024_waitlist` preserva histórico, impede duplicação ativa e valida entrada/oferta/reserva ao commit. Worker PostgreSQL consome as liberações de cancelamento/remarcação, oferece por ordem, expira/avança e sobrevive a reinício sem duplicar; API/DI/Zod/OpenAPI estão integrados. Sem conta digital ativa ou com suspensão de autoagendamento, a oferta sinaliza contato assistido e mantém o caminho da recepção. Revogação não tem exceção de envio.
 
 Primeira bateria: 15/15 integrações HTTP/PostgreSQL; regressão completa nesse ponto 76/76 integrações, 25/25 Node, 2/2 Vitest e lint. Revisão eliminou transação aninhada na consulta de disponibilidade; a bateria com 12 inscrições simultâneas e catálogo passou 21/21 (16 de espera, cinco de catálogo). Regressão final, incluindo corrida de oportunidade ocupada antes do consumidor: 78/78 integrações, 25/25 Node, 2/2 Vitest e lint em 172 arquivos aprovados. A bateria de espera final tem 17/17 testes. Testes abrangem FIFO/TTL/retirada, aceite concorrente/idempotente com mesmo hold, expiração, representação/revogação, encaixe livre/ocupado/bloqueado/RBAC, falha de auditoria com rollback de criação/aceite, contatos assistidos, suspensão, mudança de duração e integridade/histórico no banco. Não há prova de desempenho de produção antes de BE-051.
+
+### Salas de encaixe P-49 —13/11/2026
+
+GET administrativo de opções de sala para encaixe valida fora da grade e respeita permissão create_fit_in. Não expõe consulta original/reservationId nem cria hold; reaproveita exclusão semiaberta e sugestão de sala. Gestor continua sem roomId explícito no POST. Lote15/15 (6 opções de sala+9 confirmação), com encaixe por gestor/concorrência/permissões/OpenAPI, aprovado; lint220. Sem migração; UI FE-017 pendente. Contexto temporal mínimo BE-019/P-48 verificado1/1 antes desta correção.
+
+### Identificação mínima P-50 e fechamento da integração FE-017 — 13/11/2026
+
+GET `/v1/patients/fit-in-candidate?cpf` autoriza recepção/gestor com MFA pela permissão create_fit_in, retornando somente patientId/fullName. Não amplia cadastro presencial nem expõe contato, nascimento ou consentimentos. Busca exata auditada sem CPF no evento; resposta sem cache. Lote de opções/candidato 7/7 aprovado antes da UI. Sem migração.
+
+Regressão backend integral após P-48/P-49/P-50: **156/156 integrações HTTP/PostgreSQL aprovadas**, lint220. FE-017 implementada e verificada com 15 casos específicos, regressão completa 70/70 Firefox com API simulada e lint/build. Carga/infraestrutura real BE-051 e parâmetros definitivos Q-16 seguem pendentes; nenhuma declaração de homologação produtiva.

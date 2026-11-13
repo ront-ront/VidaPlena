@@ -16,7 +16,7 @@
 | RF-001 | DRS §3.1.1, RF001 | BE-002 (M0 redigida), BE-010 (M0 redigida), FE-007 (M0 redigida), FE-039 (M0 redigida), BE-028 (M1 redigida), FE-019 (M1 redigida) | Total |
 | RF-002 | DRS §3.1.2, RF002 | BE-008 (M0 redigida), FE-004 (M0 redigida), FE-005 (M0 redigida) | Total |
 | RF-003 | DRS §3.1.3, RF003 | BE-009 (M0 redigida), FE-006 (M0 redigida) | Total |
-| RF-004 | DRS §3.1.4, RF004 | BE-011 (M0 redigida), FE-007 (M0 redigida), FE-008 (M0 redigida), FE-039 (M0 redigida), FE-038 (M4 redigida) | Total |
+| RF-004 | DRS §3.1.4, RF004 | BE-011 (M0 redigida), FE-007 (M0 redigida), FE-008 (M0 redigida), FE-039 (M0 redigida), FE-038 (M4 redigida), FE-042 (M0 redigida) | Total |
 | RF-005 | DRS §3.1.5, RF005 | BE-009 (M0 redigida), BE-012 (M0 redigida), FE-008 (M0 redigida), FE-038 (M4 redigida) | Total |
 | RF-006 | DRS §3.2.1, RF006 | BE-019 (M1 redigida), FE-012 (M1 redigida), FE-015 (M1 redigida) | Total |
 | RF-007 | DRS §3.2.2, RF007 | BE-017 (M1 redigida), BE-021 (M1 redigida), BE-029 (M1 redigida), FE-010 (M1 redigida), FE-013 (M1 redigida), FE-016 (M1 redigida), FE-020 (M1 redigida) | Total |
@@ -60,7 +60,7 @@
 | RNF-013 | DRS §4.4.2, NF013 | BE-007 (M0 redigida), BE-008 (M0 redigida), BE-009 (M0 redigida), FE-004 (M0 redigida), FE-005 (M0 redigida) | Total |
 | RNF-014 | DRS §4.4.3, NF014 | BE-013 (M0 redigida), BE-045 (M3 redigida), BE-053 (M3 redigida), BE-054 (M3 redigida), FE-033 (M3 redigida), BE-052 (M4 redigida) | Total |
 | RNF-015 | DRS §4.4.4, NF015 | BE-004 (M0 redigida), BE-031 (M2 redigida), FE-028 (M2 redigida), BE-049 (M4 redigida), BE-050 (M4 redigida), FE-037 (M4 redigida) | Total |
-| RNF-016 | DRS §4.4.5, NF016 | BE-010 (M0 redigida), BE-011 (M0 redigida), BE-012 (M0 redigida), FE-008 (M0 redigida), BE-028 (M1 redigida), BE-043 (M2 redigida), BE-048 (M4 redigida), FE-035 (M4 redigida), FE-038 (M4 redigida) | Total |
+| RNF-016 | DRS §4.4.5, NF016 | BE-010 (M0 redigida), BE-011 (M0 redigida), BE-012 (M0 redigida), FE-008 (M0 redigida), BE-028 (M1 redigida), BE-043 (M2 redigida), BE-048 (M4 redigida), FE-035 (M4 redigida), FE-038 (M4 redigida), FE-042 (M0 redigida) | Total |
 | RNF-017 | DRS §4.4.6, NF017 | BE-038 (M2 redigida), FE-041 (M2 redigida) | Total |
 | RNF-018 | DRS §4.5.1, NF018 | FE-003 (M0 redigida), FE-031 (M3 redigida) | Total |
 | RNF-019 | DRS §4.5.2, NF019 | FE-003 (M0 redigida), FE-007 (M0 redigida), FE-012 (M1 redigida), FE-027 (M2 redigida), FE-031 (M3 redigida) | Total |
@@ -101,12 +101,12 @@
 
 ## Verificações e limites do lote
 
-- **Cobertura de plano:** 85/85 requisitos/diretrizes têm ao menos uma spec mapeada; sem ID órfão. **Documentação M0–M4:** 85 itens com todas as specs redigidas em 95 arquivos (54 BE, 41 FE). Estados: 85 total, 0 parcial, 0 pendente. Conformidade operacional/jurídica permanece distinta.
+- **Cobertura de plano:** 85/85 requisitos/diretrizes têm ao menos uma spec mapeada; sem ID órfão. **Documentação M0–M4:** 85 itens com todas as specs redigidas em 96 arquivos (54 BE, 42 FE). Estados: 85 total, 0 parcial, 0 pendente. Conformidade operacional/jurídica permanece distinta.
 - **Telas explicitamente desenhadas nos docs de front:** Agenda → FE-015/016/018 (M1 redigida); Prontuário → FE-021/022/023 (M2 redigida). Layouts das demais telas são propostas Q-14.
 - **Desvios registrados:** RN-008 adendo sempre; RNF-013 inatividade interna 30 min; RNF-009 metas Q-22; RNF-022 compatibilidade estrutural; RN-005 segundo lembrete; RN-009/RNF-017 assinatura simulada parcial; RNF-014 mídia parcial.
 - **Operação pendente:** RNF-006/007/024 dependem de infraestrutura real e medições; RNF-004 requer teste com usuários após treinamento; RNF-003/019/020/021/023 exigem verificação transversal quando as telas forem implementadas.
 - **Implementação:** escopo local implementável de M0 concluído em 01/11/2026; evidências por spec em `_work/03-implementation-progress.md` e na seção abaixo. Cobertura documental continua distinta de homologação jurídica/operacional e da implementação M1–M4.
-- **Fechamento documental:** 32 RF, 25 RNF, 12 RN e 16 UI cobertos por 95 specs (54 BE, 41 FE); **sem requisito sem cobertura**. Agenda → FE-015/016/018; Prontuário → FE-021/022/023. Os 95 IDs são únicos, as dependências seguem a ordem topológica sem ciclo e todos os arquivos BE/FE têm as oito seções do template e critérios de aceite Dado/Quando/Então. Este resultado mede redação e não execução dos testes.
+- **Fechamento documental:** 32 RF, 25 RNF, 12 RN e 16 UI cobertos por 96 specs (54 BE, 42 FE); **sem requisito sem cobertura**. Agenda → FE-015/016/018; Prontuário → FE-021/022/023. Os 96 IDs são únicos, as dependências seguem a ordem topológica sem ciclo e todos os arquivos BE/FE têm as oito seções do template e critérios de aceite Dado/Quando/Então. Este resultado mede redação e não execução dos testes.
 
 ## Riscos arquiteturais aprovados A-01–A-10
 
@@ -132,7 +132,7 @@ A cobertura documental está completa. Ao implementar, atualizar por requisito s
 | BE-003 | RNF-021 parcial | Testes HTTP de validação/404/409/500 sanitizado e lint | Mensagens dos módulos ainda serão integradas |
 | BE-004 | RF-032/RNF-015 parcial | Testes de rollback, metadados e imutabilidade no PostgreSQL | Consulta/exportação BE-050; operação produtiva pendente |
 | BE-005 | RF-029/RNF-012/RN-007 parcial | Guard HTTP, IDOR, DPO, revogação imediata e último admin sob concorrência; lint | Autenticador BE-008; vínculo clínico BE-030 permanece fechado |
-| BE-006 | RF-013/RN-005 parcial | Outbox concorrente/idempotente, caixa local, política de preferência, retry e bloqueio de consentimento; worker ativo no runtime; convite e reset entregues em caixa dev e consumidos no browser; testes e lint | Relógio de lembretes BE-025, validação jurídica P-01 e provedor produtivo pendentes |
+| BE-006 | RF-013/RN-005 parcial | Outbox concorrente/idempotente, caixa local, política de preferência, retry e bloqueio de consentimento; worker ativo no runtime; convite e reset entregues em caixa dev e consumidos no browser; testes e lint | Lembretes BE-025 integrados; validação jurídica P-01 e provedor produtivo pendentes |
 | BE-007 | RF-029/RNF-013 parcial | Seed em banco vazio, convite de uso único/expiração/reenvio/RBAC, revisão de inatividade, bcrypt; testes e lint | Login/MFA em BE-008; operação do job e provedor produtivo pendentes |
 | BE-008 | RF-002/RNF-013 parcial | TOTP, login interno e de paciente consentido, JWT, refresh rotativo/reuse, idle, lock, cookies/Origin/CSRF; testes e lint | Domínio real de implantação não homologado; consentimento jurídico P-01 |
 | BE-009 | RF-003/RF-005/RNF-013 parcial | Reset sem enumeração, limite, expiração/uso único, histórico, revogação, e-mail novo confirmado, telefone presencial; envio a paciente revalida consentimento | Provedor de e-mail produtivo e parecer P-01 pendentes |
@@ -146,26 +146,40 @@ A cobertura documental está completa. Ao implementar, atualizar por requisito s
 | FE-002 | UI-002/UI-006/UI-007/UI-012/UI-013/UI-015; RNF-003/RNF-021 parcial | Button 44–48 px, campo com label/ajuda/erro ARIA, status com texto/ícone, Card e estados; renderização SSR e mensagens reais de API, lint/build aprovados | Revisão manual com leitor de tela pendente |
 | FE-003 | UI-001/UI-008/UI-011/UI-015; RNF-018/019/020 parcial | Shell, diálogo mobile, rota ativa e filtros por perfil; Firefox real 360/760/761/1050/1280 px sem overflow; lint/build | Revisão manual com leitor de tela e dispositivo real pendente |
 | FE-004 | RF-002/RNF-012/RNF-013 parcial | Cliente HTTP, token em memória, refresh serializado, CSRF, guard visual e ambiente público Zod; 3 testes Node, login/refresh/cookies reais no browser, sem token em localStorage; lint/build | Homologação do domínio/cookies de implantação e leitor de tela pendentes |
-| FE-005 | RF-002/RNF-013 parcial | Login de paciente e TOTP real de admin/recepção com backend, destino por papel e 360 px; lint/build | Revisão manual de teclado/leitor de tela pendente |
+| FE-005 | RF-002/RNF-013 parcial | Login de paciente e TOTP real de admin/recepção com backend, destino por papel e 360 px; lint/build original. Ajuste QR de cadastro em 13/11/2026: 4/4 Firefox com API simulada, decodificação da URI, chave manual, dois temas/360 px e lint | Revisão manual de teclado/leitor de tela pendente; build não repetido no ajuste QR |
 | FE-006 | RF-003/RF-029 parcial | Convite do admin até ativação e recuperação do paciente até nova senha no browser/backend/caixa dev; inspeção e remoção de token da URL, links expirados em mock, 360 px; lint/build | Revisão manual com leitor de tela e provedor produtivo pendentes |
 | FE-007 | RF-001/RF-004/RNF-003/RNF-019 parcial | Autocadastro/aceite/login adulto no browser/backend; dependente, recusa, duplicidade e estados no browser com API simulada; Zod, 360 px, lint/build | Revisão manual de teclado/leitor de tela e P-01 pendentes |
 | FE-008 | RF-004/RF-005/RNF-016 parcial | Histórico/pedido e reaceite de termo novo no browser/backend; contato, revogação e confirmação em browser com API simulada; auth/consent PostgreSQL, 360 px, lint/build | Revisão manual com leitor de tela e P-01 pendentes |
 | FE-009 | RF-029/RNF-012 parcial | Listagem e convite/ativação real no browser/backend; papéis, DPO, conflito e gestor em browser com API simulada; AccessStore PostgreSQL, 360 px, lint/build | Revisão manual com leitor de tela e P-08 pendentes |
 | FE-039 | RF-001/RF-004 parcial | Menor/guardião/termo/upload/recibo no browser/backend, CPF e arquivo inválido em mock, PostgreSQL 2/2, 360 px, lint/build | Revisão manual com leitor de tela e P-01 pendentes |
+| FE-042 | RF-004/RNF-016 parcial | Tela real de publicação/admin, revisão, schema Zod,201 e recarga;11 casos Firefox, lote26/26, cliente6/6, lint221/91 e backend5/5 | P-01 e leitor de tela manual pendentes; sem build repetido |
 
 ## Cobertura implementada de M1
 
 | Spec | Requisitos | Evidência | Limite |
 | --- | --- | --- | --- |
-| BE-016 | RF-028/RN-002 parcial | Catálogo versionado e seguro, duração antiga preservada e nova duração vigente comprovadas; impacto real de inativação/modalidade integrado; testes e lint | Resolução por cancelamento comprovada; FE-010 pendente |
-| BE-017 | RF-007/RF-008/RN-001 parcial | Sala unitária/versionada, unicidade/RBAC/auditoria; inativação com impacto recusada, sala inativa e ausência de sala livre recusadas em confirmação real | Resolução por cancelamento comprovada; FE-010 pendente |
-| BE-018 | RF-011/RN-002 parcial | Grade/fuso/versionamento/RBAC, bloqueio de edição incompatível, emergência preserva reservas e enfileira avisos idempotentes; testes e lint | Operação visual FE-011 pendente; resolução por BE-022/023 usa rotas próprias |
-| BE-019 | RF-006/RN-003/RNF-009 parcial | Disponibilidade por duração/modalidade, grade/bloqueios/salas e reservas reais; antecedência e próxima data verificadas; testes e lint | Ensaio formal BE-051 e front FE-012/015 pendentes |
+| BE-016 | RF-028/RN-002 parcial | Catálogo versionado e seguro, duração antiga preservada e nova duração vigente comprovadas; impacto real de inativação/modalidade integrado; testes e lint | Resolução por cancelamento comprovada; FE-010 implementada localmente |
+| BE-017 | RF-007/RF-008/RN-001 parcial | Sala unitária/versionada, unicidade/RBAC/auditoria; inativação com impacto recusada, sala inativa e ausência de sala livre recusadas em confirmação real | Resolução por cancelamento comprovada; FE-010 implementada localmente |
+| BE-018 | RF-011/RN-002 parcial | Grade/fuso/versionamento/RBAC, bloqueio de edição incompatível, emergência preserva reservas e enfileira avisos idempotentes; testes e lint | FE-011 implementada localmente; resolução por BE-022/023 usa rotas próprias |
+| BE-019 | RF-006/RN-003/RNF-009 parcial | Disponibilidade por duração/modalidade, grade/bloqueios/salas e reservas reais; antecedência e próxima data verificadas; testes e lint | FE-012/015/017 integradas localmente; ensaio formal BE-051 pendente |
 | BE-020 | RF-008/RN-001/RNF-010 parcial | Exclusões GiST profissional/sala, idempotência, hold/expiração e troca/rollback; fixtures corrigidas 5/5 e corrida HTTP comprovada | Encaixe BE-024 comprovado; carga BE-051 pendente |
-| BE-021 | RF-007/RN-001/RN-002/RN-003/RN-006 parcial | Confirmação transacional/idempotente, consentimento/representação, duração, salas, impacto administrativo/emergencial e outbox; 9/9 integrações e lint | Front e lembretes BE-025 pendentes; homologação jurídica/operacional separada |
-| BE-022 | RF-009/RN-004 parcial | Reagendamento atômico/idempotente, listagem própria/dependentes, origem clínica, versões, prazo, representação e outbox; 9/9 testes HTTP/PostgreSQL; confirmação junto 18/18 e lint | Novos lembretes serão planejados por BE-025; FE-014/016 ainda pendentes |
-| BE-023 | RF-010/RN-004 parcial | Cancelamento/liberação/histórico/outbox e evento durável de oportunidade; 9/9 integrações, com reagendamento 18/18; prazo/representação/profissional próprio/revogação/corrida/rollback e inativação resolvida | Consumo de oferta BE-024 comprovado; novos lembretes BE-025 e front pendentes; tratamento pós-revogação segue P-01 |
-| BE-024 | RF-012/RN-001/RN-003 parcial | Fila/FIFO/hold/expiração/aceite concorrente e encaixe, com representação, revogação, contato assistido e rollback; 17/17 integrações; regressão completa 78/78 e lint | FE-017 e medição BE-051 pendentes; parâmetros provisórios P-29/Q-16 |
+| BE-021 | RF-007/RN-001/RN-002/RN-003/RN-006 parcial | Confirmação transacional/idempotente, consentimento/representação, duração, salas, impacto administrativo/emergencial e outbox; 9/9 integrações e lint | Lembretes BE-025 e front FE-013/016 integrados; homologação jurídica/operacional separada |
+| BE-022 | RF-009/RN-004 parcial | Reagendamento atômico/idempotente, listagem própria/dependentes, origem clínica, versões, prazo, representação e outbox; 9/9 testes HTTP/PostgreSQL; confirmação junto 18/18 e lint | Novos lembretes integrados por BE-025; FE-014/016 integradas localmente |
+| BE-023 | RF-010/RN-004 parcial | Cancelamento/liberação/histórico/outbox e evento durável de oportunidade; 9/9 integrações, com reagendamento 18/18; prazo/representação/profissional próprio/revogação/corrida/rollback e inativação resolvida | Consumo de oferta BE-024 comprovado; lembretes BE-025 e front FE-014/016 integrados; tratamento pós-revogação segue P-01 |
+| BE-024 | RF-012/RN-001/RN-003 parcial | Fila/FIFO/hold/expiração/aceite concorrente e encaixe, com representação, revogação, contato assistido e rollback; 17/17 integrações; regressão completa 78/78 e lint | FE-017 integrada localmente; medição BE-051 e parâmetros provisórios P-29/Q-16 pendentes |
+| BE-025 | RF-013/RN-005 parcial | Jobs transacionais/reconciliação/worker, teto global, dispatcher atual, payload mínimo cifrado, resposta append-only/projeção própria e espera só após cancelamento; 14/14 integrações específicas, regressão completa 101/101 e lint | Endereço definitivo P-30, jurídico P-01, provedor produtivo e preparo remoto M3 pendentes; interface M1 em FE-014/015 |
+| BE-026 | RF-014 parcial | Check-in imutável/transacional, fila própria e agenda administrativa, atraso por parâmetro, identidade por papel, paginação e remarcação assistida; 9/9 integrações específicas, regressão final 101/101 e lint | FE-015/018 e jurídico P-01 pendentes; nenhuma autorização clínica antes de BE-030 |
+| BE-027 | RF-015/RN-005/RN-006 parcial | Conferência e decisão manual, histórico imutável/cifrado, penalidade derivada por calendário, correção/reversão, aviso à recepção e encerramento de reserva com histórico; 10/10 específicas, regressão 111/111, Node 26/26, Vitest 2/2 e lint | FE-015/018 pendentes; parâmetro Q-16 e interpretação P-32 aguardam clínica, P-01 jurídico; sem indicadores M4 antecipados |
+| BE-028 | RF-001/RF-016/RNF-016 parcial | CSV validado/cifrado, prévia sem writes, confirmação parcial/idempotente, origem e histórico imutáveis; 12/12 específicas, consentimento M0 2/2, Node 26/26, Vitest 2/2 e lint | FE-019 e adendo cadastral P-33 pendentes; dados reais/retenção/corte P-01/P-07; nenhuma evolução clínica fabricada |
+| BE-029 | RF-007/RF-008/RN-001 parcial | CSV/relatório privado, transação retomável por linha, colisões com marcação normal pela barreira BE-020, histórico/origem e ausência de avisos; regressão 136/136 e revisão específica 14/14, Node/Vitest/lint | FE-020 e dados reais/corte P-07 pendentes; identidade demonstrativa e decisões P-34 |
+| FE-010 | RF-028/RF-007 parcial | Catálogo administrativo conectado ao cliente HTTP; formulários, paginação/estado, RBAC visual e revisão de impacto; Firefox com API simulada 7/7, cliente HTTP 4/4, lint/build | Leitor de tela e homologação manual pendentes; RF-009/010 visual integrado em FE-015/016; backend/constraints verificados em BE-016/017 |
+| FE-011 | RF-011 parcial | Editor completo/versionado, perfil próprio ou seleção administrativa, vigência/bloqueios/fuso/impacto; Firefox7/7, regressão browser14/14, fuso3/3, lint/build | Leitor de tela e homologação manual; resolução operacional visual integrada em FE-015/016 |
+| FE-012 | RF-006/RNF-001/RNF-019 parcial | Busca/catálogos paginados, datas civis, modalidade e seleção sem reserva, próxima data e expiração; Firefox6/6, regressão20/20, 360px e lint/build | Confirmação FE-013 e espera FE-017 integradas; leitor de tela e ensaio RNF-001 com participantes pendentes |
+| FE-013 | RF-007/RF-008/RNF-001/RNF-021/RNF-004 parcial | Revisão, sujeitos, idempotência de aba, duplicidade/alternativas e recibo201; Firefox8/8, regressão28/28, cliente6/6, nonce2/2 e lint/build | Caminho Minhas consultas integrado por FE-014; ensaios com usuários/leitor de tela e homologação pendentes |
+| FE-014 | RF-009/RF-010/RN-004 parcial | Consultas próprias/dependentes, paginação/view, política do servidor e diálogos de alteração/cancelamento; Firefox9/9, regressão37/37, revisão17/17, nonce3/3 e lint/build | Leitor de tela/ensaio com usuários e homologação pendentes; operação de sala BE-023 verificada separadamente |
+| FE-015 | RF-006/RF-014/RF-015/RNF-002/RNF-004/UI-009/UI-011 parcial | Dia/fuso, grade, filtros, totais/paginação, detalhes/flags; Firefox7/7, lint/build, backend147/147 | Agendar/alterar/cancelar FE-016 integrados; ações FE-018 e ensaios de dois cliques/treinamento e leitor de tela manual pendentes |
+| FE-016 | RF-007/RF-009/RF-010/RNF-002 parcial | Painel CPF/horário/sala, duplicidade, origem/razão, idempotência, 201/200 e preservação de contexto/foco; 11 casos específicos, regressão54/54+1/1, lint/build e backend152/152 | Ensaio com pessoas e leitor de tela manual pendentes; ações de chegada permanecem em FE-018 |
+| FE-017 | RF-012/RN-001 parcial | Inscrição/saída própria/dependentes/assistida, fila/oferta/expiração, aceite idempotente e encaixe justificado com sala/fuso; Firefox15/15, regressão70/70, cliente6/6, nonce3/3, lint/build e backend156/156 | Leitor de tela/homologação manual, parâmetros Q-16 e carga BE-051 pendentes; pausa solicitada após esta spec |
 
 **Verificação integrada em 05/11/2026:** suíte selecionada de M1 com 13/18 aprovações e cinco falhas em fixtures de BE-020 incompatíveis com a nova FK de consultas. Lint do monorepo aprovado; M1 permanece parcial. Detalhes em `_work/07-m1-implementation-progress.md`.
 
@@ -176,3 +190,59 @@ A cobertura documental está completa. Ao implementar, atualizar por requisito s
 **Regressão completa até BE-023 — 05/11/2026:** 61/61 integrações backend, 25/25 testes Node e 2/2 Vitest passaram; lint backend aprovado em 162 arquivos. Resolução por cancelamento comprovou inativação de profissional/especialidade/sala com histórico preservado. Restam BE-024–029 e FE-010–020; M1 continua incompleto.
 
 **Regressão completa até BE-024 — 05/11/2026:** 78/78 integrações backend, 25/25 testes Node e 2/2 Vitest aprovados; lint backend em 172 arquivos. Oferta da espera e encaixe integraram a barreira transacional. Restam BE-025–029 e FE-010–020; M1 segue ativo.
+
+
+**Regressão completa até BE-025 — 12/11/2026:** 91/91 integrações backend, 25/25 testes Node, 2/2 Vitest e lint em 180 arquivos aprovados, sem `tsc`. Restam BE-026–029 e FE-010–020; M1 continua ativo. Mudanças desta continuação ainda sem commit por solicitação do usuário.
+
+**Fechamento local BE-025/026 — 12/11/2026:** 101/101 integrações backend, 25/25 testes Node, 2/2 Vitest e lint em 188 arquivos aprovados; nenhum `tsc`. Lembretes incluem fallback quando não há adaptador externo ativo, e a confirmação de contato já enfileirada também respeita revogação. Check-in/fila/agenda e resolução assistida de atraso integrados sem acesso clínico. Restam BE-027–029 e FE-010–020; M1 permanece incompleto. Nenhum commit criado nesta continuação.
+
+**Fechamento local BE-027 — 12/11/2026:** 111/111 integrações backend, 26/26 Node, 2/2 Vitest e lint em 198 arquivos aprovados; nenhum `tsc`. Ausências manuais, correções e RN-006 integradas a confirmação/espera e agenda administrativa. Restam BE-028/029 e FE-010–020; M1 continua ativo, sem novos commits.
+
+**Fechamento backend M1 — 12/11/2026:** BE-016–029 implementadas localmente. Regressão completa 136/136, Node 26/26, Vitest 2/2 e lint aprovados; revisão final BE-029 14/14 após seleção de sala ativa homônima. Não equivale à conclusão de M1: FE-010–020 ainda pendentes. Sem novos commits.
+
+**Dependência FE-011 em correção (13/11/2026):** P-36 registra extensão técnica BE-018 para snapshot completo de edição e perfil profissional da sessão. Correção implementada: 4/4 integrações específicas e 5/5 de catálogo/grade anterior, Node26/26, Vitest2/2 e lint aprovados; FE-011 deve usar snapshot completo, nunca a projeção por janela.
+
+**Dependência FE-013 em correção (13/11/2026):** P-39 completa a projeção administrativa de nomes da própria consulta em BE-021; projeção implementada, 2/2 integrações específicas e regressão integral143/143 aprovadas; Node26/26, Vitest2/2 e lint aprovados. As nove falhas da primeira execução provinham do banco-base de teste ainda sem migrations, corrigido exclusivamente no PostgreSQL descartável.
+
+**FE-013 iniciada (13/11/2026):** P-40 registra revisão, nonce persistido sem payload e recibo somente após201; implementação/testes em andamento, sem declarar cobertura concluída.
+
+
+**Dependência FE-014 em correção (13/11/2026):** P-41 completa BE-022 com política/fuso/última origem da lista própria; testes pendentes antes da implementação FE-014. Sem ampliar acesso ao histórico.
+
+**P-41 verificada:** projeção inicial22/22 e complemento de visão12/12 (3 específicas+9 remarcação) aprovados; acesso/prontuário inalterados. FE-014 inicia conforme P-42; resultado local/testes ainda pendentes.
+
+**Dependência FE-015 em correção:** P-43 acrescenta contexto temporal autoritativo à agenda BE-026; testes em andamento antes da UI. Demais permissões preservadas.
+
+**P-43 verificada (13/11/2026):** 10/10 integrações de chegada/agenda/fila e lint216 aprovados; FE-015 pode iniciar sem presumir fuso/relógio do navegador.
+
+**Regressão backend após P-41/P-43 (13/11/2026):** 147/147 integrações aprovadas no PostgreSQL17 descartável; novas projeções/visões não alteraram o restante de M0/M1. Sem tsc/commit.
+
+**Dependência FE-016 em correção:** P-45 define opções de sala BE-021 antes do formulário da recepção; código e testes desta correção ainda em andamento. FE-016 segue pendente.
+
+**P-45 verificada (13/11/2026):** opções de sala passaram13/13 no lote (9 confirmação+4 novas),4/4 após auditoria de sujeito, Node26/26, Vitest2/2 e lint backend219/front76. Regressão147/147 é anterior a esta adição; não somar como151/151. FE-016 continua pendente, com dependência técnica agora implementada.
+
+**Complemento de dependência FE-016:** P-46 corrige origem/prazo da agenda BE-026; testes pendentes antes da implementação da UI. Preservar lastChange=null para profissional e não expor motivos de alteração.
+
+**P-46 verificada (13/11/2026):** origem/prazo operacional preservam restrição por perfil e dados mínimos. 14/14 integrações de chegada/agenda/política e revisão4/4 incluindo parse Zod aprovadas; lint backend219/front76. Última regressão integral147/147 antecede P-45/P-46; não declarar cobertura integral nova sem executá-la. FE-016–020 e ações da agenda continuam pendentes.
+
+**FE-016 iniciada:** decisões de UI P-47 registradas antes do código, usando dependências P-45/P-46 verificadas. Testes e cobertura ainda em andamento.
+
+**Fechamento FE-016 —13/11/2026:** frontend54/54 mais revisão1/1, cliente6/6, nonce3/3, lint/build e regressão backend152/152 aprovados. Substitui a limitação de full147/147 anterior a P-45/P-46. Restam FE-017–020 e integração de chegada FE-018; M1 continua incompleto.
+
+**Dependência FE-017 em correção:** BE-019/P-48 acrescenta contexto temporal mínimo de agendamento para paciente/gestor. Verificação pendente; UI FE-017 ainda não iniciada.
+
+**P-48 verificada:** contexto mínimo BE-019 passou1/1 integração (cinco perfis/MFA/OpenAPI) e lint220, sem ampliar acesso a dados. Próxima correção BE-024/P-49 antes do formulário de encaixe FE-017.
+
+**Dependência FE-017/P-49 em correção:** BE-024 passa a fornecer opções de sala fora da grade com permissão de encaixe. Testes pendentes; nenhuma UI FE-017 implementada ainda.
+
+**P-49 verificada —13/11/2026:** salas de encaixe BE-024 passaram15/15 no lote (6 opções+9 confirmação), incluindo gestor, grade regular recusada, sala/agenda ocupada e ausência de hold/duplicação; lint220. Endpoint regular preservado. FE-017 continua sem UI; full152/152 informado no fechamento FE-016 é anterior a P-48/P-49.
+
+**Dependência FE-017/P-50 em correção:** identificar paciente por CPF para gestor de encaixe exige projeção mínima, preservando cadastro presencial restrito. Testes pendentes antes da UI.
+
+**P-50 verificada:**7/7 integrações de opções/candidato de encaixe aprovadas; gestor recebe somente ID/nome e segue sem cadastro presencial. **FE-017 iniciada conforme P-51**, sem alegar cobertura concluída.
+
+**Fechamento FE-017 e pausa solicitada — 13/11/2026:** 15/15 casos específicos e regressão completa frontend70/70 Firefox com APIs simuladas; integrações HTTP/PostgreSQL backend156/156, cliente6/6, nonce3/3, lint backend220/front86 e build Next aprovados. O resultado integral substitui a limitação do full152 anterior a P-48/P-49/P-50. Busca vazia FE-012 integrada à espera. FE-015 permanece parcial nas ações FE-018; restam FE-018/019/020 para M1. Execução pausada por solicitação expressa do usuário, sem iniciar essas specs e sem criar commits. Evidências em `_work/07-m1-implementation-progress.md`.
+
+**Complemento de correção P-52 em implementação —13/11/2026:** FE-042 documentada para publicação administrativa do termo (RF-004/RNF-016), precedida de compatibilidade BE-011 e seguida de correções de estado FE-007/039. Sem cobertura de código/testes declarada ainda; M1 continua pausada.
+
+**Correção M0/P-52 concluída —13/11/2026:** termo ausente era falta de publicação; FE-042 fornece tela real para admin/MFA, BE-011 admite vigência imediata pelo servidor e FE-007/039 distinguem ausência/erro, permitem retry e invalidam aceite/evidência na troca de versão.26/26 Firefox (11 FE-042+5 FE-007+6 FE-039+4 MFA),5/5 integrações HTTP/PostgreSQL,6/6 cliente e lint221/91 aprovados. Sem mock no produto, migração, publicação automática de texto, tsc ou commit. Evidências em `_work/09-consent-publication-fix.md`. M1 continua pausada.
