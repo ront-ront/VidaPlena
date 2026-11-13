@@ -7,6 +7,7 @@ import type {
   NotificationEvent,
   NotificationStore,
 } from '../ports/notifications'
+import { renderReminderContent } from '../ports/reminder-content'
 import type { SecretBox } from '../ports/secret-box'
 
 export interface NotificationPolicy {
@@ -35,15 +36,20 @@ export class DispatchNotifications {
   async deliver(id: string) {
     await this.store.withDelivery(id, this.now(), async (tx) => {
       const message = tx.message
+      const emailAvailable =
+        tx.emailAvailable &&
+        this.channels.some((channel) => channel.name === 'email')
+      const allowed = await tx.isAllowed()
       const policyDecision = deliveryPolicy(
         message.category,
         tx.preferences,
-        await tx.isAllowed(),
-        tx.emailAvailable,
+        allowed,
+        emailAvailable,
       )
       const decision =
         message.templateKey === 'contact.verification_requested' &&
-        tx.emailAvailable
+        emailAvailable &&
+        allowed
           ? {
               channel: 'email' as const,
               reason: null,
@@ -71,17 +77,24 @@ export class DispatchNotifications {
             (item) => item.name === decision.channel,
           )
           if (!channel) throw new Error('Canal indisponível.')
+          const payload = message.payloadEncrypted
+            ? this.secrets.open(
+                message.payloadEncrypted,
+                `notification:${message.userId}:${message.templateKey}`,
+              )
+            : undefined
           await channel.deliver({
             idempotencyKey: message.id,
             to: tx.email,
             template: message.templateKey,
-            text: safeNotificationText(message.templateKey),
-            token: message.payloadEncrypted
-              ? this.secrets.open(
-                  message.payloadEncrypted,
-                  `notification:${message.userId}:${message.templateKey}`,
-                )
-              : undefined,
+            text:
+              message.templateKey === 'appointment.reminder' && payload
+                ? renderReminderContent(payload)
+                : safeNotificationText(message.templateKey),
+            token:
+              message.templateKey === 'appointment.reminder'
+                ? undefined
+                : payload,
           })
           result.deliveryStatus = 'sent'
           result.sentAt = this.now()

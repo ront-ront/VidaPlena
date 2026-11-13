@@ -1,7 +1,14 @@
 import type { z } from 'zod'
 import {
+  absenceBody,
+  absenceCorrectionBody,
+  absenceResponse,
+} from './contracts/absence'
+import {
   appointmentBody,
   appointmentParams,
+  attendanceBody,
+  attendanceResponse,
   bookingResponse,
   cancelBody,
   cancelResponse,
@@ -30,6 +37,14 @@ import {
   specialtyResponse,
 } from './contracts/catalog'
 import { errorResponse } from './contracts/m0'
+import {
+  agendaQuery,
+  agendaResponse,
+  checkInBody,
+  checkInResponse,
+  queueQuery,
+  queueResponse,
+} from './contracts/operational-agenda'
 import { roomBody, roomPatch, roomResponse } from './contracts/rooms'
 import {
   publishedScheduleResponse,
@@ -82,6 +97,66 @@ const command = (
   responses: { [patch ? '200' : '201']: response(result), ...errors },
 })
 export const catalogOpenApiPaths = {
+  '/appointments/{id}/absence': {
+    post: {
+      operationId: 'recordAbsence',
+      tags: ['Agenda'],
+      security,
+      requestParams: { path: appointmentParams },
+      requestBody: { content: { 'application/json': { schema: absenceBody } } },
+      responses: { '200': response(absenceResponse), ...errors },
+    },
+    patch: {
+      operationId: 'correctAbsence',
+      tags: ['Agenda'],
+      security,
+      requestParams: { path: appointmentParams },
+      requestBody: {
+        content: { 'application/json': { schema: absenceCorrectionBody } },
+      },
+      responses: { '200': response(absenceResponse), ...errors },
+    },
+  },
+  '/appointments/{id}/check-in': {
+    post: {
+      operationId: 'checkInAppointment',
+      tags: ['Agenda'],
+      security,
+      requestParams: { path: appointmentParams },
+      requestBody: { content: { 'application/json': { schema: checkInBody } } },
+      responses: { '200': response(checkInResponse), ...errors },
+    },
+  },
+  '/agenda/day': {
+    get: {
+      operationId: 'readAgendaDay',
+      tags: ['Agenda'],
+      security,
+      requestParams: { query: agendaQuery },
+      responses: { '200': response(agendaResponse), ...errors },
+    },
+  },
+  '/professionals/me/queue': {
+    get: {
+      operationId: 'readOwnQueue',
+      tags: ['Agenda'],
+      security,
+      requestParams: { query: queueQuery },
+      responses: { '200': response(queueResponse), ...errors },
+    },
+  },
+  '/appointments/{id}/attendance-response': {
+    post: {
+      operationId: 'respondAttendance',
+      tags: ['Agenda'],
+      security,
+      requestParams: { path: appointmentParams },
+      requestBody: {
+        content: { 'application/json': { schema: attendanceBody } },
+      },
+      responses: { '200': response(attendanceResponse), ...errors },
+    },
+  },
   '/waitlist': {
     get: {
       operationId: 'listWaitlist',

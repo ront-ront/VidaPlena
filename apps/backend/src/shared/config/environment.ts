@@ -50,6 +50,29 @@ export const environmentSchema = z
     WAITLIST_MAX_WINDOW_DAYS: integer(93, 1, 366),
     WAITLIST_POLL_SECONDS: integer(5, 1, 3600),
     WAITLIST_WORKER_BATCH_SIZE: integer(10, 1, 100),
+    REMINDER_SCHEDULE_HOURS_BEFORE: requiredText
+      .transform((value): unknown => {
+        try {
+          return JSON.parse(value)
+        } catch {
+          return null
+        }
+      })
+      .pipe(
+        z
+          .array(z.number().positive().max(8760))
+          .min(1)
+          .max(2)
+          .refine((values) => new Set(values).size === values.length),
+      )
+      .default([24, 2]),
+    REMINDER_POLL_SECONDS: integer(5, 1, 3600),
+    REMINDER_WORKER_BATCH_SIZE: integer(50, 1, 100),
+    APPOINTMENT_LATE_TOLERANCE_MINUTES: integer(15, 0, 1440),
+    APPOINTMENT_NOSHOW_AFTER_MINUTES: integer(30, 0, 10080),
+    CLINIC_ONSITE_ADDRESS: requiredText
+      .max(500)
+      .default('Endereço a confirmar com a recepção'),
     AUTH_PASSWORD_MIN_LENGTH: integer(10, 1, 72),
     AUTH_PASSWORD_COMMON_LIST_ENABLED: z
       .enum(['true', 'false'])
@@ -160,6 +183,12 @@ export const environmentSchema = z
       waitlistMaxWindowDays: env.WAITLIST_MAX_WINDOW_DAYS,
       waitlistPollSeconds: env.WAITLIST_POLL_SECONDS,
       waitlistWorkerBatchSize: env.WAITLIST_WORKER_BATCH_SIZE,
+      reminderScheduleHoursBefore: env.REMINDER_SCHEDULE_HOURS_BEFORE,
+      reminderPollSeconds: env.REMINDER_POLL_SECONDS,
+      reminderWorkerBatchSize: env.REMINDER_WORKER_BATCH_SIZE,
+      appointmentLateToleranceMinutes: env.APPOINTMENT_LATE_TOLERANCE_MINUTES,
+      appointmentNoshowAfterMinutes: env.APPOINTMENT_NOSHOW_AFTER_MINUTES,
+      clinicOnsiteAddress: env.CLINIC_ONSITE_ADDRESS,
       passwordMinLength: env.AUTH_PASSWORD_MIN_LENGTH,
       passwordCommonListEnabled: env.AUTH_PASSWORD_COMMON_LIST_ENABLED,
       bcryptRounds: env.AUTH_BCRYPT_ROUNDS,

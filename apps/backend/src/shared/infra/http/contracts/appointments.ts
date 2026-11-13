@@ -37,6 +37,12 @@ export const appointmentResponse = z.object({
   bookingSource: z.enum(['portal', 'reception', 'fit_in', 'imported']),
   parentAppointmentId: z.uuid().nullable(),
   notificationAttention: z.boolean(),
+  attendanceResponse: z
+    .object({
+      response: z.enum(['confirm', 'cannot_attend']),
+      respondedAt: z.iso.datetime(),
+    })
+    .nullable(),
 })
 export const bookingResponse = z.object({
   appointment: appointmentResponse,
@@ -91,4 +97,17 @@ export const cancelResponse = bookingResponse.extend({
   waitlistTriggered: z.literal(true),
   origin: cancelBody.shape.origin,
   alternatives: rescheduleResponse.shape.alternatives,
+})
+export const attendanceBody = z
+  .object({ response: z.enum(['confirm', 'cannot_attend']) })
+  .strict()
+export const attendanceResponse = z.object({
+  appointmentId: z.uuid(),
+  appointmentVersion: z.int().positive(),
+  response: attendanceBody.shape.response,
+  respondedAt: z.iso.datetime(),
+  requiresCancellation: z.boolean(),
+  cancellationPath: z.string().nullable(),
+  receptionContactRequired: z.boolean(),
+  waitlistTriggered: z.literal(false),
 })

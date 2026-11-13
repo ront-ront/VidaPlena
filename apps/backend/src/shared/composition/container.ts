@@ -43,6 +43,8 @@ import { CancelAppointment } from '../../application/use-cases/cancel-appointmen
 import { DispatchNotifications } from '../../application/use-cases/dispatch-notifications'
 import { FindAvailability } from '../../application/use-cases/find-availability'
 import { ListMyAppointments } from '../../application/use-cases/list-my-appointments'
+import { ManageAbsences } from '../../application/use-cases/manage-absences'
+import { ManageArrivals } from '../../application/use-cases/manage-arrivals'
 import { ManageCatalog } from '../../application/use-cases/manage-catalog'
 import { ManageConsent } from '../../application/use-cases/manage-consent'
 import { ManageFiles } from '../../application/use-cases/manage-files'
@@ -52,10 +54,12 @@ import { ManageSchedule } from '../../application/use-cases/manage-schedule'
 import { ManageSubjectRequests } from '../../application/use-cases/manage-subject-requests'
 import { ManageWaitlist } from '../../application/use-cases/manage-waitlist'
 import { PreparePatientRegistration } from '../../application/use-cases/prepare-patient-registration'
+import { ProcessReminders } from '../../application/use-cases/process-reminders'
 import { ProcessWaitlist } from '../../application/use-cases/process-waitlist'
 import { ProvisionAccounts } from '../../application/use-cases/provision-accounts'
 import { RecoverAccess } from '../../application/use-cases/recover-access'
 import { RescheduleAppointment } from '../../application/use-cases/reschedule-appointment'
+import { RespondAttendance } from '../../application/use-cases/respond-attendance'
 import type { PrismaClient } from '../../generated/prisma/client'
 import { ConsentEvidenceFilePolicy } from '../../infrastructure/files/consent-evidence-policy'
 import {
@@ -68,6 +72,7 @@ import {
   EmailNotificationChannel,
   PortalNotificationChannel,
 } from '../../infrastructure/notifications/channels'
+import { PrismaAbsenceStore } from '../../infrastructure/persistence/prisma/absence-store'
 import { PrismaAccessStore } from '../../infrastructure/persistence/prisma/access-store'
 import { PrismaAuditWriter } from '../../infrastructure/persistence/prisma/audit-writer'
 import { PrismaAuthStore } from '../../infrastructure/persistence/prisma/auth-store'
@@ -81,9 +86,11 @@ import {
   consentAwareNotificationCheck,
   PrismaNotificationStore,
 } from '../../infrastructure/persistence/prisma/notification-store'
+import { PrismaOperationalStore } from '../../infrastructure/persistence/prisma/operational-store'
 import { PrismaPatientRegistrationStore } from '../../infrastructure/persistence/prisma/patient-registration-store'
 import { PrismaProvisioningStore } from '../../infrastructure/persistence/prisma/provisioning-store'
 import { PrismaRecoveryStore } from '../../infrastructure/persistence/prisma/recovery-store'
+import { PrismaReminderStore } from '../../infrastructure/persistence/prisma/reminder-store'
 import { PrismaReservationStore } from '../../infrastructure/persistence/prisma/reservation-store'
 import { PrismaRoomStore } from '../../infrastructure/persistence/prisma/room-store'
 import { PrismaScheduleStore } from '../../infrastructure/persistence/prisma/schedule-store'
@@ -148,6 +155,10 @@ export const services = {
   rescheduleAppointment: Symbol('rescheduleAppointment'),
   listMyAppointments: Symbol('listMyAppointments'),
   waitlistStore: Symbol('waitlistStore'),
+  processReminders: Symbol('processReminders'),
+  respondAttendance: Symbol('respondAttendance'),
+  manageArrivals: Symbol('manageArrivals'),
+  manageAbsences: Symbol('manageAbsences'),
   manageWaitlist: Symbol('manageWaitlist'),
   acceptWaitlistOffer: Symbol('acceptWaitlistOffer'),
   processWaitlist: Symbol('processWaitlist'),
@@ -158,6 +169,72 @@ export function createServiceContainer(
   database: PrismaClient,
 ): DependencyContainer {
   const scoped = container.createChildContainer()
+  scoped.register<ManageAbsences>(services.manageAbsences, {
+    useFactory: (scope) =>
+      new ManageAbsences(
+        new PrismaAbsenceStore(
+          scope.resolve<PrismaClient>(services.database),
+          {
+            timeoutMs: config.reservationTxTimeoutMs,
+            maxWaitMs: config.reservationTxMaxWaitMs,
+            retryAttempts: config.reservationTxRetryAttempts,
+            internalMinutes: config.internalIdleMinutes,
+            patientMinutes: config.patientIdleMinutes,
+            reminderScheduleHours: config.reminderScheduleHoursBefore,
+          },
+          new AesSecretBox(config.encryptionKey, 'absence'),
+        ),
+        scope.resolve<AuditWriter>(services.audit),
+        {
+          timeZone: config.clinicTimeZone,
+          afterMinutes: config.appointmentNoshowAfterMinutes,
+        },
+      ),
+  })
+  scoped.register<ManageArrivals>(services.manageArrivals, {
+    useFactory: (scope) =>
+      new ManageArrivals(
+        new PrismaOperationalStore(
+          scope.resolve<PrismaClient>(services.database),
+          {
+            timeoutMs: config.reservationTxTimeoutMs,
+            maxWaitMs: config.reservationTxMaxWaitMs,
+            retryAttempts: config.reservationTxRetryAttempts,
+            internalMinutes: config.internalIdleMinutes,
+            patientMinutes: config.patientIdleMinutes,
+            reminderScheduleHours: config.reminderScheduleHoursBefore,
+          },
+          config.appointmentNoshowAfterMinutes,
+        ),
+        scope.resolve<AuditWriter>(services.audit),
+        {
+          timeZone: config.clinicTimeZone,
+          lateToleranceMinutes: config.appointmentLateToleranceMinutes,
+        },
+      ),
+  })
+  scoped.register<ProcessReminders>(services.processReminders, {
+    useFactory: (scope) =>
+      new ProcessReminders(
+        new PrismaReminderStore(
+          scope.resolve<PrismaClient>(services.database),
+          scope.resolve<SecretBox>(services.secretBox),
+          {
+            hoursBefore: config.reminderScheduleHoursBefore,
+            timeZone: config.clinicTimeZone,
+            onsiteAddress: config.clinicOnsiteAddress,
+          },
+        ),
+        config.reminderWorkerBatchSize,
+      ),
+  })
+  scoped.register<RespondAttendance>(services.respondAttendance, {
+    useFactory: (scope) =>
+      new RespondAttendance(
+        scope.resolve<BookingStore>(services.bookingStore),
+        scope.resolve<AuditWriter>(services.audit),
+      ),
+  })
   scoped.register<WaitlistStore>(services.waitlistStore, {
     useFactory: (scope) => {
       const config = scope.resolve<AppConfig>(services.config)
@@ -169,6 +246,7 @@ export function createServiceContainer(
           retryAttempts: config.reservationTxRetryAttempts,
           internalMinutes: config.internalIdleMinutes,
           patientMinutes: config.patientIdleMinutes,
+          reminderScheduleHours: config.reminderScheduleHoursBefore,
         },
       )
     },
@@ -217,6 +295,7 @@ export function createServiceContainer(
           retryAttempts: options.reservationTxRetryAttempts,
           internalMinutes: options.internalIdleMinutes,
           patientMinutes: options.patientIdleMinutes,
+          reminderScheduleHours: options.reminderScheduleHoursBefore,
         },
       )
     },

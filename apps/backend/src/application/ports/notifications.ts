@@ -15,6 +15,7 @@ export interface NotificationEvent {
   requestId: string
   token?: string
   deduplicationKey?: string
+  reminderJobId?: string
 }
 export interface NotificationMessage {
   id: string
@@ -27,6 +28,7 @@ export interface NotificationMessage {
   attempts: number
   aggregateId?: string | null
   aggregateVersion?: number | null
+  reminderJobId?: string | null
 }
 export interface Delivery {
   idempotencyKey: string

@@ -28,6 +28,7 @@ export async function createM1Database() {
     EMAIL_MAILBOX_PATH: join(directory, 'mail'),
     NOTIFICATION_POLL_SECONDS: '3600',
     WAITLIST_POLL_SECONDS: '3600',
+    REMINDER_POLL_SECONDS: '3600',
   })
   const db = createPrismaClient(config.databaseUrl)
   let created = false

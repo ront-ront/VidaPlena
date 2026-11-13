@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { mayAccess, type Principal } from '../../domain/rules/access'
+import { clinicDate } from '../../domain/rules/arrival'
 import { ApplicationError } from '../errors/application-error'
 import type { AuditContext, AuditWriter } from '../ports/audit-writer'
 import {
@@ -86,15 +87,25 @@ export class RescheduleAppointment {
             origin,
           }
         }
+        const arrival =
+          row.status === 'waiting' ? await tx.checkIn(id, row.version) : null
+        const waitingToday =
+          !portal &&
+          !!arrival &&
+          clinicDate(arrival.arrivedAt, arrival.clinicTimeZone) ===
+            clinicDate(now, arrival.clinicTimeZone)
         if (
           row.version !== input.expectedVersion ||
-          row.status !== 'confirmed' ||
-          row.startsAt <= now
+          (row.status !== 'confirmed' && !waitingToday) ||
+          (row.startsAt <= now && !waitingToday)
         )
           throw new ApplicationError('CONFLICT')
         const late = row.startsAt.getTime() - now.getTime() < 4 * 3_600_000
         if (portal && late) throw new ApplicationError('BOOKING_CHANGE_WINDOW')
-        if (((!portal && late) || origin === 'clinic') && !input.reason)
+        if (
+          (waitingToday || (!portal && late) || origin === 'clinic') &&
+          !input.reason
+        )
           throw new ApplicationError('VALIDATION_ERROR', [
             {
               field: 'reason',
@@ -129,6 +140,7 @@ export class RescheduleAppointment {
           state: 'confirmed',
         })
         const changed = await tx.update(id, row.version, {
+          status: 'confirmed',
           professionalId: slot.professionalId,
           roomId: reservation.roomId,
           modality: slot.modality,

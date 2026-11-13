@@ -49,7 +49,7 @@ async function account() {
 }
 function event(
   userId: string,
-  type: NotificationEvent['type'] = 'appointment.reminder',
+  type: NotificationEvent['type'] = 'appointment.confirmed',
 ): NotificationEvent {
   return {
     userId,

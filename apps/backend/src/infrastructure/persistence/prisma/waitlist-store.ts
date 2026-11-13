@@ -10,6 +10,7 @@ import type {
   PrismaClient,
   WaitlistEntry,
 } from '../../../generated/prisma/client'
+import { readBookingRestriction } from './absence-policy'
 import { patientNotificationRecipients } from './appointment-notifications'
 import { loadAvailability } from './availability-store'
 import {
@@ -337,7 +338,8 @@ export class PrismaWaitlistStore implements WaitlistStore {
                   owned: false,
                   active: p.status === 'active',
                   consentState: await dataConsentState(tx, id, now),
-                  suspendedUntil: p.autoBookingSuspendedUntil,
+                  suspendedUntil: (await readBookingRestriction(tx, id, now))
+                    .suspendedUntil,
                 }
               : null
           },

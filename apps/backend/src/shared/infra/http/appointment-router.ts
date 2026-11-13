@@ -5,9 +5,11 @@ import type { BookAppointment } from '../../../application/use-cases/book-appoin
 import type { CancelAppointment } from '../../../application/use-cases/cancel-appointment'
 import type { ListMyAppointments } from '../../../application/use-cases/list-my-appointments'
 import type { RescheduleAppointment } from '../../../application/use-cases/reschedule-appointment'
+import type { RespondAttendance } from '../../../application/use-cases/respond-attendance'
 import {
   appointmentBody,
   appointmentParams,
+  attendanceBody,
   cancelBody,
   idempotencyHeader,
   myAppointmentsQuery,
@@ -22,8 +24,25 @@ export function createAppointmentRouter(
   reschedule: RescheduleAppointment,
   list: ListMyAppointments,
   cancel: CancelAppointment,
+  attendance: RespondAttendance,
 ) {
   const router = Router()
+  router.post(
+    '/appointments/:id/attendance-response',
+    accessGuard(tokens, authorize, 'session'),
+    async (req, res) => {
+      const { id } = parseInput(appointmentParams, req.params)
+      const { response } = parseInput(attendanceBody, req.body)
+      res.json(
+        await attendance.execute(
+          principalOf(res),
+          id,
+          response,
+          auditContext(req, res),
+        ),
+      )
+    },
+  )
   router.post(
     '/appointments/:id/cancel',
     accessGuard(tokens, authorize, 'consent_management'),

@@ -117,3 +117,19 @@ RNF-022/Q-08 exigem que identificadores e relações possam ser mapeados para FH
 - `ImportBatch` referencia layout de `import-templates.md`, origem, data, responsável, linhas aceitas/rejeitadas e chave idempotente. Nenhuma importação cria `User` de acesso ou dispara `Notification` (Q-19).
 - `ImportedHistory` exibe origem, importador e “conferido por” quando houver; não equivale a evolução assinada, é imutável com correção por adendo.
 - `ClinicalRecord`/documentos clínicos preservam-se por `privacy.clinical_retention_years` nunca abaixo de RN-012; `AuditEvent` por `privacy.audit_retention_years`. Identificação mínima, prova de consentimento e dados fiscais usam respectivamente `privacy.min_identity_retention_years`, `privacy.consent_evidence_retention_years` e `privacy.fiscal_retention_years`, sem default até P-01; nenhuma rotina de exclusão dessas categorias deve rodar antes da decisão jurídica. Gravação usa `recording.retention_days`, separada do prontuário (Q-11).
+
+### Lembretes e presença declarada — BE-025/P-30
+
+`ReminderJob`: consulta, versão, antecedência, scheduledAt, status (`pending/enqueued/completed/cancelled/suppressed/failed/skipped`), firstSuccessfulAt e createdAt; único por consulta/versão/antecedência, sem exclusão de histórico. `Notification.reminderJobId` referencia o evento para deduplicar destinatários e contar sucesso uma vez. Payload administrativo cifrado de lembrete entregue permanece disponível para a projeção do portal; tokens de identidade continuam descartados ao terminar.
+
+`AttendanceResponse`: consulta/versão, ator, resposta e data; append-only, com sequência monotônica para ordenar respostas mesmo com timestamps iguais. A projeção vigente usa a última resposta da versão atual, sem modificar Appointment.status ou reservas. Correções e declaração após remarcação criam novos registros; nunca sobrescrevem evidência anterior.
+
+### Check-in por versão de consulta — BE-026/P-31
+
+`CheckIn`: id, appointmentId, appointmentVersion efetiva após chegada, arrivedAt, recordedAt, recordedBy, lateFlag, toleranceMinutes e clinicTimeZone. Único por consulta/versão; append-only. Registro e mudança a `waiting`, histórico, auditoria e invalidação de avisos são transacionais; reserva confirmada permanece. Reagendamento assistido de espera preserva o check-in anterior e cria nova versão `confirmed`, para novo ciclo de chegada; nunca atualiza/exclui o registro original. A projeção de fila usa a chegada da versão vigente. Não cria `CareLink` ou ausência.
+
+### Ausência e revisão — BE-027/P-32
+
+`Absence`: consulta única, patientId, occurredAt (início marcado), penaltyExpiresAt (12 meses no calendário/fuso registrado), clinicTimeZone, kind atual, explanationEncrypted, recordedBy/recordedAt, decidedBy/decidedAt e version. Origem/ocorrência/gravação não são alteradas. `AbsenceRevision`: absenceId, version, classificação anterior/nova, justificativa cifrada, ator e instante; append-only, única por ausência/versão, incluindo decisão inicial. FK ao paciente/consulta e restrições preservam histórico; nenhuma exclusão física.
+
+`PatientProfile.autoBookingPolicyVersion` identifica transições da política para deduplicar avisos; `autoBookingSuspendedUntil` é cache derivado dos fatos atuais, sem autoridade para penalidade manual. Consultas de elegibilidade usam as ocorrências injustificadas ainda válidas; correção grava novo histórico e recalcula, mantendo dados antigos. A ausência encerra a ocupação ativa (`SlotReservation.released`), preservando consulta, reserva e histórico. Não cria `SlotReleaseEvent` de cancelamento.
