@@ -1,6 +1,7 @@
 import type { Principal } from '../../domain/rules/access'
 import type { AuditWriter } from './audit-writer'
 import type { Modality } from './catalog'
+import type { CheckInRecord } from './check-in'
 import type { ReservationTransaction } from './reservations'
 import type { ScheduleSnapshot } from './schedule'
 export type AppointmentStatus =
@@ -16,6 +17,14 @@ export type AppointmentRecord = {
   professionalId: string
   specialtyId: string
   roomId: string | null
+  lastChange?: {
+    action: 'rescheduled' | 'cancelled'
+    origin: AppointmentOrigin | null
+    occurredAt: Date
+  } | null
+  professionalName?: string | null
+  specialtyName?: string | null
+  roomName?: string | null
   modality: Modality
   visitType: 'first' | 'return'
   startsAt: Date
@@ -29,6 +38,10 @@ export type AppointmentRecord = {
   parentAppointmentId: string | null
   reason: string | null
   notificationAttention: boolean
+  attendanceResponse?: {
+    response: 'confirm' | 'cannot_attend'
+    respondedAt: Date
+  } | null
 }
 export type BookInput = {
   patientId: string
@@ -70,6 +83,8 @@ export type RescheduleInput = {
   expectedVersion: number
 }
 export type OwnAppointmentsQuery = {
+  view?: 'upcoming' | 'history'
+  referenceAt?: Date
   patientId?: string
   status?: AppointmentStatus
   from?: Date
@@ -83,7 +98,24 @@ export type BookingPatient = {
   consentState: 'active' | 'pending' | 'revoked'
   suspendedUntil: Date | null
 }
+export type RoomOptionsInput = {
+  professionalId: string
+  specialtyId: string
+  visitType: 'first' | 'return'
+  startsAt: string
+  appointmentId?: string
+  expectedVersion?: number
+}
 export interface BookingTransaction {
+  freeRooms(
+    professionalId: string,
+    startsAt: Date,
+    endsAt: Date,
+    now: Date,
+    ignoreAppointmentId?: string,
+  ): Promise<{ id: string; name: string }[]>
+
+  checkIn(id: string, version: number): Promise<CheckInRecord | null>
   lock(key: string, patientId: string): Promise<void>
   principal(actor: Principal): Promise<Principal | null>
   patient(
@@ -134,6 +166,12 @@ export interface BookingTransaction {
   ): Promise<AppointmentRecord>
   confirmedReservation(appointmentId: string): Promise<{ id: string } | null>
   invalidateNotifications(appointmentId: string): Promise<void>
+  attendanceResponse(
+    row: AppointmentRecord,
+    actor: Principal,
+    response: 'confirm' | 'cannot_attend',
+    now: Date,
+  ): Promise<{ respondedAt: Date; created: boolean }>
   slotReleased(
     previous: AppointmentRecord,
     changeVersion: number,
@@ -175,6 +213,9 @@ export const appointmentSummary = (row: AppointmentRecord) => ({
   professionalId: row.professionalId,
   specialtyId: row.specialtyId,
   roomId: row.roomId,
+  professionalName: row.professionalName ?? null,
+  specialtyName: row.specialtyName ?? null,
+  roomName: row.roomName ?? null,
   modality: row.modality,
   visitType: row.visitType,
   startsAt: row.startsAt.toISOString(),
@@ -186,4 +227,10 @@ export const appointmentSummary = (row: AppointmentRecord) => ({
   bookingSource: row.bookingSource,
   parentAppointmentId: row.parentAppointmentId,
   notificationAttention: row.notificationAttention,
+  attendanceResponse: row.attendanceResponse
+    ? {
+        response: row.attendanceResponse.response,
+        respondedAt: row.attendanceResponse.respondedAt.toISOString(),
+      }
+    : null,
 })

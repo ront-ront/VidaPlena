@@ -7,6 +7,7 @@ import type { PatientRegistrationStore } from '../../../application/ports/patien
 import type { Authorize } from '../../../application/use-cases/authorize'
 import { normalizeCpf } from '../../../domain/rules/patient-identity'
 import { idSchema } from './contracts/m0'
+import { fitInPatientQuery } from './contracts/waitlist'
 import { accessGuard, auditContext, principalOf } from './middleware/access'
 import { parseInput } from './parse-input'
 
@@ -17,6 +18,33 @@ export function createPatientRouter(
   audit: AuditWriter,
 ) {
   const router = Router()
+  router.get(
+    '/patients/fit-in-candidate',
+    accessGuard(tokens, authorize, 'create_fit_in'),
+    async (req, res) => {
+      const input = parseInput(fitInPatientQuery, req.query),
+        cpf = normalizeCpf(input.cpf)
+      if (!cpf)
+        throw new ApplicationError('VALIDATION_ERROR', [
+          { field: 'cpf', reason: 'Informe um CPF válido.' },
+        ])
+      const actor = principalOf(res),
+        patient = await store.findPatient(cpf)
+      await audit.append({
+        ...auditContext(req, res),
+        actorUserId: actor.userId,
+        actorRoles: actor.roles,
+        action: 'patient.fit_in_lookup',
+        resourceType: 'PatientCandidate',
+        resourceId: patient?.patientId ?? actor.userId,
+        subjectPatientId: patient?.patientId,
+        metadata: { found: Boolean(patient) },
+      })
+      if (!patient) throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
+      res.setHeader('Cache-Control', 'no-store')
+      res.json({ patientId: patient.patientId, fullName: patient.fullName })
+    },
+  )
   router.get(
     '/onsite-guardians',
     accessGuard(tokens, authorize, 'onsite_registration'),

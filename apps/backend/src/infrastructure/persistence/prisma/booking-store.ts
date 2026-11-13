@@ -7,13 +7,19 @@ import type {
 import { appointmentSummary } from '../../../application/ports/booking'
 import type {
   Appointment,
+  AttendanceResponse,
   Prisma,
   PrismaClient,
 } from '../../../generated/prisma/client'
+import { readBookingRestriction } from './absence-policy'
 import { readPrincipal } from './access-store'
 import { enqueueAppointmentNotification } from './appointment-notifications'
 import { PrismaAuditWriter } from './audit-writer'
 import { dataConsentState } from './consent-state'
+import {
+  lockAppointmentDelivery,
+  planAppointmentReminders,
+} from './reminder-planning'
 import {
   isExclusionConflict,
   isReservationRetryConflict,
@@ -21,23 +27,111 @@ import {
 } from './reservation-store'
 import { readCurrentSchedule } from './schedule-snapshot'
 
-export const appointmentRecord = (row: Appointment): AppointmentRecord => ({
+export const appointmentRecord = (
+  row: Appointment & {
+    history?: { action: string; origin: string | null; occurredAt: Date }[]
+    attendanceResponses?: AttendanceResponse[]
+    professional?: { user: { fullName: string } }
+    specialty?: { name: string }
+    room?: { name: string } | null
+  },
+): AppointmentRecord => ({
   ...row,
+  lastChange: row.history?.[0]
+    ? {
+        action: row.history[0].action as 'rescheduled' | 'cancelled',
+        origin: row.history[0].origin as
+          | 'patient'
+          | 'reception'
+          | 'clinic'
+          | null,
+        occurredAt: row.history[0].occurredAt,
+      }
+    : null,
+  professionalName: row.professional?.user.fullName ?? null,
+  specialtyName: row.specialty?.name ?? null,
+  roomName: row.room?.name ?? null,
   visitType: row.visitType as AppointmentRecord['visitType'],
   bookingSource: row.bookingSource as AppointmentRecord['bookingSource'],
+  attendanceResponse:
+    row.attendanceResponses?.[0]?.appointmentVersion === row.version
+      ? {
+          response: row.attendanceResponses[0].response as
+            | 'confirm'
+            | 'cannot_attend',
+          respondedAt: row.attendanceResponses[0].occurredAt,
+        }
+      : null,
 })
+const appointmentDisplay = {
+  professional: { select: { user: { select: { fullName: true } } } },
+  specialty: { select: { name: true } },
+  room: { select: { name: true } },
+} as const
 export type BookingPersistencePolicy = {
   maxWaitMs: number
   timeoutMs: number
   retryAttempts: number
   internalMinutes: number
   patientMinutes: number
+  reminderScheduleHours: number[]
 }
 export function bookingTransaction(
   tx: Prisma.TransactionClient,
   policy: BookingPersistencePolicy,
 ): BookingTransaction {
   return {
+    freeRooms: async (
+      professionalId,
+      startsAt,
+      endsAt,
+      now,
+      ignoreAppointmentId,
+    ) => {
+      const occupied: Prisma.SlotReservationWhereInput = {
+        startsAt: { lt: endsAt },
+        endsAt: { gt: startsAt },
+        AND: [
+          {
+            OR: [
+              { state: 'confirmed' },
+              { state: 'held', expiresAt: { gt: now } },
+            ],
+          },
+          ...(ignoreAppointmentId
+            ? [
+                {
+                  OR: [
+                    { appointmentId: null },
+                    { appointmentId: { not: ignoreAppointmentId } },
+                  ],
+                },
+              ]
+            : []),
+        ],
+      }
+      if (
+        await tx.slotReservation.findFirst({
+          where: { ...occupied, professionalId },
+          select: { id: true },
+        })
+      )
+        return []
+      return tx.room.findMany({
+        where: { active: true, reservations: { none: occupied } },
+        orderBy: { id: 'asc' },
+        select: { id: true, name: true },
+      })
+    },
+    checkIn: (id, version) =>
+      tx.checkIn.findUnique({
+        where: {
+          appointmentId_appointmentVersion: {
+            appointmentId: id,
+            appointmentVersion: version,
+          },
+        },
+      }),
     lock: async (key, patientId) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`booking:${key}`},662021))`
       await tx.$executeRaw`SELECT pg_advisory_xact_lock_shared(775001)`
@@ -64,7 +158,8 @@ export function bookingTransaction(
             active: row.status === 'active',
             owned: row.userId === actor.userId || row.guardians.length > 0,
             consentState: await dataConsentState(tx, id, now),
-            suspendedUntil: row.autoBookingSuspendedUntil,
+            suspendedUntil: (await readBookingRestriction(tx, id, now))
+              .suspendedUntil,
           }
         : null
     },
@@ -125,7 +220,13 @@ export function bookingTransaction(
       })
     },
     appointment: async (id) => {
-      const row = await tx.appointment.findUnique({ where: { id } })
+      const row = await tx.appointment.findUnique({
+        where: { id },
+        include: {
+          ...appointmentDisplay,
+          attendanceResponses: { orderBy: { sequence: 'desc' }, take: 1 },
+        },
+      })
       return row ? appointmentRecord(row) : null
     },
     duplicateAppointments: (patientId, specialtyId, now, exceptId) =>
@@ -140,15 +241,42 @@ export function bookingTransaction(
         select: { id: true, startsAt: true },
         orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
       }),
-    create: async (input) =>
-      appointmentRecord(await tx.appointment.create({ data: input })),
-    update: async (id, version, input) =>
-      appointmentRecord(
-        await tx.appointment.update({
-          where: { id, version },
-          data: { ...input, version: { increment: 1 } },
-        }),
-      ),
+    create: async (input) => {
+      const row = await tx.appointment.create({
+        data: input,
+        include: appointmentDisplay,
+      })
+      await planAppointmentReminders(tx, row, policy.reminderScheduleHours)
+      return appointmentRecord(row)
+    },
+    update: async (id, version, input) => {
+      await lockAppointmentDelivery(tx, id)
+      const row = await tx.appointment.update({
+        where: { id, version },
+        data: { ...input, version: { increment: 1 } },
+        include: appointmentDisplay,
+      })
+      await planAppointmentReminders(tx, row, policy.reminderScheduleHours)
+      return appointmentRecord(row)
+    },
+    attendanceResponse: async (row, actor, response, now) => {
+      const previous = await tx.attendanceResponse.findFirst({
+        where: { appointmentId: row.id, appointmentVersion: row.version },
+        orderBy: { sequence: 'desc' },
+      })
+      if (previous?.response === response)
+        return { respondedAt: previous.occurredAt, created: false }
+      await tx.attendanceResponse.create({
+        data: {
+          appointmentId: row.id,
+          appointmentVersion: row.version,
+          actorUserId: actor.userId,
+          response,
+          occurredAt: now,
+        },
+      })
+      return { respondedAt: now, created: true }
+    },
     confirmedReservation: (appointmentId) =>
       tx.slotReservation.findFirst({
         where: { appointmentId, state: 'confirmed' },
@@ -175,6 +303,7 @@ export function bookingTransaction(
       })
     },
     invalidateNotifications: async (appointmentId) => {
+      await lockAppointmentDelivery(tx, appointmentId)
       await tx.notification.updateMany({
         where: {
           aggregateId: appointmentId,
@@ -216,6 +345,24 @@ export function bookingTransaction(
           ids.push(subject.id)
       const where: Prisma.AppointmentWhereInput = {
         patientId: { in: ids },
+        AND:
+          query.view === 'upcoming'
+            ? [
+                {
+                  startsAt: { gte: query.referenceAt },
+                  status: { in: ['confirmed', 'waiting', 'in_service'] },
+                },
+              ]
+            : query.view === 'history'
+              ? [
+                  {
+                    OR: [
+                      { startsAt: { lt: query.referenceAt } },
+                      { status: { in: ['cancelled', 'completed', 'no_show'] } },
+                    ],
+                  },
+                ]
+              : undefined,
         status: query.status,
         startsAt: { gte: query.from, lt: query.to },
       }
@@ -248,6 +395,16 @@ export function bookingTransaction(
         },
         orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
         take: 31,
+        include: {
+          ...appointmentDisplay,
+          history: {
+            where: { action: { in: ['rescheduled', 'cancelled'] } },
+            orderBy: [{ occurredAt: 'desc' }, { id: 'desc' }],
+            take: 1,
+            select: { action: true, origin: true, occurredAt: true },
+          },
+          attendanceResponses: { orderBy: { sequence: 'desc' }, take: 1 },
+        },
       })
       return {
         items: rows.slice(0, 30).map(appointmentRecord),

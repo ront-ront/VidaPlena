@@ -172,6 +172,7 @@ test('cadastro e aceite são atômicos; versão nova exige aceite e revogação 
       patientId,
       fullName: registration.patient.fullName,
       birthDate: '1990-01-01T00:00:00.000Z',
+      importOrigin: null,
     })
     await request(app.app)
       .get('/v1/onsite-guardians')

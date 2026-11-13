@@ -15,6 +15,7 @@ import {
   registrationResponse,
   revokeConsentBody,
 } from './contracts/consent'
+import { patientImportOriginSchema } from './contracts/imports'
 import {
   acceptInvitationBody,
   cursorQuery,
@@ -350,6 +351,7 @@ export const openApiDocument = createDocument({
               patientId: z.uuid(),
               fullName: z.string(),
               birthDate: z.iso.datetime(),
+              importOrigin: patientImportOriginSchema.nullable(),
             }),
             'Identidade mínima do cadastro',
           ),

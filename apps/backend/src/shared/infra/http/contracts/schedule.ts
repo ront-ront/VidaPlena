@@ -29,6 +29,11 @@ export const scheduleQuery = z
   .object({ from: z.iso.date(), to: z.iso.date() })
   .strict()
 export const scheduleParams = z.object({ id: z.uuid() })
+export const ownProfessionalResponse = z.object({
+  id: z.uuid(),
+  displayName: z.string(),
+  modalities: z.array(modalitySchema),
+})
 export const impactResponse = z.object({
   id: z.uuid(),
   startsAt: z.iso.datetime(),

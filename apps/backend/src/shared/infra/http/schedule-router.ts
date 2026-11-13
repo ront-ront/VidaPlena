@@ -16,6 +16,15 @@ export function createScheduleRouter(
 ) {
   const router = Router(),
     guard = accessGuard(tokens, authorize, 'manage_schedule')
+  router.get('/professionals/me/profile', guard, async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store')
+    res.json(await service.ownProfile(principalOf(res), auditContext(req, res)))
+  })
+  router.get('/professionals/:id/schedule/editor', guard, async (req, res) => {
+    const { id } = parseInput(scheduleParams, req.params)
+    res.setHeader('Cache-Control', 'no-store')
+    res.json(await service.editor(principalOf(res), id, auditContext(req, res)))
+  })
   router.get('/professionals/:id/schedule', guard, async (req, res) => {
     const { id } = parseInput(scheduleParams, req.params)
     const { from, to } = parseInput(scheduleQuery, req.query)

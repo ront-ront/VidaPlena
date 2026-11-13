@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { mayAccess, type Principal } from '../../domain/rules/access'
+import { isPatientChangeLate } from '../../domain/rules/patient-change-window'
 import { ApplicationError } from '../errors/application-error'
 import type { AuditContext, AuditWriter } from '../ports/audit-writer'
 import {
@@ -97,7 +98,7 @@ export class CancelAppointment {
           row.startsAt <= now
         )
           throw new ApplicationError('CONFLICT')
-        const late = row.startsAt.getTime() - now.getTime() < 4 * 3_600_000
+        const late = isPatientChangeLate(row.startsAt, now)
         if (portal && late) throw new ApplicationError('BOOKING_CHANGE_WINDOW')
         if (
           ((!portal && late) ||

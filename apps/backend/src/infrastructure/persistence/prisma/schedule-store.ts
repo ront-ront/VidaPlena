@@ -21,6 +21,30 @@ export class PrismaScheduleStore implements ScheduleStore {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(775001)`
       return run({
         principal: (actor) => readPrincipal(tx, actor.userId, actor.sessionId),
+        ownProfessional: async (userId) => {
+          const row = await tx.professionalProfile.findFirst({
+            where: {
+              userId,
+              active: true,
+              user: {
+                status: 'active',
+                roles: { some: { roleCode: 'professional', revokedAt: null } },
+              },
+            },
+            select: {
+              id: true,
+              modalities: true,
+              user: { select: { fullName: true } },
+            },
+          })
+          return row
+            ? {
+                id: row.id,
+                displayName: row.user.fullName,
+                modalities: row.modalities,
+              }
+            : null
+        },
         professional: async (id) => {
           const row = await tx.professionalProfile.findUnique({
             where: { id },

@@ -155,6 +155,7 @@ export async function createBookingFixture() {
       retryAttempts: ctx.config.reservationTxRetryAttempts,
       internalMinutes: ctx.config.internalIdleMinutes,
       patientMinutes: ctx.config.patientIdleMinutes,
+      reminderScheduleHours: ctx.config.reminderScheduleHoursBefore,
     })
     const availability = new FindAvailability(
       new PrismaAvailabilityStore(ctx.db),

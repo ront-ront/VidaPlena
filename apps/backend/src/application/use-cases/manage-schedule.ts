@@ -53,6 +53,70 @@ export class ManageSchedule {
       )
     return outcome.result
   }
+  async ownProfile(actor: Principal, context: AuditContext) {
+    const outcome = await this.store.transaction(async (tx) => {
+      const current = await tx.principal(actor)
+      if (
+        !current?.roles.includes('professional') ||
+        !mayAccess(current, 'manage_schedule')
+      ) {
+        await tx.audit.append({
+          ...context,
+          actorUserId: actor.userId,
+          actorRoles: actor.roles,
+          action: 'authorization.denied',
+          resourceType: 'ProfessionalProfile',
+          resourceId: actor.userId,
+          authorizationBasis: 'denied',
+        })
+        return { kind: 'denied' } as const
+      }
+      const profile = await tx.ownProfessional(current.userId)
+      await tx.audit.append({
+        ...context,
+        actorUserId: current.userId,
+        actorRoles: current.roles,
+        action: 'professional.profile_viewed',
+        resourceType: 'ProfessionalProfile',
+        resourceId: profile?.id ?? current.userId,
+      })
+      return profile
+        ? ({ kind: 'ok', profile } as const)
+        : ({ kind: 'missing' } as const)
+    })
+    if (outcome.kind !== 'ok')
+      throw new ApplicationError(
+        outcome.kind === 'denied' ? 'FORBIDDEN' : 'NOT_FOUND_OR_FORBIDDEN',
+      )
+    return outcome.profile
+  }
+  editor(actor: Principal, id: string, context: AuditContext) {
+    return this.authorized(actor, id, context, async (tx) => {
+      const snapshot = (await tx.current(id)) ?? {
+        professionalId: id,
+        version: 0,
+        clinicTimeZone: this.timeZone,
+        rules: [],
+        blocks: [],
+      }
+      const impacts = await tx.impacts(id, snapshot, snapshot.clinicTimeZone)
+      await tx.audit.append({
+        ...context,
+        actorUserId: actor.userId,
+        actorRoles: actor.roles,
+        action: 'schedule.editor_viewed',
+        resourceType: 'ProfessionalSchedule',
+        resourceId: id,
+        metadata: { version: snapshot.version },
+      })
+      return {
+        ...snapshot,
+        affectedAppointments: impacts.map(
+          ({ emergencyOnly: _, ...impact }) => impact,
+        ),
+      }
+    })
+  }
   read(
     actor: Principal,
     id: string,

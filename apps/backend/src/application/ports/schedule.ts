@@ -22,6 +22,9 @@ export type ScheduleImpact = {
 }
 export interface ScheduleTransaction {
   principal(actor: Principal): Promise<Principal | null>
+  ownProfessional(
+    userId: string,
+  ): Promise<{ id: string; displayName: string; modalities: Modality[] } | null>
   professional(id: string): Promise<ScheduleTarget | null>
   current(id: string): Promise<ScheduleSnapshot | null>
   impacts(

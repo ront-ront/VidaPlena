@@ -27,3 +27,9 @@ export const availabilityResponse = z.object({
   nearestAvailableAt: z.iso.datetime().nullable(),
   clinicTimeZone: z.string(),
 })
+
+export const schedulingContextResponse = z.object({
+  clinicTimeZone: z.string(),
+  serverNow: z.iso.datetime(),
+  localDate: z.iso.date(),
+})

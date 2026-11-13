@@ -6,7 +6,15 @@ import type { FindAvailability } from './find-availability'
 
 export async function eligibleBookingSlot(
   tx: BookingTransaction,
-  input: BookInput,
+  input: Pick<
+    BookInput,
+    | 'professionalId'
+    | 'specialtyId'
+    | 'visitType'
+    | 'modality'
+    | 'startsAt'
+    | 'roomId'
+  >,
   portal: boolean,
   now: Date,
   outsideGrade = false,

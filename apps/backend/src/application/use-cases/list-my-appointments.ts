@@ -1,4 +1,8 @@
 import { mayAccess, type Principal } from '../../domain/rules/access'
+import {
+  isPatientChangeLate,
+  patientChangeDeadline,
+} from '../../domain/rules/patient-change-window'
 import { localInstant } from '../../domain/rules/schedule'
 import { ApplicationError } from '../errors/application-error'
 import type { AuditContext, AuditWriter } from '../ports/audit-writer'
@@ -13,10 +17,12 @@ export class ListMyAppointments {
     private readonly store: BookingStore,
     private readonly timeZone: string,
     private readonly audit: AuditWriter,
+    private readonly now = () => new Date(),
   ) {}
   async execute(
     actor: Principal,
     query: {
+      view?: 'upcoming' | 'history'
       patientId?: string
       status?: AppointmentStatus
       from?: string
@@ -56,7 +62,9 @@ export class ListMyAppointments {
         } catch {
           throw new ApplicationError('VALIDATION_ERROR')
         }
+        const now = this.now()
         const page = await tx.ownAppointments(current, {
+          referenceAt: now,
           ...query,
           from,
           to,
@@ -72,7 +80,26 @@ export class ListMyAppointments {
           metadata: { count: page.items.length },
         })
         return {
-          items: page.items.map(appointmentSummary),
+          clinicTimeZone: this.timeZone,
+          serverNow: now.toISOString(),
+          items: page.items.map((row) => ({
+            ...appointmentSummary(row),
+            selfService: {
+              deadline: patientChangeDeadline(row.startsAt).toISOString(),
+              rescheduleAllowed:
+                row.status === 'confirmed' &&
+                !isPatientChangeLate(row.startsAt, now),
+              cancelAllowed:
+                ['confirmed', 'waiting'].includes(row.status) &&
+                !isPatientChangeLate(row.startsAt, now),
+            },
+            lastChange: row.lastChange
+              ? {
+                  ...row.lastChange,
+                  occurredAt: row.lastChange.occurredAt.toISOString(),
+                }
+              : null,
+          })),
           nextCursor: page.nextCursor,
         }
       })

@@ -55,8 +55,16 @@ model User {
   publishedSchedules ScheduleVersion[]
   createdAppointments Appointment[] @relation("AppointmentCreator")
   appointmentHistory AppointmentHistory[]
+  attendanceResponses AttendanceResponse[]
+  checkIns CheckIn[]
   bookingCommands BookingCommand[]
   waitlistEntries WaitlistEntry[]
+  importBatches ImportBatch[]
+  importIdentities ImportIdentity[]
+  importCommands ImportCommand[]
+  recordedAbsences Absence[] @relation("AbsenceRecorder")
+  decidedAbsences Absence[] @relation("AbsenceDecider")
+  absenceRevisions AbsenceRevision[]
 
   @@index([status])
   auditEvents AuditEvent[]
@@ -109,8 +117,12 @@ model PatientProfile {
   cpf       String         @unique @db.VarChar(11)
   phone     String?
   email     String?
+  importIdentity ImportIdentity?
+  importRows ImportRow[]
   status    String         @default("active")
   autoBookingSuspendedUntil DateTime? @db.Timestamptz(3)
+  autoBookingPolicyVersion Int @default(0)
+  absences Absence[]
   appointments Appointment[]
   waitlistEntries WaitlistEntry[]
   createdAt DateTime       @default(now()) @db.Timestamptz(3)
@@ -237,6 +249,8 @@ model Notification {
   templateKey String
   aggregateId String?
   aggregateVersion BigInt?
+  reminderJobId String? @db.Uuid
+  reminderJob ReminderJob? @relation(fields:[reminderJobId],references:[id],onDelete:Restrict)
   payloadEncrypted String?
   destinationEncrypted String?
   deliveryStatus String @default("queued")
@@ -255,6 +269,7 @@ model Notification {
   @@index([userId,id])
   @@index([needsReceptionAttention])
   @@index([aggregateId,aggregateVersion])
+  @@index([reminderJobId])
 }
 
 model RefreshToken {
@@ -547,6 +562,12 @@ model Appointment {
   history AppointmentHistory[]
   commands BookingCommand[]
   slotReleases SlotReleaseEvent[]
+  reminders ReminderJob[]
+  attendanceResponses AttendanceResponse[]
+  checkIns CheckIn[]
+  absence Absence?
+  importIdentity ImportIdentity?
+  importRows ImportRow[]
   @@index([professionalId,startsAt,status])
   @@index([roomId,startsAt,status])
   @@index([patientId,specialtyId,startsAt,status])
@@ -641,4 +662,146 @@ model WaitlistOffer {
   @@unique([entryId,releaseEventId])
   @@index([status,expiresAt])
   @@index([releaseEventId,status])
+}
+
+model ReminderJob {
+  id String @id @default(uuid()) @db.Uuid
+  appointmentId String @db.Uuid
+  appointmentVersion Int
+  hoursBefore Float
+  scheduledAt DateTime @db.Timestamptz(3)
+  status String @default("pending")
+  firstSuccessfulAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  appointment Appointment @relation(fields:[appointmentId],references:[id],onDelete:Restrict)
+  notifications Notification[]
+  @@unique([appointmentId,appointmentVersion,hoursBefore])
+  @@index([status,scheduledAt,id])
+}
+
+model AttendanceResponse {
+  id String @id @default(uuid()) @db.Uuid
+  sequence BigInt @unique @default(autoincrement())
+  appointmentId String @db.Uuid
+  appointmentVersion Int
+  actorUserId String @db.Uuid
+  response String
+  occurredAt DateTime @default(now()) @db.Timestamptz(3)
+  appointment Appointment @relation(fields:[appointmentId],references:[id],onDelete:Restrict)
+  actor User @relation(fields:[actorUserId],references:[id],onDelete:Restrict)
+  @@index([appointmentId,appointmentVersion,occurredAt,id])
+}
+
+model CheckIn {
+  id String @id @default(uuid()) @db.Uuid
+  appointmentId String @db.Uuid
+  appointmentVersion Int
+  arrivedAt DateTime @db.Timestamptz(3)
+  recordedAt DateTime @db.Timestamptz(3)
+  recordedBy String @db.Uuid
+  lateFlag Boolean
+  toleranceMinutes Int
+  clinicTimeZone String
+  appointment Appointment @relation(fields:[appointmentId],references:[id],onDelete:Restrict)
+  recorder User @relation(fields:[recordedBy],references:[id],onDelete:Restrict)
+  @@unique([appointmentId,appointmentVersion])
+}
+
+model Absence {
+  id String @id @default(uuid()) @db.Uuid
+  appointmentId String @unique @db.Uuid
+  appointmentVersion Int
+  patientId String @db.Uuid
+  occurredAt DateTime @db.Timestamptz(3)
+  penaltyExpiresAt DateTime @db.Timestamptz(3)
+  clinicTimeZone String
+  kind String
+  explanationEncrypted String?
+  recordedBy String @db.Uuid
+  recordedAt DateTime @db.Timestamptz(3)
+  decidedBy String @db.Uuid
+  decidedAt DateTime @db.Timestamptz(3)
+  version Int @default(1)
+  appointment Appointment @relation(fields:[appointmentId],references:[id],onDelete:Restrict)
+  patient PatientProfile @relation(fields:[patientId],references:[id],onDelete:Restrict)
+  recorder User @relation("AbsenceRecorder",fields:[recordedBy],references:[id],onDelete:Restrict)
+  decider User @relation("AbsenceDecider",fields:[decidedBy],references:[id],onDelete:Restrict)
+  revisions AbsenceRevision[]
+  @@index([patientId,kind,penaltyExpiresAt])
+}
+model AbsenceRevision {
+  id String @id @default(uuid()) @db.Uuid
+  absenceId String @db.Uuid
+  version Int
+  previousKind String?
+  kind String
+  explanationEncrypted String?
+  actorId String @db.Uuid
+  occurredAt DateTime @db.Timestamptz(3)
+  absence Absence @relation(fields:[absenceId],references:[id],onDelete:Restrict)
+  actor User @relation(fields:[actorId],references:[id],onDelete:Restrict)
+  @@unique([absenceId,version])
+}
+
+model ImportBatch {
+  id String @id @default(uuid()) @db.Uuid
+  kind String
+  sourceSystem String
+  fileHash String
+  fileEncrypted String
+  fileErrors Json
+  status String
+  createdBy String @db.Uuid
+  createdAt DateTime @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+  cutoffDate DateTime? @db.Date
+  confirmedAt DateTime? @db.Timestamptz(3)
+  creator User @relation(fields:[createdBy],references:[id],onDelete:Restrict)
+  rows ImportRow[]
+  identities ImportIdentity[]
+  commands ImportCommand[]
+  @@index([createdBy,createdAt])
+}
+model ImportRow {
+  id String @id @default(uuid()) @db.Uuid
+  batchId String @db.Uuid
+  line Int
+  previewStatus String
+  previewErrors Json
+  previewDuplicateOf String?
+  finalStatus String?
+  finalErrors Json?
+  finalDuplicateOf String?
+  targetId String? @db.Uuid
+  appointmentId String? @db.Uuid
+  appointment Appointment? @relation(fields:[appointmentId],references:[id],onDelete:Restrict)
+  batch ImportBatch @relation(fields:[batchId],references:[id],onDelete:Restrict)
+  target PatientProfile? @relation(fields:[targetId],references:[id],onDelete:Restrict)
+  @@unique([batchId,line])
+}
+model ImportIdentity {
+  id String @id @default(uuid()) @db.Uuid
+  sourceSystem String
+  kind String
+  externalId String
+  rowHash String
+  patientId String? @unique @db.Uuid
+  appointmentId String? @unique @db.Uuid
+  appointment Appointment? @relation(fields:[appointmentId],references:[id],onDelete:Restrict)
+  batchId String @db.Uuid
+  importedAt DateTime @db.Timestamptz(3)
+  importedBy String @db.Uuid
+  historicalStatus String @default("undated")
+  patient PatientProfile? @relation(fields:[patientId],references:[id],onDelete:Restrict)
+  batch ImportBatch @relation(fields:[batchId],references:[id],onDelete:Restrict)
+  importer User @relation(fields:[importedBy],references:[id],onDelete:Restrict)
+  @@unique([sourceSystem,kind,externalId])
+}
+model ImportCommand {
+  requestKey String @id
+  actorId String @db.Uuid
+  batchId String @db.Uuid
+  inputHash String
+  actor User @relation(fields:[actorId],references:[id],onDelete:Restrict)
+  batch ImportBatch @relation(fields:[batchId],references:[id],onDelete:Restrict)
 }

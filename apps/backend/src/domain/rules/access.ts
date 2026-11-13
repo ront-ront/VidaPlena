@@ -15,6 +15,12 @@ export interface Principal {
   consentState?: 'active' | 'pending' | 'revoked'
 }
 export type Capability =
+  | 'import_patients'
+  | 'record_absence'
+  | 'correct_absence'
+  | 'check_in'
+  | 'own_queue'
+  | 'operational_agenda'
   | 'manage_catalog'
   | 'operational_catalog'
   | 'manage_schedule'
@@ -56,6 +62,20 @@ export function mayAccess(
     actor.permissions.includes('privacy.dpo') &&
     actor.roles.some((role) => role === 'admin' || role === 'manager')
   switch (capability) {
+    case 'import_patients':
+      return actor.roles.some((role) => role === 'admin' || role === 'manager')
+    case 'record_absence':
+      return actor.roles.includes('receptionist')
+    case 'correct_absence':
+      return actor.roles.some(
+        (role) => role === 'receptionist' || role === 'manager',
+      )
+    case 'check_in':
+      return actor.roles.includes('receptionist')
+    case 'own_queue':
+      return actor.roles.includes('professional')
+    case 'operational_agenda':
+      return actor.roles.some((role) => role !== 'patient')
     case 'consent_management':
       return true
     case 'consent_patient':

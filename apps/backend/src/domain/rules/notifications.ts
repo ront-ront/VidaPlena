@@ -13,6 +13,7 @@ export const notificationTemplates = [
   'appointment.schedule_changed',
   'waitlist.offered',
   'marketing.news',
+  'patient.auto_booking_suspended',
 ] as const
 export type NotificationTemplate = (typeof notificationTemplates)[number]
 export type NotificationCategory = 'essential' | 'nonessential'
@@ -71,6 +72,8 @@ export function deliveryPolicy(
 
 export function safeNotificationText(template: NotificationTemplate): string {
   const texts: Record<NotificationTemplate, string> = {
+    'patient.auto_booking_suspended':
+      'Há um paciente com autoagendamento suspenso por faltas. Consulte a agenda da recepção.',
     'auth.account_locked':
       'Um acesso foi temporariamente bloqueado por tentativas. Confira a segurança da conta.',
     'account.inactivity_review':

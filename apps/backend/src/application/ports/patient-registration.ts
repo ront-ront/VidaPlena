@@ -61,6 +61,14 @@ export interface PatientRegistrationStore {
   findPatient(cpf: string): Promise<{
     patientId: string
     fullName: string
+    importOrigin?: {
+      sourceSystem: string
+      externalId: string
+      batchId: string
+      importedAt: string
+      importedBy: string
+      historicalStatus: 'undated'
+    } | null
     birthDate: Date
   } | null>
   onsiteConsents(patientId: string): Promise<

@@ -11,6 +11,7 @@ import {
 } from '../../src/infrastructure/persistence/prisma/notification-store'
 import { AesSecretBox } from '../../src/infrastructure/security/aes-secret-box'
 import { composeBackendApplication } from '../../src/shared/composition/root'
+import { seedAbsenceFacts } from '../support/m1-absences'
 import { createM1Database, fictitiousCpf } from '../support/m1-database'
 
 let ctx: Awaited<ReturnType<typeof createM1Database>>
@@ -253,9 +254,11 @@ test('BE-021: consentimento, sujeito alheio, suspens√£o, duplicidade e remoto s√
       .error.code,
     'CONSENT_REQUIRED',
   )
-  await ctx.db.patientProfile.update({
-    where: { id: p.patientId },
-    data: { autoBookingSuspendedUntil: new Date(Date.now() + 86_400_000) },
+  await seedAbsenceFacts(ctx.db, {
+    patientId: p.patientId,
+    professionalId,
+    specialtyId,
+    actorId: reception.user.id,
   })
   assert.equal(
     (await book(p.token, input(p.patientId, 1)).expect(403)).body.error.code,

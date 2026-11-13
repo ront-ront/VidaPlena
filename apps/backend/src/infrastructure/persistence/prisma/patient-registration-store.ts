@@ -9,6 +9,7 @@ import { readPrincipal } from './access-store'
 import { PrismaAuditWriter } from './audit-writer'
 import { userDataConsentState } from './consent-state'
 import { recordConsentEvent } from './consent-store'
+import { patientImportOrigin } from './import-origin'
 import { enqueueNotification } from './notification-store'
 
 export class PrismaPatientRegistrationStore
@@ -36,13 +37,14 @@ export class PrismaPatientRegistrationStore
   async findPatient(cpf: string) {
     const patient = await this.db.patientProfile.findUnique({
       where: { cpf },
-      select: { id: true, fullName: true, birthDate: true },
+      include: { importIdentity: true },
     })
     return patient
       ? {
           patientId: patient.id,
           fullName: patient.fullName,
           birthDate: patient.birthDate,
+          importOrigin: patientImportOrigin(patient.importIdentity),
         }
       : null
   }

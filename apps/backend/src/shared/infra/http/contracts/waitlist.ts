@@ -77,3 +77,11 @@ export const waitlistResponse = z.object({
   nextCursor: z.uuid().nullable(),
 })
 export const acceptOfferResponse = bookingResponse
+
+export const fitInPatientQuery = z
+  .object({ cpf: z.string().trim().min(11).max(14) })
+  .strict()
+export const fitInPatientResponse = z.object({
+  patientId: z.uuid(),
+  fullName: z.string(),
+})

@@ -12,6 +12,14 @@ export function createAvailabilityRouter(
 ) {
   const router = Router()
   router.get(
+    '/scheduling/context',
+    accessGuard(tokens, authorize, 'session'),
+    (_req, res) => {
+      res.setHeader('Cache-Control', 'no-store')
+      res.json(service.context(principalOf(res)))
+    },
+  )
+  router.get(
     '/availability',
     accessGuard(tokens, authorize, 'session'),
     async (req, res) => {

@@ -19,6 +19,9 @@ export const appointmentResponse = z.object({
   professionalId: z.uuid(),
   specialtyId: z.uuid(),
   roomId: z.uuid().nullable(),
+  professionalName: z.string().nullable(),
+  specialtyName: z.string().nullable(),
+  roomName: z.string().nullable(),
   modality: modalitySchema,
   visitType: z.enum(['first', 'return']),
   startsAt: z.iso.datetime(),
@@ -37,6 +40,12 @@ export const appointmentResponse = z.object({
   bookingSource: z.enum(['portal', 'reception', 'fit_in', 'imported']),
   parentAppointmentId: z.uuid().nullable(),
   notificationAttention: z.boolean(),
+  attendanceResponse: z
+    .object({
+      response: z.enum(['confirm', 'cannot_attend']),
+      respondedAt: z.iso.datetime(),
+    })
+    .nullable(),
 })
 export const bookingResponse = z.object({
   appointment: appointmentResponse,
@@ -56,6 +65,7 @@ export const rescheduleBody = z
   .strict()
 export const myAppointmentsQuery = z
   .object({
+    view: z.enum(['upcoming', 'history']).optional(),
     patientId: z.uuid().optional(),
     status: appointmentResponse.shape.status.optional(),
     from: z.iso.date().optional(),
@@ -63,8 +73,24 @@ export const myAppointmentsQuery = z
     cursor: z.uuid().optional(),
   })
   .strict()
+export const appointmentLastChange = z.object({
+  action: z.enum(['rescheduled', 'cancelled']),
+  origin: z.enum(['patient', 'reception', 'clinic']).nullable(),
+  occurredAt: z.iso.datetime(),
+})
 export const myAppointmentsResponse = z.object({
-  items: z.array(appointmentResponse),
+  clinicTimeZone: z.string(),
+  serverNow: z.iso.datetime(),
+  items: z.array(
+    appointmentResponse.extend({
+      selfService: z.object({
+        deadline: z.iso.datetime(),
+        rescheduleAllowed: z.boolean(),
+        cancelAllowed: z.boolean(),
+      }),
+      lastChange: appointmentLastChange.nullable(),
+    }),
+  ),
   nextCursor: z.uuid().nullable(),
 })
 export const rescheduleResponse = bookingResponse.extend({
@@ -91,4 +117,17 @@ export const cancelResponse = bookingResponse.extend({
   waitlistTriggered: z.literal(true),
   origin: cancelBody.shape.origin,
   alternatives: rescheduleResponse.shape.alternatives,
+})
+export const attendanceBody = z
+  .object({ response: z.enum(['confirm', 'cannot_attend']) })
+  .strict()
+export const attendanceResponse = z.object({
+  appointmentId: z.uuid(),
+  appointmentVersion: z.int().positive(),
+  response: attendanceBody.shape.response,
+  respondedAt: z.iso.datetime(),
+  requiresCancellation: z.boolean(),
+  cancellationPath: z.string().nullable(),
+  receptionContactRequired: z.boolean(),
+  waitlistTriggered: z.literal(false),
 })

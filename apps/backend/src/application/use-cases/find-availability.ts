@@ -28,6 +28,15 @@ export class FindAvailability {
     private readonly lookaheadDays: number,
     private readonly now = () => new Date(),
   ) {}
+  context(actor: Principal) {
+    if (!mayAccess(actor, 'session')) throw new ApplicationError('FORBIDDEN')
+    const serverNow = this.now().toISOString()
+    return {
+      clinicTimeZone: this.timeZone,
+      serverNow,
+      localDate: this.localDateOf(serverNow),
+    }
+  }
   withStore(store: AvailabilityStore, now = this.now) {
     return new FindAvailability(
       store,

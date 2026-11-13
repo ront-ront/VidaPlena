@@ -1,4 +1,6 @@
+import type { ImportReport } from '../ports/patient-imports'
 export type ErrorCode =
+  | 'IMPORT_TOO_LARGE'
   | 'ACCOUNT_LOCKED'
   | 'TOKEN_EXPIRED'
   | 'VALIDATION_ERROR'
@@ -24,6 +26,7 @@ export class ApplicationError extends Error {
     readonly code: ErrorCode,
     readonly details?: Array<{ field: string; reason: string }>,
     readonly context?: {
+      importReport?: ImportReport
       affectedAppointments?: Array<{
         id: string
         startsAt: string

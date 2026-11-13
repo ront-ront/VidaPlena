@@ -6,6 +6,11 @@ import {
 } from '../../../../application/errors/application-error'
 
 const errors: Record<ErrorCode, { status: number; message: string }> = {
+  IMPORT_TOO_LARGE: {
+    status: 413,
+    message:
+      'O arquivo excede o limite da importação. Divida os dados em lotes menores.',
+  },
   WAITLIST_NOT_NEEDED: {
     status: 409,
     message:

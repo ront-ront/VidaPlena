@@ -3,16 +3,23 @@ import type { SessionVerifier } from '../../../application/ports/session-verifie
 import type { Authorize } from '../../../application/use-cases/authorize'
 import type { BookAppointment } from '../../../application/use-cases/book-appointment'
 import type { CancelAppointment } from '../../../application/use-cases/cancel-appointment'
+import type { FindRoomOptions } from '../../../application/use-cases/find-room-options'
 import type { ListMyAppointments } from '../../../application/use-cases/list-my-appointments'
 import type { RescheduleAppointment } from '../../../application/use-cases/reschedule-appointment'
+import type { RespondAttendance } from '../../../application/use-cases/respond-attendance'
 import {
   appointmentBody,
   appointmentParams,
+  attendanceBody,
   cancelBody,
   idempotencyHeader,
   myAppointmentsQuery,
   rescheduleBody,
 } from './contracts/appointments'
+import {
+  fitInRoomOptionsQuery,
+  roomOptionsQuery,
+} from './contracts/room-options'
 import { accessGuard, auditContext, principalOf } from './middleware/access'
 import { parseInput } from './parse-input'
 export function createAppointmentRouter(
@@ -22,8 +29,55 @@ export function createAppointmentRouter(
   reschedule: RescheduleAppointment,
   list: ListMyAppointments,
   cancel: CancelAppointment,
+  attendance: RespondAttendance,
+  rooms: FindRoomOptions,
 ) {
   const router = Router()
+  router.get(
+    '/appointments/fit-ins/room-options',
+    accessGuard(tokens, authorize, 'create_fit_in'),
+    async (req, res) => {
+      res.setHeader('Cache-Control', 'no-store')
+      res.json(
+        await rooms.execute(
+          principalOf(res),
+          parseInput(fitInRoomOptionsQuery, req.query),
+          auditContext(req, res),
+          true,
+        ),
+      )
+    },
+  )
+  router.get(
+    '/appointments/room-options',
+    accessGuard(tokens, authorize, 'book_appointment'),
+    async (req, res) => {
+      res.setHeader('Cache-Control', 'no-store')
+      res.json(
+        await rooms.execute(
+          principalOf(res),
+          parseInput(roomOptionsQuery, req.query),
+          auditContext(req, res),
+        ),
+      )
+    },
+  )
+  router.post(
+    '/appointments/:id/attendance-response',
+    accessGuard(tokens, authorize, 'session'),
+    async (req, res) => {
+      const { id } = parseInput(appointmentParams, req.params)
+      const { response } = parseInput(attendanceBody, req.body)
+      res.json(
+        await attendance.execute(
+          principalOf(res),
+          id,
+          response,
+          auditContext(req, res),
+        ),
+      )
+    },
+  )
   router.post(
     '/appointments/:id/cancel',
     accessGuard(tokens, authorize, 'consent_management'),

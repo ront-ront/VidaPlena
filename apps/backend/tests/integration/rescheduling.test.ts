@@ -168,6 +168,7 @@ function timedService(now: Date) {
       retryAttempts: ctx.config.reservationTxRetryAttempts,
       internalMinutes: ctx.config.internalIdleMinutes,
       patientMinutes: ctx.config.patientIdleMinutes,
+      reminderScheduleHours: ctx.config.reminderScheduleHoursBefore,
     }),
     new PrismaAuditWriter(ctx.db),
     new FindAvailability(
