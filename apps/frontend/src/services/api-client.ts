@@ -1,6 +1,32 @@
+import { z } from 'zod'
 import { publicEnv } from './env'
 
 export type ApiFieldError = { field: string; reason: string }
+
+export type AffectedAppointment = {
+  id: string
+  startsAt: string
+  endsAt: string
+}
+const affectedAppointmentsSchema = z.array(
+  z.object({
+    id: z.uuid(),
+    startsAt: z.iso.datetime(),
+    endsAt: z.iso.datetime(),
+  }),
+)
+const alternativesSchema = z.array(
+  z.object({
+    startsAt: z.iso.datetime(),
+    endsAt: z.iso.datetime(),
+    professionalId: z.uuid(),
+    roomAvailable: z.boolean(),
+  }),
+)
+const duplicateAppointmentsSchema = z.array(
+  z.object({ id: z.uuid(), startsAt: z.iso.datetime() }),
+)
+export type AppointmentAlternative = z.infer<typeof alternativesSchema>[number]
 
 type ApiErrorBody = {
   error?: {
@@ -8,10 +34,29 @@ type ApiErrorBody = {
     message?: string
     requestId?: string
     details?: ApiFieldError[]
+    affectedAppointments?: unknown
+    alternatives?: unknown
+    duplicateAppointments?: unknown
   }
 }
 
 const errorMessages: Record<string, string> = {
+  OFFER_EXPIRED:
+    'Esta oferta expirou ou não está mais disponível. Atualize a lista para conferir novas ofertas.',
+  WAITLIST_NOT_NEEDED:
+    'Há horários disponíveis nesse período. Volte à busca para agendar diretamente.',
+  SLOT_UNAVAILABLE:
+    'Este horário deixou de estar disponível. Escolha uma alternativa ou volte à busca.',
+  DUPLICATE_SPECIALTY_WARNING:
+    'Já existe uma consulta futura nesta especialidade. Revise antes de continuar.',
+  AUTO_BOOKING_SUSPENDED:
+    'O agendamento online está suspenso. Procure a recepção para marcar seu atendimento.',
+  BOOKING_CHANGE_WINDOW:
+    'O prazo para alterar online terminou. Procure a recepção para remarcar ou cancelar.',
+  BOOKING_LEAD_TIME:
+    'Este horário está próximo demais. Escolha outro horário ou procure a recepção.',
+  SCHEDULE_IMPACT_REVIEW:
+    'Há consultas afetadas. Resolva os agendamentos antes de aplicar esta alteração.',
   ACCOUNT_LOCKED:
     'Acesso temporariamente bloqueado. Aguarde e tente novamente.',
   CONFLICT:
@@ -40,6 +85,11 @@ export class ApiError extends Error {
     readonly code: string,
     readonly requestId?: string,
     readonly details: ApiFieldError[] = [],
+    readonly affectedAppointments: AffectedAppointment[] = [],
+    readonly alternatives: AppointmentAlternative[] = [],
+    readonly duplicateAppointments: z.infer<
+      typeof duplicateAppointmentsSchema
+    > = [],
   ) {
     super(
       errorMessages[code] ??
@@ -126,7 +176,7 @@ export class ApiClient {
   async request<T>(
     path: `/v1/${string}`,
     init: RequestInit = {},
-    options: { authenticated?: boolean } = {},
+    options: { authenticated?: boolean; expectedStatus?: number } = {},
   ): Promise<T> {
     const authenticated = options.authenticated !== false
     let token = this.accessToken
@@ -151,6 +201,15 @@ export class ApiClient {
       try {
         body = (await response.json()) as ApiErrorBody
       } catch {}
+      const affected = affectedAppointmentsSchema.safeParse(
+        body.error?.affectedAppointments,
+      )
+      const alternatives = alternativesSchema.safeParse(
+        body.error?.alternatives,
+      )
+      const duplicates = duplicateAppointmentsSchema.safeParse(
+        body.error?.duplicateAppointments,
+      )
       throw new ApiError(
         response.status,
         body.error?.code ?? 'INTERNAL_ERROR',
@@ -158,9 +217,17 @@ export class ApiClient {
           response.headers.get('X-Request-Id') ??
           undefined,
         body.error?.details ?? [],
+        affected.success ? affected.data : [],
+        alternatives.success ? alternatives.data : [],
+        duplicates.success ? duplicates.data : [],
       )
     }
 
+    if (
+      options.expectedStatus !== undefined &&
+      response.status !== options.expectedStatus
+    )
+      throw new ApiError(502, 'SERVICE_UNAVAILABLE')
     if (response.status === 204) return undefined as T
     return (await response.json()) as T
   }

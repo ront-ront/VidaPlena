@@ -13,7 +13,11 @@ export function ForbiddenState() {
         Você não tem acesso a esta página. Volte para sua área ou fale com a
         equipe responsável se precisar de ajuda.
       </p>
-      <Button render={<Link href="/" />} variant="secondary">
+      <Button
+        nativeButton={false}
+        render={<Link href="/" />}
+        variant="secondary"
+      >
         Voltar ao início
       </Button>
     </div>
