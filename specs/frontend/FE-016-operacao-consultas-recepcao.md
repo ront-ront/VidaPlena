@@ -2,7 +2,7 @@
 
 - **Software:** front
 - **Milestone:** M1 Agenda
-- **Status:** pendente
+- **Status:** implementada localmente; ensaio com usuários/leitor de tela pendente
 - **Depende de:** FE-015, BE-021, BE-022, BE-023
 - **Requisitos cobertos:** RF-007, RF-009, RF-010, RNF-002
 
@@ -22,18 +22,24 @@ Ler `specs/frontend/screens-map.md` (Agenda), `specs/frontend/design-system.md`,
 - Loading bloqueia repetição; 409 `SLOT_UNAVAILABLE` oferece horários próximos; consentimento/suspensão/paciente inexistente têm orientação em pt-BR. Em mobile, painel vira Sheet acessível e grade permanece scroll próprio.
 
 ## 5. Critérios de aceite
-- [ ] Dado presencial, quando escolher horário, então sala livre é sugerida; troca só aceita outra livre, e ausência de sala impede confirmar.
-- [ ] Dado conflito concorrente, quando API responder 409, então painel explica indisponibilidade, oferece alternativas e nenhuma consulta é mostrada como confirmada.
-- [ ] Dado reagendamento falho, quando fechar/voltar, então consulta original permanece no slot antigo.
-- [ ] Dado cancelamento pela clínica, quando concluir, então grade/histórico mostram origem e aviso foi agendado pelo backend.
-- [ ] Dada qualquer ação comum, quando partir da agenda, então é acessível em até dois cliques e sem reload integral.
+- [x] Dado presencial, quando escolher horário, então sala livre é sugerida; troca só aceita outra livre, e ausência de sala impede confirmar.
+- [x] Dado conflito concorrente, quando API responder 409, então painel explica indisponibilidade, oferece alternativas e nenhuma consulta é mostrada como confirmada.
+- [x] Dado reagendamento falho, quando fechar/voltar, então consulta original permanece no slot antigo.
+- [x] Dado cancelamento pela clínica, quando concluir, então grade/histórico mostram origem e aviso foi agendado pelo backend.
+- [x] Dada qualquer ação comum, quando partir da agenda, então é acessível em até dois cliques e sem reload integral.
 
 ## 6. Testes esperados
 Sala auto/troca, duplicidade, três operações, conflito, prazo/motivo, filtro/foco e teclado; ensaio RNF-002/004 com FE-015.
 
 ## 7. Definition of Done
-- [ ] Chama serviços FE-004 e contratos M1, sem regra de colisão só no front.
-- [ ] Testes/lint passam; nenhuma tela clínica acessada, sem `tsc`.
+- [x] Chama serviços FE-004 e contratos M1, sem regra de colisão só no front.
+- [x] Testes/lint passam; nenhuma tela clínica acessada, sem `tsc`.
 
 ## 8. Suposições e pontos em aberto
 O desenho exato do painel é proposta Q-14 aplicada ao layout explícito da agenda; não há escolha de sala pelo profissional.
+
+## Evidência local — 13/11/2026
+
+Painel acessível da recepção na agenda: CPF próprio do paciente/dependente, busca de slots, sugestão/troca de sala por P-45, modalidade remota sem sala, duplicidade explícita, três operações, origem/motivo e confirmação201/200. Remarcação exibe original/novo lado a lado; conflito não altera original. Nonce inclui ator/operação/payload, e resposta perdida orienta conferir agenda. Origem/prazo vêm de P-46. Data/filtros preservados e foco restaurado somente após nova leitura, com fallback em Atualizar agenda. Cadastro/consentimento continuam FE-039; encaixe/check-in ficam FE-017/018.
+
+Regressão Firefox com APIs simuladas **54/54** (10 casos FE-016+44 anteriores), mais **1/1** posterior de fechamento após conflito (11 casos específicos aprovados, não somar como execução55/55). ClienteHTTP6/6, nonce3/3, lint backend219/frontend79 e build Next aprovados. Backend integral **152/152** após P-45/P-46. Primeiras execuções14/15 e7/8 revelaram foco aplicado antes de substituir a grade; corrigido estado de atualização e finalFocus gerenciado pelo fluxo. Captura360px inspecionada. Dois cliques/sem reload foram automatizados; ensaio de treinamento/RNF-004 e leitor de tela manual permanecem pendentes. Arquivo original39 linhas e guia Next use-client123 linhas lidos integralmente. Sem tsc/commit.

@@ -8,6 +8,12 @@ import { ForbiddenState } from '@/components/ui/forbidden-state'
 import { destinationForPath } from '@/lib/navigation'
 
 const availableRoutes = new Set<string>([
+  '/agendar',
+  '/agenda',
+  '/agenda/espera',
+  '/minhas-consultas',
+  '/agenda/grade',
+  '/gestao/catalogo',
   '/minha-conta',
   '/admin/usuarios',
   '/recepcao/pacientes/novo',

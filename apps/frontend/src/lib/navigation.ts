@@ -14,6 +14,28 @@ export type NavigationDestination = {
 // Include a destination in availableRoutes only after its page is implemented.
 export const navigationDestinations: readonly NavigationDestination[] = [
   {
+    href: '/agenda/espera',
+    label: 'Lista de espera',
+    roles: ['patient', 'receptionist', 'manager', 'admin'],
+  },
+  {
+    href: '/agenda',
+    label: 'Agenda',
+    roles: ['receptionist', 'manager', 'admin'],
+  },
+  { href: '/minhas-consultas', label: 'Minhas consultas', roles: ['patient'] },
+  { href: '/agendar', label: 'Agendar atendimento', roles: ['patient'] },
+  {
+    href: '/agenda/grade',
+    label: 'Grade de atendimento',
+    roles: ['admin', 'manager', 'professional', 'receptionist'],
+  },
+  {
+    href: '/gestao/catalogo',
+    label: 'Oferta de atendimento',
+    roles: ['manager', 'admin'],
+  },
+  {
     href: '/minha-conta',
     label: 'Minha conta',
     roles: ['patient', 'receptionist', 'professional', 'manager', 'admin'],
@@ -42,7 +64,7 @@ export function visibleDestinations(
 }
 
 export function isCurrentDestination(pathname: string, href: string): boolean {
-  return pathname === href || pathname.startsWith(`${href}/`)
+  return destinationForPath(pathname)?.href === href
 }
 
 export function destinationForPath(pathname: string) {
@@ -50,7 +72,7 @@ export function destinationForPath(pathname: string) {
     return navigationDestinations.find(
       ({ href }) => href === '/recepcao/pacientes/novo',
     )
-  return navigationDestinations.find(({ href }) =>
-    isCurrentDestination(pathname, href),
-  )
+  return [...navigationDestinations]
+    .sort((a, b) => b.href.length - a.href.length)
+    .find(({ href }) => pathname === href || pathname.startsWith(`${href}/`))
 }
