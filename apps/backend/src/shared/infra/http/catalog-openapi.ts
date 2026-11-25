@@ -2,6 +2,7 @@ import type { z } from 'zod'
 import {
   absenceBody,
   absenceCorrectionBody,
+  absenceHistoryResponse,
   absenceResponse,
 } from './contracts/absence'
 import {
@@ -188,6 +189,15 @@ export const catalogOpenApiPaths = {
       security,
       requestParams: { path: importReadParams },
       responses: { '200': response(importReport), ...errors },
+    },
+  },
+  '/appointments/{id}/absence/history': {
+    get: {
+      operationId: 'absenceHistory',
+      tags: ['Agenda'],
+      security,
+      requestParams: { path: appointmentParams },
+      responses: { '200': response(absenceHistoryResponse), ...errors },
     },
   },
   '/appointments/{id}/absence': {

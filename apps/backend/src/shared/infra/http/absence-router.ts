@@ -12,6 +12,17 @@ export function createAbsenceRouter(
   service: ManageAbsences,
 ) {
   const router = Router()
+  router.get(
+    '/appointments/:id/absence/history',
+    accessGuard(tokens, authorize, 'correct_absence'),
+    async (req, res) => {
+      const { id } = parseInput(appointmentParams, req.params)
+      res.setHeader('Cache-Control', 'no-store')
+      res.json(
+        await service.history(principalOf(res), id, auditContext(req, res)),
+      )
+    },
+  )
   router.post(
     '/appointments/:id/absence',
     accessGuard(tokens, authorize, 'record_absence'),

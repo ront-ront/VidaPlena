@@ -194,3 +194,24 @@ test('confirmação exige 201 e preserva a chave no retry por rotação de sess�
   )
   assert.deepEqual(keys, ['command', 'command'])
 })
+
+test('erro estrutural de importação preserva relatório para validação pelo serviço', async () => {
+  const report = { batchId: 'lote-de-teste', fileErrors: ['INVALID_HEADER'] }
+  const client = new ApiClient('http://localhost:3333', (async () =>
+    json(
+      { error: { code: 'VALIDATION_ERROR', importReport: report } },
+      400,
+    )) as typeof fetch)
+  await assert.rejects(
+    client.request(
+      '/v1/imports/patients/preview',
+      { method: 'POST' },
+      { authenticated: false },
+    ),
+    (cause) => {
+      assert.ok(cause instanceof ApiError)
+      assert.deepEqual(cause.importReport, report)
+      return true
+    },
+  )
+})

@@ -14,6 +14,16 @@ export type NavigationDestination = {
 // Include a destination in availableRoutes only after its page is implemented.
 export const navigationDestinations: readonly NavigationDestination[] = [
   {
+    href: '/importacoes/agenda',
+    label: 'Importar agenda',
+    roles: ['admin', 'manager'],
+  },
+  {
+    href: '/importacoes/pacientes',
+    label: 'Importar pacientes',
+    roles: ['admin', 'manager'],
+  },
+  {
     href: '/agenda/espera',
     label: 'Lista de espera',
     roles: ['patient', 'receptionist', 'manager', 'admin'],

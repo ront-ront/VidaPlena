@@ -73,6 +73,7 @@ export type OperationalAppointment = z.infer<
 >
 export type AgendaPage = z.infer<typeof pageSchema>
 export type AgendaFilters = {
+  absenceEligibleOnly?: 'true'
   localDate?: string
   patientQuery?: string
   professionalId?: string

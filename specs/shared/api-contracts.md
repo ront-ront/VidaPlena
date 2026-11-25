@@ -339,3 +339,13 @@ Filtro opcional `view=upcoming|history` na lista própria: upcoming = startsAt >
 ### Paciente do encaixe — BE-024/P-50
 
 `GET /v1/patients/fit-in-candidate?cpf=<CPF completo>`: create_fit_in (recepção/gestor, MFA interno),200 `{patientId,fullName}`,400 CPF inválido,404 ausente,401/403 conforme sessão/papel. Sem cache; auditoria patient.fit_in_lookup com subjectPatientId encontrado, sem CPF em metadata. Não dá ao gestor acesso a /onsite-patients, dados cadastrais completos ou consentimentos. POST fit-ins continua autoridade de consentimento/estado.
+
+### Complemento de dependência FE-018 — P-53 (24/11/2026)
+
+`GET /appointments/{id}/absence/history`: recepção/gestor com MFA (mesma capacidade correct_absence), retorna200 `{items:[{version,previousKind,kind,explanation,occurredAt}]}` por versão decrescente. Inclui somente justificativa administrativa já registrada para cumprir o histórico da FE-018; não expõe autor, conteúdo clínico, ciphertext ou políticas de outros pacientes.404 se ausência inexistente,403 outros papéis,401 sem sessão/MFA; sem cache, leitura auditada por sujeito. Texto não entra em logs. Não há edição ou migração de histórico; eventos existentes são imutáveis. Complemento necessário porque a projeção da agenda só continha a última versão e não cumpria o histórico solicitado.
+
+### Prévia administrativa para FE-020 — P-55
+
+`ImportReport.rows` de agenda acrescenta campos opcionais `professionalExternalId` (UUID validado do profissional), `specialtyCode`, `roomName` (vazio no remoto) e `localDate` (`YYYY-MM-DD`, fuso configurado da clínica). Valores vêm da linha validada, não implicam referência apta: `status/errors` decidem o resultado. CPF permanece mascarado. Campos aparecem também na consulta/replay, sem conteúdo clínico e sob a mesma posse/MFA/auditoria de BE-029. Nenhuma migração necessária. Navegação frontend `/agenda?date=localDate` valida data civil e não amplia permissão.
+
+O relatório de agenda também informa `clinicTimeZone` (IANA) para exibir início/fim no mesmo fuso usado em `localDate`, independentemente do navegador.

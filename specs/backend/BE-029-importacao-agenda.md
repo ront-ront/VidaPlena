@@ -40,3 +40,7 @@ Data de corte real e fontes legadas permanecem P-07. Histórico clínico manual 
 ## Evidência local — 12/11/2026
 
 Migration `202611120029_appointment_imports`, contrato Zod/OpenAPI, prévia sem consulta/reserva, confirmação por linha retomável e reserva ativa via BE-020 implementados. Identidade/evidência imutáveis, histórico de estados completed/cancelled sem reserva, origem administrativa por papel e reconciliação sem lembretes. **Regressão completa 136/136 integrações**, Node 26/26, Vitest 2/2 e lint aprovados. Revisão posterior de nome de sala reutilizado: seleção prioriza cadastro ativo, **14/14 integrações BE-029** aprovadas; os 136 casos da regressão completa incluem os 13 anteriores. Lotes CSV juntos passaram 25/25 antes dessa revisão. P-34 identifica UUID demonstrativo de profissional, classificação de corte e comportamento em falha parcial; sem `tsc`, dados reais ou commits. FE-020 ainda pendente.
+
+### Projeção para FE-020/P-55 —24/11/2026
+
+Relatório acrescenta UUID profissional/código de especialidade/nome de sala da linha validada, dia civil da clínica e fuso IANA. Campos continuam administrativos e sujeitos a posse/MFA; não implicam referência apta sem status aceito.14/14 integrações repetidas com validação da projeção/CPF mascarado e origem na agenda, sem migração. FE-020 agora integrada; nenhuma alteração na barreira transacional, notificações ou processamento por linha.

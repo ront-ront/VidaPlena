@@ -787,3 +787,71 @@ test('BE-027: aviso administrativo mínimo permite pendência de termo e revalid
     })
   }
 })
+
+test('BE-027/P-53: histórico administrativo restrito, auditado e sem ciphertext ou autor', async () => {
+  const patient = await ctx.patient()
+  const [row] = await seed(patient.patientId, [new Date(Date.now() - 86400000)])
+  const app = timed(new Date()).app
+  const manager = await ctx.account('manager')
+  await correct(app, row.id, manager.token, {
+    explanation: 'Correção administrativa fictícia',
+  }).expect(200)
+  for (const token of [ctx.reception.token, manager.token]) {
+    const res = await request(app)
+      .get(`/v1/appointments/${row.id}/absence/history`)
+      .set('Authorization', token)
+      .expect(200)
+    assert.equal(res.headers['cache-control'], 'no-store')
+    assert.deepEqual(
+      res.body.items.map((item: { version: number }) => item.version),
+      [2, 1],
+    )
+    assert.equal(
+      res.body.items[0].explanation,
+      'Correção administrativa fictícia',
+    )
+    assert.deepEqual(Object.keys(res.body.items[0]).sort(), [
+      'explanation',
+      'kind',
+      'occurredAt',
+      'previousKind',
+      'version',
+    ])
+  }
+  for (const token of [
+    ctx.admin.token,
+    ctx.professionalAccounts[0].token,
+    patient.token,
+  ]) {
+    await request(app)
+      .get(`/v1/appointments/${row.id}/absence/history`)
+      .set('Authorization', token)
+      .expect(403)
+  }
+  await request(app)
+    .get(`/v1/appointments/${row.id}/absence/history`)
+    .expect(401)
+  await request(app)
+    .get(`/v1/appointments/${randomUUID()}/absence/history`)
+    .set('Authorization', manager.token)
+    .expect(404)
+  assert.equal(
+    await ctx.db.auditEvent.count({
+      where: {
+        action: 'absence.history_viewed',
+        subjectPatientId: patient.patientId,
+      },
+    }),
+    2,
+  )
+  const stored = await ctx.db.absenceRevision.findMany({
+    where: { absence: { appointmentId: row.id } },
+  })
+  assert.ok(
+    stored.some(
+      (entry) =>
+        entry.explanationEncrypted &&
+        !entry.explanationEncrypted.includes('Correção administrativa'),
+    ),
+  )
+})

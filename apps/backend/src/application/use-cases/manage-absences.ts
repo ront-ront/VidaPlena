@@ -11,6 +11,9 @@ import type {
 import type { AuditContext, AuditWriter } from '../ports/audit-writer'
 
 export class ManageAbsences {
+  history(actor: Principal, id: string, context: AuditContext) {
+    return this.store.history(id, actor, context)
+  }
   constructor(
     private readonly store: AbsenceStore,
     private readonly audit: AuditWriter,

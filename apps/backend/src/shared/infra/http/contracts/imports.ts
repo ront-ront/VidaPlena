@@ -34,6 +34,10 @@ export const importRowResponse = z.object({
   externalId: z.string().optional(),
   fullName: z.string().optional(),
   cpfMasked: z.string().optional(),
+  professionalExternalId: z.uuid().optional(),
+  specialtyCode: z.string().optional(),
+  roomName: z.string().optional(),
+  localDate: z.iso.date().optional(),
   startsAt: z.iso.datetime().optional(),
   endsAt: z.iso.datetime().optional(),
   modality: z.enum(['onsite', 'remote']).optional(),
@@ -42,6 +46,7 @@ export const importRowResponse = z.object({
 export const importReport = z.object({
   batchId: z.uuid(),
   kind: z.enum(['patients', 'appointments']),
+  clinicTimeZone: z.string().optional(),
   sourceSystem: z.string(),
   fileHash: z.string(),
   status: z.enum(['preview', 'invalid', 'processing', 'confirmed']),

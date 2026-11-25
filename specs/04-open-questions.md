@@ -394,3 +394,15 @@ Encaixe usa CPF pela projeção P-50, catálogos públicos e data/hora local com
 ### P-52 — publicação do termo e ausência no cadastro
 
 **Plano aprovado pelo usuário em13/11/2026:** corrigir a falta de termo por tela administrativa real `/admin/termos` (FE-042), não por mock/seed. Somente admin com MFA publica versão/texto com vigência imediata; `effectiveAt` omitido é calculado no servidor, data explícita segue compatível. Nenhum texto automático ou desativação de validação. Cadastros distinguem404 de erro técnico, permitem retry e exigem novo aceite/arquivo após mudança de versão; demais dados são preservados. P-01 jurídico permanece. Implementar BE-011, FE-042 e correções FE-007/039 sequencialmente. M1 permanece pausada após FE-017. Evidências em `_work/09-consent-publication-fix.md`.
+
+### P-53 — histórico administrativo de ausência na FE-018
+
+Decisão técnica derivada da FE-018/RF-015 em24/11/2026: acrescentar leitura de revisões existentes para recepção/gestor com MFA, incluindo somente classificação, versão, data e justificativa administrativa. Endpoint auditado/sem cache, sem autor/ciphertext/conteúdo clínico e sem mudança de schema. Testar autorização/imutabilidade e cifragem antes da UI. Dependência verificada11/11 e FE-018 integrada; limites de homologação preservados.
+
+### P-54 — interface demonstrativa de importação
+
+Decisão técnica FE-019/Q-19: origem é informada explicitamente, CSV conforme layout compartilhado, prévia sem escrita, confirmação com batchId/hash e nonce por ator/operação/lote/hash. Relatório estrutural retornado em400 deve ser validado por Zod antes de renderizar. Estados inválidos não oferecem confirmação; o servidor decide expiração e409 bloqueia nova tentativa daquela prévia no front; erro de rede orienta consultar o lote antes de repetir com a mesma chave. UI permite consultar UUID do lote anterior, com posse/permissão revalidada no servidor; não persistir CSV ou dados pessoais no navegador. Campos alterados invalidam a prévia. Sem novas bibliotecas ou números de limites fixos no front.
+
+### P-55 — projeção e navegação da importação de agenda
+
+Decisão técnica FE-020/RF-007/008: BE-029 acrescenta à linha validada `professionalExternalId` (UUID do cadastro existente), `specialtyCode`, `roomName` e `localDate` calculada no fuso da clínica, sem dados clínicos nem nova persistência. A UI mostra CPF mascarado como identificação mínima do paciente, referências administrativas do CSV e horários. `/agenda?date=YYYY-MM-DD` abre o dia civil validado, sem IDs/dados pessoais na URL; parâmetro inválido usa o dia do servidor. Detalhe da consulta mostra também importador já presente no contrato. Reutilizar painel FE-019 com `kind` validado antes de renderizar/confirmar; resultado500 pode representar progresso parcial, portanto consultar lote e retomar com a mesma chave, sem prometer rollback de todo o arquivo. Implementar/verificar dependência BE-029 antes de encerrar FE-020.

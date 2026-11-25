@@ -37,6 +37,7 @@ type ApiErrorBody = {
     affectedAppointments?: unknown
     alternatives?: unknown
     duplicateAppointments?: unknown
+    importReport?: unknown
   }
 }
 
@@ -90,6 +91,7 @@ export class ApiError extends Error {
     readonly duplicateAppointments: z.infer<
       typeof duplicateAppointmentsSchema
     > = [],
+    readonly importReport?: unknown,
   ) {
     super(
       errorMessages[code] ??
@@ -220,6 +222,7 @@ export class ApiClient {
         affected.success ? affected.data : [],
         alternatives.success ? alternatives.data : [],
         duplicates.success ? duplicates.data : [],
+        body.error?.importReport,
       )
     }
 

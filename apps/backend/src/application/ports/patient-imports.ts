@@ -25,6 +25,10 @@ export type ImportRowResult = {
   externalId?: string
   fullName?: string
   cpfMasked?: string
+  professionalExternalId?: string
+  specialtyCode?: string
+  roomName?: string
+  localDate?: string
   startsAt?: string
   endsAt?: string
   modality?: 'onsite' | 'remote'
@@ -57,6 +61,7 @@ export type ImportBatch = {
 export type ImportReport = {
   batchId: string
   kind: 'patients' | 'appointments'
+  clinicTimeZone?: string
   sourceSystem: string
   fileHash: string
   status: ImportBatch['status']

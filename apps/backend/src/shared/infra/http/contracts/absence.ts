@@ -1,5 +1,16 @@
 import { z } from 'zod'
 export const absenceKind = z.enum(['unjustified', 'justified', 'clinic_fault'])
+export const absenceHistoryResponse = z.object({
+  items: z.array(
+    z.object({
+      version: z.int().positive(),
+      previousKind: absenceKind.nullable(),
+      kind: absenceKind,
+      explanation: z.string().nullable(),
+      occurredAt: z.iso.datetime(),
+    }),
+  ),
+})
 export const absenceBody = z
   .object({
     kind: absenceKind,

@@ -2,7 +2,7 @@
 
 - **Software:** front
 - **Milestone:** M1 Agenda
-- **Status:** leitura operacional implementada localmente; agendar/remarcar/cancelar integrados por FE-016; check-in integra FE-018 e ensaio com usuários pendente
+- **Status:** implementada localmente com FE-016/018 integradas; ensaio com usuários/leitor de tela pendente
 - **Depende de:** FE-003, BE-021, BE-026, BE-027
 - **Requisitos cobertos:** RF-006, RF-014, RF-015, RNF-002, RNF-004, UI-009, UI-011
 
@@ -23,7 +23,7 @@ Ler `apps/frontend/docs/VidaPlena_Design_System.md` §§17/20/31, `specs/fronten
 
 ## 5. Critérios de aceite
 - [x] Dado dia com consultas, quando abrir, então topbar, três cards e grade hora/especialidade/status correspondem ao contrato sem números mockados.
-- [ ] Dada ação comum, quando partir da agenda, então formulário/ação está acessível em até dois cliques e sem reload da página.
+- [x] Dada ação comum, quando partir da agenda, então formulário/ação está acessível em até dois cliques e sem reload da página.
 - [x] Dado 760 px ou menos, quando abrir, então grade mantém largura mínima 620 px com scroll próprio e controles continuam acessíveis por teclado.
 - [x] Dado erro/vazio/atualização, quando ocorrer, então há mensagem acionável, contexto mantido e status comunicado além de cor.
 - [ ] Dada sessão de treinamento de uma hora, quando avaliar recepção, então 90% executam as quatro tarefas RNF-004 sem auxílio; evidência é ensaio com usuários, não lint.
@@ -33,7 +33,7 @@ Layout visual fiel §§17/31, busca/data/filtros, dois cliques, estados, 760/105
 
 ## 7. Definition of Done
 - [x] Origem visual citada e componentes FE-002 usados; dados mínimos autorizados.
-- [ ] Testes/lint passam; ensaio de usabilidade registrado quando executado, sem `tsc`.
+- [x] Testes/lint passam; ensaio de usabilidade registrado quando executado, sem `tsc`. (Ensaio ainda não executado; pendência RNF-004 preservada acima.)
 
 ## 8. Suposições e pontos em aberto
 A grade do Design System exemplifica especialidades e números; usar catálogo/dados reais. RNF-004 só pode ser encerrado após teste com participantes e treinamento.
@@ -45,3 +45,5 @@ Layout de origem §§17/20/31 aplicado a dados reais da API: dia/fuso do servido
 Firefox7/7 específicas aprovadas, incluindo760px/teclado/scroll próprio; regressão anterior43/44 com37/37 anteriores aprovados e única falha em fixture de rolagem (duas colunas cabiam em760px); fixture passou a carregar terceira coluna e sete testes finais passaram. Não declarar44/44 como uma execução única. Lint backend216/front76 e build Next aprovados, sem tsc/commit. Backend147/147 integrações aprovado após P-41/P-43. Captura760px inspecionada. Arquivo original39 linhas lido integralmente; detalhe232 linhas ManageArrivals lido completo. Ações de FE-016/018 e teste de dois cliques/treinamento continuam pendentes, sem controles simulados.
 
 Integração FE-016 concluída: Novo atendimento e ações nos detalhes abrem painéis em até dois cliques, preservam data/filtros/foco após sucesso. Regressão54/54+revisão1/1, lint/build aprovados. Check-in/no-show continuam FE-018; ensaio com pessoas permanece pendente.
+
+**Integração FE-018 —24/11/2026:** chegada/ausência/histórico e filtro de conferência concluídos; check-in parte da grade em dois cliques, atualiza sem reload e mantém filtros/foco.9/9 Firefox e11/11 integrações de ausência/histórico aprovados; origem/importador e navegação ao dia completadas por FE-020/P-55. Ensaio RNF-004 com pessoas e leitor de tela continuam sem evidência, explicitamente pendentes.

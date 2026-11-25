@@ -113,6 +113,13 @@ export class ImportAppointments {
             ? {
                 externalId: data.externalId,
                 cpfMasked: `***.***.***-${data.patientCpf.slice(-2)}`,
+                professionalExternalId: data.professionalExternalId,
+                specialtyCode: data.specialtyCode,
+                roomName: data.roomName,
+                localDate: clinicDate(
+                  new Date(data.startsAt),
+                  this.policy.timeZone,
+                ),
                 startsAt: data.startsAt,
                 endsAt: data.endsAt,
                 modality: data.modality,
@@ -162,6 +169,7 @@ export class ImportAppointments {
     return {
       batchId: batch.id,
       kind: 'appointments',
+      clinicTimeZone: this.policy.timeZone,
       sourceSystem: batch.sourceSystem,
       fileHash: batch.fileHash,
       status: batch.status,

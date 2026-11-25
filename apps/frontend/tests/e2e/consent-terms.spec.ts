@@ -8,7 +8,7 @@ const ids = {
   consent: '71000000-0000-4000-8000-000000000005',
   file: '71000000-0000-4000-8000-000000000006',
 }
-const document = (version = 'v1') => ({
+const consentDocument = (version = 'v1') => ({
   id: version === 'v1' ? ids.term : ids.nextTerm,
   version,
   body: `Texto fictício completo do termo ${version}.`,
@@ -18,7 +18,7 @@ const document = (version = 'v1') => ({
 async function mock(
   page: Page,
   role = 'admin',
-  initial: ReturnType<typeof document> | null = null,
+  initial: ReturnType<typeof consentDocument> | null = null,
 ) {
   const control = {
     current: initial,
@@ -80,7 +80,7 @@ async function mock(
       if (control.postMode === 'slow')
         await new Promise((resolve) => setTimeout(resolve, 400))
       control.current = {
-        ...document(String(body.version)),
+        ...consentDocument(String(body.version)),
         body: String(body.bodyReference),
         effectiveAt: new Date().toISOString(),
       }
@@ -92,7 +92,7 @@ async function mock(
       const body = req.postDataJSON()
       control.posts.push({ path, body })
       if (control.postMode === 'newVersion') {
-        control.current = document('v2')
+        control.current = consentDocument('v2')
         control.postMode = 'ok'
         return error(409, 'CONFLICT')
       }
@@ -128,7 +128,7 @@ async function mock(
       const body = JSON.parse(data)
       control.posts.push({ path, body })
       if (control.postMode === 'newVersion') {
-        control.current = document('v2')
+        control.current = consentDocument('v2')
         control.postMode = 'ok'
         return error(409, 'CONFLICT')
       }
@@ -153,7 +153,7 @@ async function draft(page: Page) {
   await page.getByLabel('Versão', { exact: true }).fill('v1')
   await page
     .getByLabel('Texto completo do termo', { exact: true })
-    .fill(document().body)
+    .fill(consentDocument().body)
   await page
     .getByRole('button', { name: 'Revisar publicação', exact: true })
     .click()
@@ -177,7 +177,7 @@ test('FE-042: primeiro termo, validação, revisão cancelável e publicação r
   expect(control.posts).toHaveLength(0)
   const dialog = await draft(page)
   await expect(dialog.getByLabel('Texto que será publicado')).toHaveValue(
-    document().body,
+    consentDocument().body,
   )
   await dialog.getByRole('button', { name: 'Voltar para editar' }).click()
   await expect(page.getByLabel('Versão', { exact: true })).toHaveValue('v1')
@@ -188,7 +188,7 @@ test('FE-042: primeiro termo, validação, revisão cancelável e publicação r
   await dialog.getByRole('button', { name: 'Confirmar publicação' }).click()
   await expect(page.getByText('Termo publicado', { exact: true })).toBeVisible()
   await expect(page.getByLabel('Texto do termo vigente')).toHaveValue(
-    document().body,
+    consentDocument().body,
   )
   expect(control.posts).toEqual([
     {
@@ -196,7 +196,7 @@ test('FE-042: primeiro termo, validação, revisão cancelável e publicação r
       body: {
         kind: 'data',
         version: 'v1',
-        bodyReference: document().body,
+        bodyReference: consentDocument().body,
       },
     },
   ])
@@ -226,11 +226,11 @@ test('FE-042: conflito mantém rascunho, não anuncia sucesso e permite conferir
   await expect(page.getByLabel('Versão', { exact: true })).toHaveValue('v1')
   await expect(
     page.getByLabel('Texto completo do termo', { exact: true }),
-  ).toHaveValue(document().body)
-  control.current = document('v2')
+  ).toHaveValue(consentDocument().body)
+  control.current = consentDocument('v2')
   await page.getByRole('button', { name: 'Atualizar termo vigente' }).click()
   await expect(page.getByLabel('Texto do termo vigente')).toHaveValue(
-    document('v2').body,
+    consentDocument('v2').body,
   )
 })
 
@@ -254,7 +254,7 @@ for (const mode of ['lost', 'invalid']) {
     ).toHaveCount(0)
     await expect(
       page.getByLabel('Texto completo do termo', { exact: true }),
-    ).toHaveValue(document().body)
+    ).toHaveValue(consentDocument().body)
     expect(control.posts).toHaveLength(1)
   })
 }
@@ -282,7 +282,7 @@ test('FE-042: erro de leitura permite retry e duplo evento produz uma publicaç�
   const dialog = await draft(page)
   await dialog
     .getByRole('button', { name: 'Confirmar publicação' })
-    .evaluate((button) => {
+    .evaluate((button: HTMLButtonElement) => {
       button.click()
       button.click()
     })
@@ -311,7 +311,7 @@ test('FE-042: revisão em360px, teclado e retorno ao formulário sem publicar', 
   page,
 }) => {
   await page.setViewportSize({ width: 360, height: 800 })
-  await mock(page, 'admin', document('v2'))
+  await mock(page, 'admin', consentDocument('v2'))
   await page.goto('/admin/termos')
   await expect(page.getByLabel('Texto do termo vigente')).toBeVisible()
   const dialog = await draft(page)
@@ -332,7 +332,7 @@ test('FE-042: revisão em360px, teclado e retorno ao formulário sem publicar', 
   ).toBeFocused()
   await expect(
     page.getByLabel('Texto completo do termo', { exact: true }),
-  ).toHaveValue(document().body)
+  ).toHaveValue(consentDocument().body)
 })
 
 async function fillRegistration(page: Page) {
@@ -368,13 +368,13 @@ test('FE-007/P-52: ausência de termo bloqueia; após publicação, retry permit
   await expect(
     page.getByRole('link', { name: 'Publicar termo em outra aba' }),
   ).toHaveCount(0)
-  control.current = document()
+  control.current = consentDocument()
   await page
     .getByRole('button', { name: 'Atualizar termo', exact: true })
     .click()
   await expect(
     page.getByLabel('Texto completo do termo de tratamento de dados'),
-  ).toHaveValue(document().body)
+  ).toHaveValue(consentDocument().body)
   await fillRegistration(page)
   await page
     .getByRole('button', { name: 'Concluir cadastro', exact: true })
@@ -412,7 +412,7 @@ test('FE-007/P-52: admin recebe link para publicar sem abandonar cadastro; erro 
     page.getByText('Carregando o termo vigente…', { exact: true }),
   ).toHaveCount(0)
   control.readError = false
-  control.current = document()
+  control.current = consentDocument()
   await page
     .getByRole('button', { name: 'Tentar novamente', exact: true })
     .click()
@@ -422,7 +422,7 @@ test('FE-007/P-52: admin recebe link para publicar sem abandonar cadastro; erro 
 test('FE-007/P-52: nova versão exige novo aceite, preserva dados e usa ID atualizado', async ({
   page,
 }) => {
-  const control = await mock(page, 'patient', document())
+  const control = await mock(page, 'patient', consentDocument())
   control.postMode = 'newVersion'
   await page.goto('/cadastro')
   await fillRegistration(page)
@@ -443,7 +443,7 @@ test('FE-007/P-52: nova versão exige novo aceite, preserva dados e usa ID atual
   )
   await expect(
     page.getByLabel('Texto completo do termo de tratamento de dados'),
-  ).toHaveValue(document('v2').body)
+  ).toHaveValue(consentDocument('v2').body)
   await page
     .getByRole('button', { name: 'Concluir cadastro', exact: true })
     .click()
@@ -464,7 +464,7 @@ test('FE-007/P-52: nova versão exige novo aceite, preserva dados e usa ID atual
 test('FE-007/P-52: CPF duplicado preserva formulário e mantém recuperação de acesso', async ({
   page,
 }) => {
-  const control = await mock(page, 'patient', document())
+  const control = await mock(page, 'patient', consentDocument())
   control.postMode = 'conflict'
   await page.goto('/cadastro')
   await fillRegistration(page)
@@ -541,13 +541,13 @@ test('FE-039/P-52: admin publica em outra aba e retry libera cadastro preservand
     path: '/tmp/vidaplena-consent-missing-mobile.png',
     fullPage: true,
   })
-  control.current = document()
+  control.current = consentDocument()
   await page
     .getByRole('button', { name: 'Atualizar termo', exact: true })
     .click()
   await expect(
     page.getByLabel('Texto completo do termo', { exact: true }),
-  ).toHaveValue(document().body)
+  ).toHaveValue(consentDocument().body)
   await expect(page.getByLabel('Nome completo', { exact: true })).toHaveValue(
     'Paciente Fictício',
   )
@@ -594,13 +594,13 @@ test('FE-039/P-52: recepção recebe orientação, erro tem retry e não deixa l
     }),
   ).toBeDisabled()
   control.readError = false
-  control.current = document()
+  control.current = consentDocument()
   await page
     .getByRole('button', { name: 'Tentar novamente', exact: true })
     .click()
   await expect(
     page.getByLabel('Texto completo do termo', { exact: true }),
-  ).toHaveValue(document().body)
+  ).toHaveValue(consentDocument().body)
   await expect(page.getByLabel('Nome completo', { exact: true })).toHaveValue(
     'Paciente Fictício',
   )
@@ -609,7 +609,7 @@ test('FE-039/P-52: recepção recebe orientação, erro tem retry e não deixa l
 test('FE-039/P-52: versão nova limpa aceite e arquivo do DOM; exige nova evidência sem perder dados', async ({
   page,
 }) => {
-  const control = await mock(page, 'receptionist', document())
+  const control = await mock(page, 'receptionist', consentDocument())
   control.postMode = 'newVersion'
   await page.goto('/recepcao/pacientes/novo')
   await fillOnsite(page)
@@ -623,7 +623,7 @@ test('FE-039/P-52: versão nova limpa aceite e arquivo do DOM; exige nova evidê
     .click()
   await expect(
     page.getByLabel('Texto completo do termo', { exact: true }),
-  ).toHaveValue(document('v2').body)
+  ).toHaveValue(consentDocument('v2').body)
   await expect(accepted).not.toBeChecked()
   await expect(
     page.getByLabel('Arquivo do termo assinado', { exact: true }),
@@ -658,7 +658,7 @@ test('FE-039/P-52: versão nova limpa aceite e arquivo do DOM; exige nova evidê
 test('FE-039/P-52: conflito com mesma versão conserva arquivo e aceite para correção cadastral', async ({
   page,
 }) => {
-  const control = await mock(page, 'receptionist', document())
+  const control = await mock(page, 'receptionist', consentDocument())
   control.postMode = 'conflict'
   await page.goto('/recepcao/pacientes/novo')
   await fillOnsite(page)
@@ -684,7 +684,7 @@ test('FE-039/P-52: conflito com mesma versão conserva arquivo e aceite para cor
 test('FE-039/P-52: novo termo em paciente existente não recria cadastro e exige arquivo atualizado', async ({
   page,
 }) => {
-  const control = await mock(page, 'admin', document())
+  const control = await mock(page, 'admin', consentDocument())
   control.postMode = 'newVersion'
   await page.goto(`/recepcao/pacientes/${ids.patient}/consentimento`)
   await page.getByLabel('CPF do paciente', { exact: true }).fill('52998224725')
@@ -702,7 +702,7 @@ test('FE-039/P-52: novo termo em paciente existente não recria cadastro e exige
     .click()
   await expect(
     page.getByLabel('Texto completo do termo', { exact: true }),
-  ).toHaveValue(document('v2').body)
+  ).toHaveValue(consentDocument('v2').body)
   await expect(
     page.getByLabel('Arquivo do termo assinado', { exact: true }),
   ).toHaveValue('')
@@ -758,7 +758,7 @@ for (const path of ['/cadastro', '/recepcao/pacientes/novo']) {
     page,
   }) => {
     const control = await mock(page, 'admin', {
-      ...document(),
+      ...consentDocument(),
       id: 'identificador-inválido',
     })
     await page.goto(path)

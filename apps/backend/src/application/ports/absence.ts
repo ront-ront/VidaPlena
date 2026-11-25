@@ -1,4 +1,6 @@
 import type { AbsenceKind } from '../../domain/rules/absence'
+import type { Principal } from '../../domain/rules/access'
+import type { AuditContext } from './audit-writer'
 import type { BookingTransaction } from './booking'
 export type AbsenceInput = {
   kind: AbsenceKind
@@ -34,5 +36,18 @@ export interface AbsenceTransaction extends BookingTransaction {
   ): Promise<{ unjustifiedCount: number; suspendedUntil: Date | null }>
 }
 export interface AbsenceStore {
+  history(
+    appointmentId: string,
+    actor: Principal,
+    context: AuditContext,
+  ): Promise<{
+    items: {
+      version: number
+      previousKind: string | null
+      kind: string
+      explanation: string | null
+      occurredAt: string
+    }[]
+  }>
   transaction<T>(run: (tx: AbsenceTransaction) => Promise<T>): Promise<T>
 }

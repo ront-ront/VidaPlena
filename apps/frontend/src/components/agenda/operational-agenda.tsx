@@ -18,6 +18,7 @@ import {
   operationalAgenda,
 } from '@/services/operational-agenda'
 import { professionalSchedule } from '@/services/schedule'
+import { ArrivalActions } from './arrival-actions'
 import {
   type ReceptionAction,
   ReceptionAppointment,
@@ -30,6 +31,7 @@ const flagLabel = {
   consent_revoked: 'Consentimento revogado',
 }
 const filtersSchema = z.object({
+  absenceEligibleOnly: z.literal('true').optional(),
   localDate: z.iso.date(),
   patientQuery: z.string().trim().max(100).optional(),
   professionalId: z.uuid().optional(),
@@ -88,9 +90,21 @@ function AgendaSkeleton() {
     </div>
   )
 }
-export function OperationalAgenda({ operatorId }: { operatorId?: string }) {
-  const [query, setQuery] = useState<AgendaFilters>({}),
-    [draft, setDraft] = useState<AgendaFilters>({}),
+export function OperationalAgenda({
+  operatorId,
+  initialDate,
+  canCorrectAbsence = false,
+}: {
+  operatorId?: string
+  initialDate?: string
+  canCorrectAbsence?: boolean
+}) {
+  const [query, setQuery] = useState<AgendaFilters>(
+      initialDate ? { localDate: initialDate } : {},
+    ),
+    [draft, setDraft] = useState<AgendaFilters>(
+      initialDate ? { localDate: initialDate } : {},
+    ),
     [data, setData] = useState<AgendaPage | null>(null),
     [loading, setLoading] = useState(true),
     [error, setError] = useState<ApiError | null>(null),
@@ -377,6 +391,23 @@ export function OperationalAgenda({ operatorId }: { operatorId?: string }) {
           apply()
         }}
       >
+        {operatorId && (
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={draft.absenceEligibleOnly === 'true'}
+              onChange={(event) =>
+                setDraft({
+                  ...draft,
+                  absenceEligibleOnly: event.target.checked
+                    ? 'true'
+                    : undefined,
+                })
+              }
+            />
+            Somente ausências para conferir
+          </label>
+        )}
         <TextField
           id="agenda-date"
           label="Data da agenda"
@@ -780,9 +811,12 @@ export function OperationalAgenda({ operatorId }: { operatorId?: string }) {
                   </p>
                 )}
                 {selected.importOrigin && (
-                  <p>
+                  <p className="break-all">
                     Origem: {selected.importOrigin.sourceSystem} · Importado em{' '}
-                    {format(selected.importOrigin.importedAt)}
+                    {format(selected.importOrigin.importedAt)} · Importador:{' '}
+                    {selected.importOrigin.importedBy}
+                    {selected.importOrigin.historicalStatus ===
+                      'before_cutoff' && ' · Histórico importado'}
                   </p>
                 )}
                 <p className="break-all text-xs text-muted-foreground">
@@ -823,6 +857,31 @@ export function OperationalAgenda({ operatorId }: { operatorId?: string }) {
               >
                 Fechar detalhes
               </Button>
+              {(operatorId || canCorrectAbsence) && (
+                <ArrivalActions
+                  key={`${selected.id}:${selected.version}:${selected.absence?.version ?? 0}`}
+                  row={selected}
+                  receptionist={!!operatorId}
+                  canCheckIn={
+                    !!data &&
+                    Temporal.Instant.from(selected.startsAt)
+                      .toZonedDateTimeISO(data.clinicTimeZone)
+                      .toPlainDate()
+                      .equals(
+                        Temporal.Instant.from(data.serverNow)
+                          .toZonedDateTimeISO(data.clinicTimeZone)
+                          .toPlainDate(),
+                      )
+                  }
+                  timeZone={data?.clinicTimeZone ?? 'UTC'}
+                  onDone={(message) => {
+                    const id = selected.id
+                    setSelected(null)
+                    setSuccess(message)
+                    refreshAfter(id)
+                  }}
+                />
+              )}
             </Dialog.Popup>
           </Dialog.Portal>
         </Dialog.Root>

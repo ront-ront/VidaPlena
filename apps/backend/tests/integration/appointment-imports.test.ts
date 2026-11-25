@@ -142,10 +142,18 @@ test('BE-029: prévia sem writes e confirmação preservam origem sem conta, con
   const batch = (await preview([entry], source).expect(200)).body
   assert.equal(batch.accepted, 1)
   assert.equal(batch.kind, 'appointments')
+  assert.equal(batch.clinicTimeZone, f.config.clinicTimeZone)
+  assert.equal(batch.rows[0].professionalExternalId, entry.professional)
+  assert.equal(batch.rows[0].specialtyCode, entry.specialty)
+  assert.equal(batch.rows[0].roomName, entry.room)
+  assert.equal(batch.rows[0].localDate, f.day.toString())
+  assert.ok(!JSON.stringify(batch).includes(cpfOf(p)))
   assert.equal(await f.db.appointment.count(), before.appointments)
   assert.equal(await f.db.slotReservation.count(), 0)
   const final = (await confirm(batch).expect(200)).body
   assert.equal(final.imported, 1)
+  assert.equal(final.rows[0].professionalExternalId, entry.professional)
+  assert.equal(final.rows[0].localDate, f.day.toString())
   const id = final.rows[0].targetId
   const appt = await f.db.appointment.findUniqueOrThrow({
     where: { id },

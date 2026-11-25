@@ -25,7 +25,7 @@
 | `/agenda/grade` | Grade por profissional, faixas, férias, bloqueios e consultas afetadas. | Alterar → revisão de conflito/impacto → publicar. | RF-011; FE-011 |
 | `/agendar` | Busca por especialidade, profissional, modalidade/período, dias e slots. | Escolher → confirmar em até quatro interações; vazio oferece próxima data/espera. | RF-006, Design System §17.1 (paciente mais espaçoso); FE-012/013 |
 | `/minhas-consultas` | Futuras/passadas, detalhes, reagendar/cancelar, aviso de prazo. | Selecionar → ação → confirmação; conflito preserva original. | RF-009/010; FE-014 |
-| `/agenda` | **Layout de origem:** sidebar, topbar título/data/busca, cards total/confirmadas/no-show, grade hora/especialidade/status. | Recepção abre ações em até dois cliques; loading, vazio, conflito, atraso; grade scroll próprio em estreito. | Design System §§17/31; FE-015/016/018 |
+| `/agenda` (opcional `?date=YYYY-MM-DD`, P-55) | **Layout de origem:** sidebar, topbar título/data/busca, cards total/confirmadas/no-show, grade hora/especialidade/status. | Recepção abre ações em até dois cliques; loading, vazio, conflito, atraso; grade scroll próprio em estreito. | Design System §§17/31; FE-015/016/018 |
 | `/agenda/espera` | Fila ordenada, ofertas/TTL, faixa disponível, justificativa de encaixe. | Paciente entra/sai; recepção oferta/encaixa em intervalo livre. | RF-012, Q-06; FE-017 |
 | `/importacoes/pacientes`, `/importacoes/agenda` | Upload CSV, preview de linhas, erros/duplicatas, confirmação e relatório. | Arquivo inválido não grava; reimportar não duplica. | Q-19; FE-019/020 |
 

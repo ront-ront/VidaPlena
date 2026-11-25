@@ -1,9 +1,12 @@
+import { ApplicationError } from '../../../application/errors/application-error'
 import type {
   AbsenceRecord,
   AbsenceStore,
   AbsenceTransaction,
 } from '../../../application/ports/absence'
+import type { AuditContext } from '../../../application/ports/audit-writer'
 import type { SecretBox } from '../../../application/ports/secret-box'
+import { mayAccess, type Principal } from '../../../domain/rules/access'
 import type { PrismaClient } from '../../../generated/prisma/client'
 import { readBookingRestriction } from './absence-policy'
 import { PrismaAuditWriter } from './audit-writer'
@@ -20,6 +23,56 @@ export class PrismaAbsenceStore implements AbsenceStore {
     private readonly policy: BookingPersistencePolicy,
     private readonly secrets: SecretBox,
   ) {}
+  async history(
+    appointmentId: string,
+    actor: Principal,
+    context: AuditContext,
+  ) {
+    return this.db.$transaction(async (tx) => {
+      const current = await bookingTransaction(tx, this.policy).principal(actor)
+      if (!current || !mayAccess(current, 'correct_absence'))
+        throw new ApplicationError('FORBIDDEN')
+      const absence = await tx.absence.findUnique({
+        where: { appointmentId },
+        select: { id: true, patientId: true },
+      })
+      if (!absence) throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
+      const rows = await tx.absenceRevision.findMany({
+        where: { absenceId: absence.id },
+        orderBy: { version: 'desc' },
+        select: {
+          version: true,
+          previousKind: true,
+          kind: true,
+          explanationEncrypted: true,
+          occurredAt: true,
+        },
+      })
+      await new PrismaAuditWriter(tx).append({
+        ...context,
+        actorUserId: current.userId,
+        actorRoles: current.roles,
+        action: 'absence.history_viewed',
+        resourceType: 'Absence',
+        resourceId: absence.id,
+        subjectPatientId: absence.patientId,
+      })
+      return {
+        items: rows.map((row) => ({
+          version: row.version,
+          previousKind: row.previousKind,
+          kind: row.kind,
+          explanation: row.explanationEncrypted
+            ? this.secrets.open(
+                row.explanationEncrypted,
+                `absence:${absence.id}`,
+              )
+            : null,
+          occurredAt: row.occurredAt.toISOString(),
+        })),
+      }
+    })
+  }
   transaction<T>(run: (tx: AbsenceTransaction) => Promise<T>): Promise<T> {
     return bookingUnitOfWork(this.db, this.policy, (tx) =>
       run({
