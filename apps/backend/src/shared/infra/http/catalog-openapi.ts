@@ -1,5 +1,6 @@
 import type { z } from 'zod'
 import { careLinkOpenApiPaths } from './care-link-openapi'
+import { clinicalAlertOpenApiPaths } from './clinical-alert-openapi'
 import { clinicalEvolutionOpenApiPaths } from './clinical-evolution-openapi'
 import { clinicalRecordOpenApiPaths } from './clinical-record-openapi'
 import {
@@ -127,6 +128,7 @@ export const catalogOpenApiPaths = {
   ...terminologyOpenApiPaths,
   ...importedHistoryOpenApiPaths,
   ...clinicalRecordOpenApiPaths,
+  ...clinicalAlertOpenApiPaths,
   ...emergencyAccessOpenApiPaths,
   '/imports/patients/preview': {
     post: {

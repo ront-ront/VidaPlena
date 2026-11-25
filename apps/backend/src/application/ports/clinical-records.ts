@@ -1,6 +1,7 @@
 import type { Principal } from '../../domain/rules/access'
 import type { CareAppointment } from '../../domain/rules/care-link'
 import type { AuditContext } from './audit-writer'
+import type { ClinicalAlertView } from './clinical-alerts'
 import type { EmergencyAccessTransaction } from './emergency-access'
 export const timelineTypes = [
   'encounter',
@@ -76,8 +77,8 @@ export interface ClinicalRecordTransaction extends EmergencyAccessTransaction {
     record: ClinicalRecord,
     query: TimelineQuery,
   ): Promise<{ items: TimelineItem[]; nextCursor: string | null }>
-  // BE-037 implements active critical alerts without changing the record contract.
-  criticalAlerts(patientId: string): Promise<object[]>
+  // Critical alerts are visible even in the restricted pre-consultation header.
+  criticalAlerts(patientId: string): Promise<ClinicalAlertView[]>
   lockAppointment(id: string): Promise<void>
   clinicalAppointment(id: string): Promise<CareAppointment | null>
   encounterByAppointment(id: string): Promise<ClinicalEncounter | null>

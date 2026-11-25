@@ -201,6 +201,14 @@ Uma revisão append-only por grant; repetição retorna 409. `rejected` encerra 
 | `POST /v1/clinical/records/{patientId}/alerts` | `{ kind,term,substanceCode?,verificationState }` | 201 alerta/evento | 403 sem vínculo em atendimento; 400 campo inválido. | RF-018 |
 | `POST /v1/clinical/alerts/{id}/deactivate` | `{ reason }` | 200 `active:false`, histórico preservado | 400 sem razão; 403 sem vínculo; nunca DELETE. | RF-018 |
 
+### Concretização BE-037 —P-63 (25/11/2026)
+
+Proposta técnica RF-018, sem ampliar prescrição BE-039: POST alerts aceita kind (`allergy/condition/continuous_medication/other`), term (1–500 caracteres não vazios), substanceCode opcional (identificador opaco até80 caracteres, não atesta mapeamento clínico) e verificationState (`reported/confirmed`). Resposta contém id, patientId, campos, active, author{id,name}, date, version e history[{id,kind:created|confirmed|deactivated,author,date,reason:null|string,version}]. Texto/identificador/justificativa cifrados. Criação e eventos são append-only; projeção calcula estado vigente. Não há PATCH/DELETE nem reativação; correção de termo é desativação justificada seguida de novo registro.
+
+POST `/v1/clinical/alerts/{id}/confirm` com `{expectedVersion}` confirma relato ativo, preservando autor/data originais e registrando confirmador/data no histórico. POST deactivate exige `{reason,expectedVersion}` (reason1–1000); versão divergente/estado incompatível409. Criação/confirmação/desativação exigem CareLink na fase during, nunca somente grant de urgência. Qualquer profissional com esse vínculo pode confirmar/desativar, com sua autoria auditada; não altera o texto original. Não exige criar uma evolução para registrar alerta.
+
+GET alerts aceita `active?:true|false,cursor?:UUID`, páginas30 por data/id; cursor pertence ao mesmo paciente/filtro. Pré-consulta retorna somente ativos e omite history de eventos; filtro active=false é negado404 nessa fase. Durante/pós/urgência permite histórico; header retorna todos ativos, sem paginação que esconda informação crítica e sem justificativas/histórico. Alertas relatados continuam reported até evento explícito de confirmação. GETs auditam CareLink/grant; sem vínculo404, administrativos403/MFA401. Catálogo real e associação de substâncias permanecem P-13; campo sem mapeamento não significa ausência de risco. BE-039 consumirá ativos pela mesma porta transacional, revalidando antes de emitir prescrição.
+
 Rascunho salva no servidor e é recuperado após sessão expirar; FE-022 dispara salvamento em até 30 s, indica `Salvando…/Salvo/Erro` e não descarta texto não sincronizado. Finalização exige autoria, data e hash imutáveis. Q-04 substitui edição direta de 24 h: **qualquer correção de finalizada é adendo**. Alerta relatado pelo paciente continua marcado `reported` até confirmação clínica.
 
 #### Concretização BE-036 (P-62,25/11/2026)

@@ -12,6 +12,7 @@ import type { SecretBox } from '../../../application/ports/secret-box'
 import type { CareLinkPolicy } from '../../../domain/rules/care-link'
 import { Prisma, type PrismaClient } from '../../../generated/prisma/client'
 import { syncAppointmentCareLink } from './care-link-store'
+import { readActiveClinicalAlerts } from './clinical-alert-reader'
 import type { PrismaEmergencyAccessStore } from './emergency-access-store'
 
 type TimelineRow = {
@@ -108,7 +109,8 @@ export class PrismaClinicalRecordStore implements ClinicalRecordStore {
           where: { recordId, professionalId, status: 'in_progress' },
           orderBy: [{ startedAt: 'desc' }, { id: 'desc' }],
         }),
-      criticalAlerts: async () => [],
+      criticalAlerts: (patientId) =>
+        readActiveClinicalAlerts(tx, patientId, this.secrets),
       timeline: (record, query) => this.timeline(tx, record, query),
       lockAppointment: async (id) => {
         await tx.$queryRaw`SELECT "id" FROM "Appointment" WHERE "id"=${id}::uuid FOR UPDATE`

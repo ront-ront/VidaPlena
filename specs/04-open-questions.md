@@ -446,3 +446,7 @@ Concretização técnica provisória em shared/api-contracts.md: uma evolução 
 ## P-62 — Finalização e mínimo clínico (BE-036)
 
 Usuário respondeu “Adotar queixa e conduta obrigatórias” em25/11/2026. Esses dois campos são o default configurável de clinical.evolution_required_fields; demais textos/CID opcionais, com validação clínica antes de produção. Contratos concretizam encerramento real/agenda/vínculo e retenção append-only por privacy.clinical_retention_years (mínimo RN-012), sem exclusão física automática. Hash versionado é integridade técnica, sem assinatura legal (BE-038/P-02). Autor ativo/MFA mantém leitura e adendo do próprio original após expiração do vínculo (Q-04/Q-21); outros precisam vínculo pleno/urgência e não podem aditar. Proteção de arquivos cobre vínculos existentes/futuros; não implementa upload genérico ou PDF de evolução inexistente no contrato.
+
+## P-63 — concretização técnica dos alertas RF-018 (25/11/2026)
+
+Eventos imutáveis de criação/confirmação/desativação, versão esperada, limites de campos e cursor conforme api-contracts.md. Confirmação/desativação por profissional com vínculo durante atendimento, preservando autoria original. Pré-consulta vê ativos sem histórico. substanceCode é opcional/opaco até integração demonstrativa BE-039; não permite declarar segurança por ausência de mapeamento. Proposta técnica dentro RF-018, sem nova decisão clínica presumida. P-13/validação clínica permanecem antes de produção.

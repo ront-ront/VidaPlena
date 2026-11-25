@@ -25,6 +25,7 @@ import type { ManageAbsences } from '../../application/use-cases/manage-absences
 import type { ManageArrivals } from '../../application/use-cases/manage-arrivals'
 import type { ManageCareLinks } from '../../application/use-cases/manage-care-links'
 import type { ManageCatalog } from '../../application/use-cases/manage-catalog'
+import type { ManageClinicalAlerts } from '../../application/use-cases/manage-clinical-alerts'
 import type { ManageClinicalEvolutions } from '../../application/use-cases/manage-clinical-evolutions'
 import type { ManageConsent } from '../../application/use-cases/manage-consent'
 import type { ManageEmergencyAccess } from '../../application/use-cases/manage-emergency-access'
@@ -59,6 +60,7 @@ import { createAuthRouter } from '../infra/http/auth-router'
 import { createAvailabilityRouter } from '../infra/http/availability-router'
 import { createCareLinkRouter } from '../infra/http/care-link-router'
 import { createCatalogRouter } from '../infra/http/catalog-router'
+import { createClinicalAlertRouter } from '../infra/http/clinical-alert-router'
 import { createClinicalEvolutionRouter } from '../infra/http/clinical-evolution-router'
 import { createClinicalRecordRouter } from '../infra/http/clinical-record-router'
 import { createConsentRouter } from '../infra/http/consent-router'
@@ -146,6 +148,13 @@ export async function composeBackendApplication(config: AppConfig) {
     }
     const routes = Router()
     registerApiDocumentation(routes)
+    routes.use(
+      createClinicalAlertRouter(
+        tokens,
+        authorize,
+        scope.resolve<ManageClinicalAlerts>(services.manageClinicalAlerts),
+      ),
+    )
     routes.use(
       createClinicalEvolutionRouter(
         tokens,

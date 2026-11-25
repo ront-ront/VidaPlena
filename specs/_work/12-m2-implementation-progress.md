@@ -100,3 +100,15 @@ Finalização/adendos/retenção e autorização de autoria própria implementad
 120/120 regressão (`/tmp/vidaplena-be036-regression.log`, sessão32657 saída0), revisão final12/12 (`/tmp/vidaplena-be036-canonical.log`, sessão95015 saída0), restore lógico1/1 (`/tmp/vidaplena-be036-final-restore.log`, sessão80215 saída0),28/28 Node,2/2 Vitest e lint277 aprovados. Suítes sobrepostas. Rerun cobre CID congelado após troca de catálogo, TRUNCATE e UUID maiúsculo no adendo. Primeiro lint após resumo usou cwd raiz e recusou configuração aninhada; reexecutado corretamente no workspace sem alterar configurações. Restore controlado usa PG17 do container descartável; não é homologação pgBackRest/P-07. Banco dev intocado; nenhum tsc. Porta atual de teste32768 (confirmar se reiniciar).
 
 Constituição48, overview47, ordem160, matriz271, BE-03638 originais e AGENTS54/README105 originais relidos da primeira à última no disco, com continuação após saída inicialmente truncada. BE-030 fecha teste de autoria real; alertas BE-037, TUSS BE-040 e autosave FE-022 seguem pendentes.18 specs sem código (7BE+11FE); objetivo integral M2 continua ativo. Próxima BE-037, sem M3.
+
+## BE-037 — início
+
+BE-036 commitada em470cb64, worktree limpa antes da próxima. BE-03738 linhas, política de acesso45 linhas e contexto RF-018/Design System18.1 lidos diretamente. P-63 concretiza eventos append-only, confirmação explícita e versão/paginação antes do código. Escopo apenas alertas/header, associação prescrição BE-039 permanece futura; objetivo M2 integral ativo.
+
+## BE-037 — verificada localmente
+
+Eventos append-only cifrados, criação/confirmação/desativação com autoria/versão/locks, header ativo permanente e lista paginada por paciente/estado. Pré-consulta omite eventos/inativos, urgência só lê e mutações exigem vínculo durante atendimento. Trigger exige evento inicial na criação e impede UPDATE/DELETE/TRUNCATE. Uma transição concorrente vence; auditoria falha reverte tudo. Associação de substância/ciência em prescrição fica BE-039.
+
+82/82 regressão BE-030–037 (`/tmp/vidaplena-be037-regression.log`, sessão42101 saída0), revisão10/10 (`/tmp/vidaplena-be037-final-integration.log`, sessão19109 saída0),28/28 Node,2/2 Vitest (sessão41107 saída0), lint285 e Prisma validate/generate/diff aprovados. Primeira rodada6/9 falhou em fixtures: nomes de contas inexistentes e tentativa de mudar reserva imutável. Corrigidas fixtures com contas reais e novas reservas/consultas, sem enfraquecer regras;9/9 depois10/10 passaram. Alerta persiste em novo atendimento e pós-consulta só lê. Todos testes em bancos descartáveis, dev intocado, nenhum tsc.
+
+BE-03738 linhas e access-policy45 lidos da primeira à última; constitution48, overview47, ordem160 e matriz271 originais relidos completamente, inclusive continuação de saída truncada.17 specs sem código (6BE+11FE); M2 integral ativa, próxima BE-038. Sem processo de teste vivo neste checkpoint.

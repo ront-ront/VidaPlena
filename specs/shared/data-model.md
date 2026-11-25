@@ -157,3 +157,7 @@ Catálogo e entradas são append-only; a seleção ativa muda atomicamente. Repe
 ### Finalização e retenção BE-036 (P-62)
 
 ClinicalEvolution ganha integrityVersion (v1) para a projeção determinística de hash. EvolutionAddendum mantém originalEvolutionId, authorProfessionalId, contentEncrypted (reason/correctionText), createdAt/contentHash e é append-only. ClinicalRetentionEvent é append-only por encounterId único: recordId, anchorAt (encerramento UTC), retentionYears (mínimo RN-012), retainUntil, createdAt. Não substitui parecer jurídico nem ativa purga. Finalização encerra encontro/agenda na mesma transação e a janela CareLink usa clinicalEndedAt real, preservando o intervalo agendado/reserva no histórico. Arquivos vinculados são congelados junto à evolução; hashes dos anexos ativos compõem a integridade. Nenhum item é publicado automaticamente.
+
+### BE-037 — alertas append-only (P-63)
+
+ClinicalAlert guarda patientId, kind, payloadEncrypted (term/substanceCode), verificationState original, authorProfessionalId e createdAt. ClinicalAlertEvent guarda alertId, kind created/confirmed/deactivated, version sequencial única por alerta, authorProfessionalId, reasonEncrypted? e createdAt. Trigger serializa transições pelo alerta, exige primeiro created, impede confirmação repetida/depois de desativação e preserva todos os originais; UPDATE/DELETE/TRUNCATE negados nas duas tabelas. Estado/versão atuais derivados dos eventos; no máximo três eventos por alerta. Leitura ativa/header usa ausência de evento de desativação. RF-018/P-63.

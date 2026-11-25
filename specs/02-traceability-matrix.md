@@ -263,13 +263,14 @@ A cobertura documental está completa. Ao implementar, atualizar por requisito s
 | --- | --- | --- | --- |
 | BE-030 | RN-007/RF-016/RNF-012 parcial | CareLink/guard, reconciliação CLI/startup, sincronização da agenda e concessões;89/89 consumidores e10/10 revisão,28/28 Node,2/2 Vitest e lint | Autoria própria sem vínculo integrada/testada em BE-036; prontuário BE-032 integrado; P-06 validação clínica pré-produção |
 | BE-031 | RF-023/RN-007/RNF-015 parcial | Grants/revisões append-only, guard, outbox transacional admin/DPO e fila;22/22 integrações incluindo regressão BE-030/006,28/28 Node e lint | Leitura real BE-032 integrada e verificada; responsabilidade periódica P-08 ainda depende da clínica |
-| BE-032 | RF-016/RF-022/RN-007/RNF-009 parcial | Header/timeline/cursor SQL, encontro explícito e histórico M1;31/31 regressão,10/10 revisão,28/28 Node e lint238 | Alertas reais BE-037; recursos clínicos nas specs seguintes; carga p95 BE-051 não medida |
+| BE-032 | RF-016/RF-022/RN-007/RNF-009 parcial | Header/timeline/cursor SQL, encontro explícito e histórico M1;31/31 regressão,10/10 revisão,28/28 Node e lint238 | Alertas reais BE-037 integrados; recursos clínicos nas specs seguintes; carga p95 BE-051 não medida |
 | BE-033 | RF-016/RF-022/RN-012/RNF-005 parcial | Entrada cega, conferência/adendos imutáveis, arquivo cifrado e download auditado;43/43 regressão,9/9 específicos, revisão1/1 expiração,28/28 Node e lint247 | Fontes reais/corte/validação clínica P-07 e retenção jurídica pré-produção; não é evolução assinada |
 | BE-034 | RF-017/RF-020/RNF-022 parcial | Loader/fixtures dev versionados, busca/validação/snapshot, bloqueio demo em produção;49/49 integrações,28/28 Node,2/2 Vitest e lint260 | CID em diagnóstico/finalização integrado BE-035/036; TUSS em procedimento BE-040; dataset oficial P-13 pendente; sem FHIR/TISS operacional |
 | BE-035 | RF-017/RNF-008 parcial | Draft cifrado, recuperação, versão/nonce/HMAC, snapshot CID e guard da consulta;42/42 regressão,12/12 específicos,28/28 Node e lint266 | Temporizador/UX FE-022; finalização/adendo BE-036 integrados; dados oficiais P-13 |
 | BE-036 | RF-017/RN-008/RN-012/RNF-005 parcial | Finalização/adendo/retenção e integridade de arquivos,12/12 específicas,120/120 regressão, restore lógico1/1,28/28 Node,2/2 Vitest e lint | P-62 validação clínica, P-02 assinatura legal e P-07 operação produtiva pendentes; não é assinatura ICP-Brasil |
+| BE-037 | RF-018/RN-007 parcial | Alertas/eventos imutáveis cifrados, confirmação/desativação e header;82/82 regressão,10/10 revisão específica,28/28 Node,2/2 Vitest e lint285 | Associação/ciência na prescrição BE-039 e UI FE-023 pendentes; vocabulário/validação clínica P-13 |
 
 P-06/P-11 resolvidas para implementação conforme respostas de24/11/2026; P-13 limitado a testes simples de desenvolvimento. Não afirmar cobertura global M2 por entrega de fundação; objetivo integral continua25 specs.
 
 
-BE-030 fecha critério de autoria com evolução real após expiração; prontuário integral continua negado. Evidências sobrepostas não são somadas.18 specs M2 ainda sem implementação.
+BE-030 fecha critério de autoria com evolução real após expiração; prontuário integral continua negado. Evidências sobrepostas não são somadas.17 specs M2 ainda sem implementação.

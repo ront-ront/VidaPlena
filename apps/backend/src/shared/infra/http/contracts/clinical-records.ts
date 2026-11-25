@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { timelineTypes } from '../../../../application/ports/clinical-records'
+import { alertSummaryResponse } from './clinical-alerts'
 export const recordParams = z.object({ patientId: z.uuid() })
 export const timelineQuery = z
   .object({
@@ -44,17 +45,7 @@ export const recordHeaderResponse = z.object({
   }),
   lastEncounterAt: z.iso.datetime().nullable(),
   firstVisit: z.boolean().nullable(),
-  alerts: z.array(
-    z.object({
-      id: z.uuid(),
-      kind: z.enum(['allergy', 'condition', 'continuous_medication', 'other']),
-      term: z.string(),
-      verificationState: z.enum(['reported', 'confirmed']),
-      active: z.boolean(),
-      author: z.object({ id: z.uuid(), name: z.string() }),
-      date: z.iso.datetime(),
-    }),
-  ),
+  alerts: z.array(alertSummaryResponse),
   currentEncounter: encounterSchema.nullable(),
   linkBasis: z.object({
     id: z.uuid(),

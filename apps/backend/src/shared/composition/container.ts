@@ -2,6 +2,7 @@ import { AuthorizeClinical } from '../../application/use-cases/authorize-clinica
 import { FindRoomOptions } from '../../application/use-cases/find-room-options'
 import { ImportAppointments } from '../../application/use-cases/import-appointments'
 import { ManageCareLinks } from '../../application/use-cases/manage-care-links'
+import { ManageClinicalAlerts } from '../../application/use-cases/manage-clinical-alerts'
 import { ManageClinicalEvolutions } from '../../application/use-cases/manage-clinical-evolutions'
 import { ManageEmergencyAccess } from '../../application/use-cases/manage-emergency-access'
 import { ManageEvolutionDrafts } from '../../application/use-cases/manage-evolution-drafts'
@@ -13,6 +14,7 @@ import { EvolutionFilePolicy } from '../../infrastructure/files/evolution-file-p
 import { CsvParseAppointmentParser } from '../../infrastructure/imports/appointment-csv-parser'
 import { PrismaAppointmentImportStore } from '../../infrastructure/persistence/prisma/appointment-import-store'
 import { PrismaCareLinkStore } from '../../infrastructure/persistence/prisma/care-link-store'
+import { PrismaClinicalAlertStore } from '../../infrastructure/persistence/prisma/clinical-alert-store'
 import { PrismaClinicalEvolutionStore } from '../../infrastructure/persistence/prisma/clinical-evolution-store'
 import { PrismaClinicalRecordStore } from '../../infrastructure/persistence/prisma/clinical-record-store'
 import { PrismaEmergencyAccessStore } from '../../infrastructure/persistence/prisma/emergency-access-store'
@@ -141,6 +143,8 @@ export const services = {
   evolutionDraftStore: Symbol('evolutionDraftStore'),
   clinicalEvolutionStore: Symbol('clinicalEvolutionStore'),
   manageClinicalEvolutions: Symbol('manageClinicalEvolutions'),
+  clinicalAlertStore: Symbol('clinicalAlertStore'),
+  manageClinicalAlerts: Symbol('manageClinicalAlerts'),
   manageEvolutionDrafts: Symbol('manageEvolutionDrafts'),
   manageTerminologies: Symbol('manageTerminologies'),
   manageImportedHistory: Symbol('manageImportedHistory'),
@@ -269,6 +273,23 @@ export function createServiceContainer(
         ),
         new AesSecretBox(config.encryptionKey, 'clinical-record'),
         config.careLinkPolicy,
+      ),
+  })
+  scoped.register<PrismaClinicalAlertStore>(services.clinicalAlertStore, {
+    useFactory: (scope) =>
+      new PrismaClinicalAlertStore(
+        scope.resolve<PrismaClient>(services.database),
+        scope.resolve<PrismaClinicalRecordStore>(services.clinicalRecordStore),
+        new AesSecretBox(config.encryptionKey, 'clinical-record'),
+      ),
+  })
+  scoped.register<ManageClinicalAlerts>(services.manageClinicalAlerts, {
+    useFactory: (scope) =>
+      new ManageClinicalAlerts(
+        scope.resolve<PrismaClinicalAlertStore>(services.clinicalAlertStore),
+        scope.resolve<AuthorizeClinical>(services.authorizeClinical),
+        scope.resolve<ManageCareLinks>(services.manageCareLinks),
+        scope.resolve<AuditWriter>(services.audit),
       ),
   })
   scoped.register<ReadClinicalRecord>(services.readClinicalRecord, {

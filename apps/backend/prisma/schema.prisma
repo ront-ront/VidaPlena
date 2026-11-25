@@ -129,6 +129,7 @@ model PatientProfile {
   absences Absence[]
   careLinks CareLink[]
   emergencyAccess EmergencyAccessGrant[]
+  clinicalAlerts ClinicalAlert[]
   clinicalRecord ClinicalRecord?
   appointments Appointment[]
   waitlistEntries WaitlistEntry[]
@@ -439,6 +440,8 @@ model ProfessionalProfile {
   clinicalEncounters ClinicalEncounter[]
   importedHistoryChecks ImportedHistoryCheck[]
   clinicalEvolutions ClinicalEvolution[]
+  clinicalAlerts ClinicalAlert[]
+  clinicalAlertEvents ClinicalAlertEvent[]
   evolutionAddenda EvolutionAddendum[]
   importedHistoryAddenda ImportedHistoryAddendum[]
   timelineEntries ClinicalTimelineEntry[]
@@ -1050,4 +1053,30 @@ model ClinicalRetentionEvent {
   record ClinicalRecord @relation(fields:[recordId],references:[id],onDelete:Restrict)
   encounter ClinicalEncounter @relation(fields:[encounterId],references:[id],onDelete:Restrict)
   @@index([recordId,retainUntil])
+}
+
+model ClinicalAlert {
+  id String @id @default(uuid()) @db.Uuid
+  patientId String @db.Uuid
+  kind String
+  payloadEncrypted String
+  verificationState String
+  authorProfessionalId String @db.Uuid
+  createdAt DateTime @db.Timestamptz(3)
+  patient PatientProfile @relation(fields:[patientId],references:[id],onDelete:Restrict)
+  author ProfessionalProfile @relation(fields:[authorProfessionalId],references:[id],onDelete:Restrict)
+  events ClinicalAlertEvent[]
+  @@index([patientId,createdAt,id])
+}
+model ClinicalAlertEvent {
+  id String @id @default(uuid()) @db.Uuid
+  alertId String @db.Uuid
+  kind String
+  version Int
+  authorProfessionalId String @db.Uuid
+  reasonEncrypted String?
+  createdAt DateTime @db.Timestamptz(3)
+  alert ClinicalAlert @relation(fields:[alertId],references:[id],onDelete:Restrict)
+  author ProfessionalProfile @relation(fields:[authorProfessionalId],references:[id],onDelete:Restrict)
+  @@unique([alertId,version])
 }
