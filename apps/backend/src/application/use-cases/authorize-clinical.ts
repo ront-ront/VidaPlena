@@ -74,7 +74,6 @@ export class AuthorizeClinical {
           action: 'authorization.denied',
           resourceType: 'PatientProfile',
           resourceId: patientId,
-          subjectPatientId: patientId,
           authorizationBasis: 'denied',
         })
       throw error

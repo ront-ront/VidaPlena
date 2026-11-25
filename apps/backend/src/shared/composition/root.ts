@@ -36,6 +36,7 @@ import type { ManageWaitlist } from '../../application/use-cases/manage-waitlist
 import type { ProcessReminders } from '../../application/use-cases/process-reminders'
 import type { ProcessWaitlist } from '../../application/use-cases/process-waitlist'
 import type { ProvisionAccounts } from '../../application/use-cases/provision-accounts'
+import type { ReadClinicalRecord } from '../../application/use-cases/read-clinical-record'
 import type { RecoverAccess } from '../../application/use-cases/recover-access'
 import type { RescheduleAppointment } from '../../application/use-cases/reschedule-appointment'
 import type { RespondAttendance } from '../../application/use-cases/respond-attendance'
@@ -54,6 +55,7 @@ import { createAuthRouter } from '../infra/http/auth-router'
 import { createAvailabilityRouter } from '../infra/http/availability-router'
 import { createCareLinkRouter } from '../infra/http/care-link-router'
 import { createCatalogRouter } from '../infra/http/catalog-router'
+import { createClinicalRecordRouter } from '../infra/http/clinical-record-router'
 import { createConsentRouter } from '../infra/http/consent-router'
 import { maintenanceBody } from '../infra/http/contracts/maintenance'
 import { createEmergencyAccessRouter } from '../infra/http/emergency-access-router'
@@ -136,6 +138,13 @@ export async function composeBackendApplication(config: AppConfig) {
     }
     const routes = Router()
     registerApiDocumentation(routes)
+    routes.use(
+      createClinicalRecordRouter(
+        tokens,
+        authorize,
+        scope.resolve<ReadClinicalRecord>(services.readClinicalRecord),
+      ),
+    )
     routes.use(
       createEmergencyAccessRouter(
         tokens,

@@ -127,6 +127,7 @@ model PatientProfile {
   absences Absence[]
   careLinks CareLink[]
   emergencyAccess EmergencyAccessGrant[]
+  clinicalRecord ClinicalRecord?
   appointments Appointment[]
   waitlistEntries WaitlistEntry[]
   createdAt DateTime       @default(now()) @db.Timestamptz(3)
@@ -399,6 +400,7 @@ enum AppointmentModality {
 }
 
 model Specialty {
+  timelineEntries ClinicalTimelineEntry[]
   id String @id @default(uuid()) @db.Uuid
   code String @unique
   name String
@@ -431,6 +433,8 @@ model ProfessionalProfile {
   specialties ProfessionalSpecialty[]
   careLinks CareLink[]
   emergencyAccess EmergencyAccessGrant[]
+  clinicalEncounters ClinicalEncounter[]
+  timelineEntries ClinicalTimelineEntry[]
   schedules ScheduleVersion[]
   reservations SlotReservation[]
   appointments Appointment[]
@@ -572,6 +576,7 @@ model Appointment {
   attendanceResponses AttendanceResponse[]
   checkIns CheckIn[]
   careLinks CareLink[]
+  clinicalEncounter ClinicalEncounter?
   absence Absence?
   importIdentity ImportIdentity?
   importRows ImportRow[]
@@ -579,6 +584,7 @@ model Appointment {
   @@index([roomId,startsAt,status])
   @@index([patientId,specialtyId,startsAt,status])
   @@index([startsAt,status,id])
+  @@index([patientId,status,endsAt,id])
 }
 
 model AppointmentHistory {
@@ -862,4 +868,44 @@ model EmergencyAccessReview {
   reviewedAt DateTime @db.Timestamptz(3)
   grant EmergencyAccessGrant @relation(fields:[grantId],references:[id],onDelete:Restrict)
   reviewer User @relation(fields:[reviewerUserId],references:[id],onDelete:Restrict)
+}
+
+model ClinicalRecord {
+  id String @id @default(uuid()) @db.Uuid
+  patientId String @unique @db.Uuid
+  recordNumber String @unique
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  patient PatientProfile @relation(fields:[patientId],references:[id],onDelete:Restrict)
+  encounters ClinicalEncounter[]
+  timelineEntries ClinicalTimelineEntry[]
+}
+model ClinicalEncounter {
+  id String @id @default(uuid()) @db.Uuid
+  appointmentId String @unique @db.Uuid
+  recordId String @db.Uuid
+  professionalId String @db.Uuid
+  startedAt DateTime @db.Timestamptz(3)
+  endedAt DateTime? @db.Timestamptz(3)
+  status String @default("in_progress")
+  appointment Appointment @relation(fields:[appointmentId],references:[id],onDelete:Restrict)
+  record ClinicalRecord @relation(fields:[recordId],references:[id],onDelete:Restrict)
+  professional ProfessionalProfile @relation(fields:[professionalId],references:[id],onDelete:Restrict)
+  @@index([recordId,status,startedAt,id])
+}
+model ClinicalTimelineEntry {
+  id String @id @default(uuid()) @db.Uuid
+  recordId String @db.Uuid
+  type String
+  resourceId String @db.Uuid
+  occurredAt DateTime @db.Timestamptz(3)
+  professionalId String? @db.Uuid
+  specialtyId String? @db.Uuid
+  modality AppointmentModality?
+  summaryEncrypted String
+  importedOriginEncrypted String?
+  record ClinicalRecord @relation(fields:[recordId],references:[id],onDelete:Restrict)
+  professional ProfessionalProfile? @relation(fields:[professionalId],references:[id],onDelete:Restrict)
+  specialty Specialty? @relation(fields:[specialtyId],references:[id],onDelete:Restrict)
+  @@unique([type,resourceId])
+  @@index([recordId,occurredAt,id])
 }

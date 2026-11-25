@@ -51,5 +51,6 @@ export function carePhase(
   if (appointment.status === 'completed' || appointment.status === 'no_show')
     return 'post'
   if (now < appointment.startsAt) return 'pre'
+  if (appointment.status === 'in_service') return 'during'
   return now < appointment.endsAt ? 'during' : 'post'
 }

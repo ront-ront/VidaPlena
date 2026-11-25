@@ -424,3 +424,7 @@ P-56: mudança da janela da consulta revoga concessões derivadas antigas, além
 ## P-57 — Concretização técnica da revisão de urgência (BE-031)
 
 Fila administrativa paginada e detalhe sem conteúdo clínico; revisão única append-only, resultado `approved|requires_follow_up|rejected`, notas obrigatórias cifradas. Rejeição encerra acesso imediatamente; aprovação nunca prorroga. Revisor é admin ou detentor atual de privacy.dpo (admin/gestor); gestor comum não recebe leitura. Outbox transacional BE-006, fallback ao admin se nenhum DPO, sem dados clínicos nas mensagens. Decisão técnica implementável dentro de RF-023; responsável periódico/texto definitivo aguardam a clínica/P-08, sem omitir a fila. Contrato único em shared/api-contracts.md.
+
+## P-58 — Concretização técnica da leitura e início de atendimento (BE-032)
+
+Projeção pré-consulta restrita e campos nulos, cursor por item no mesmo escopo e índice append-only de resumos finalizados; contrato em shared/api-contracts.md. Início explícito por profissional da consulta dentro do horário previsto, com fase durante enquanto in_service e vínculo vigente; início fora da janela programada precisa de remarcação/encaixe pela operação M1. Regra técnica conservadora para não permitir escrita em fase somente de leitura; validação do fluxo de atrasos longos com responsável clínico permanece pendente, sem impedir testes. Urgência da BE-031 concede leitura, não inicia consulta arbitrária. Alertas, autores próprios e itens clínicos concretos são integrados pelas specs M2 respectivas.

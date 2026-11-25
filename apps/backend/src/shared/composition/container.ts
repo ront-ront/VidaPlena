@@ -3,9 +3,11 @@ import { FindRoomOptions } from '../../application/use-cases/find-room-options'
 import { ImportAppointments } from '../../application/use-cases/import-appointments'
 import { ManageCareLinks } from '../../application/use-cases/manage-care-links'
 import { ManageEmergencyAccess } from '../../application/use-cases/manage-emergency-access'
+import { ReadClinicalRecord } from '../../application/use-cases/read-clinical-record'
 import { CsvParseAppointmentParser } from '../../infrastructure/imports/appointment-csv-parser'
 import { PrismaAppointmentImportStore } from '../../infrastructure/persistence/prisma/appointment-import-store'
 import { PrismaCareLinkStore } from '../../infrastructure/persistence/prisma/care-link-store'
+import { PrismaClinicalRecordStore } from '../../infrastructure/persistence/prisma/clinical-record-store'
 import { PrismaEmergencyAccessStore } from '../../infrastructure/persistence/prisma/emergency-access-store'
 import 'reflect-metadata'
 import { hkdfSync } from 'node:crypto'
@@ -122,6 +124,8 @@ import type { AppConfig } from '../config/environment'
 export const services = {
   manageCareLinks: Symbol('manageCareLinks'),
   careLinkStore: Symbol('careLinkStore'),
+  clinicalRecordStore: Symbol('clinicalRecordStore'),
+  readClinicalRecord: Symbol('readClinicalRecord'),
   emergencyAccessStore: Symbol('emergencyAccessStore'),
   manageEmergencyAccess: Symbol('manageEmergencyAccess'),
   authorizeClinical: Symbol('authorizeClinical'),
@@ -233,6 +237,26 @@ export function createServiceContainer(
         scope.resolve<PrismaEmergencyAccessStore>(
           services.emergencyAccessStore,
         ),
+        scope.resolve<ManageCareLinks>(services.manageCareLinks),
+        scope.resolve<AuditWriter>(services.audit),
+      ),
+  })
+  scoped.register<PrismaClinicalRecordStore>(services.clinicalRecordStore, {
+    useFactory: (scope) =>
+      new PrismaClinicalRecordStore(
+        scope.resolve<PrismaClient>(services.database),
+        scope.resolve<PrismaEmergencyAccessStore>(
+          services.emergencyAccessStore,
+        ),
+        new AesSecretBox(config.encryptionKey, 'clinical-record'),
+        config.careLinkPolicy,
+      ),
+  })
+  scoped.register<ReadClinicalRecord>(services.readClinicalRecord, {
+    useFactory: (scope) =>
+      new ReadClinicalRecord(
+        scope.resolve<PrismaClinicalRecordStore>(services.clinicalRecordStore),
+        scope.resolve<AuthorizeClinical>(services.authorizeClinical),
         scope.resolve<ManageCareLinks>(services.manageCareLinks),
         scope.resolve<AuditWriter>(services.audit),
       ),

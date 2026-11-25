@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M2 Prontuário
-- **Status:** fundação implementada e verificada localmente; integração de autoria em BE-035/036 e leitura clínica em BE-032 pendentes
+- **Status:** fundação implementada e verificada localmente; integração de autoria em BE-035/036 pendente; leitura clínica BE-032 integrada
 - **Depende de:** BE-005, BE-021, BE-023, BE-027
 - **Requisitos cobertos:** RN-007, RF-016, RNF-012
 

@@ -239,7 +239,7 @@ test('BE-031: cada uso tem base de urgência e expiração exata sem encerrar a 
   )
   assert.equal(
     await f.db.auditEvent.count({
-      where: { subjectPatientId: p.patientId, action: 'authorization.denied' },
+      where: { resourceId: p.patientId, action: 'authorization.denied' },
     }),
     4,
   )

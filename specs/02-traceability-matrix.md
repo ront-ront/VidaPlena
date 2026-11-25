@@ -261,8 +261,10 @@ A cobertura documental está completa. Ao implementar, atualizar por requisito s
 
 | Spec | Requisitos | Evidência | Limite |
 | --- | --- | --- | --- |
-| BE-030 | RN-007/RF-016/RNF-012 parcial | CareLink/guard, reconciliação CLI/startup, sincronização da agenda e concessões;89/89 consumidores e10/10 revisão,28/28 Node,2/2 Vitest e lint | Autoria própria em evolução concreta integra BE-035/036; prontuário BE-032 ainda pendente; P-06 validação clínica pré-produção |
+| BE-030 | RN-007/RF-016/RNF-012 parcial | CareLink/guard, reconciliação CLI/startup, sincronização da agenda e concessões;89/89 consumidores e10/10 revisão,28/28 Node,2/2 Vitest e lint | Autoria própria em evolução concreta integra BE-035/036; prontuário BE-032 integrado; P-06 validação clínica pré-produção |
 
-| BE-031 | RF-023/RN-007/RNF-015 parcial | Grants/revisões append-only, guard, outbox transacional admin/DPO e fila;22/22 integrações incluindo regressão BE-030/006,28/28 Node e lint | Leitura de prontuário real integra BE-032; responsabilidade periódica P-08 ainda depende da clínica |
+| BE-031 | RF-023/RN-007/RNF-015 parcial | Grants/revisões append-only, guard, outbox transacional admin/DPO e fila;22/22 integrações incluindo regressão BE-030/006,28/28 Node e lint | Leitura real BE-032 integrada e verificada; responsabilidade periódica P-08 ainda depende da clínica |
+
+| BE-032 | RF-016/RF-022/RN-007/RNF-009 parcial | Header/timeline/cursor SQL, encontro explícito e histórico M1;31/31 regressão,10/10 revisão,28/28 Node e lint238 | Alertas reais BE-037; recursos clínicos nas specs seguintes; carga p95 BE-051 não medida |
 
 P-06/P-11 resolvidas para implementação conforme respostas de24/11/2026; P-13 limitado a testes simples de desenvolvimento. Não afirmar cobertura global M2 por entrega de fundação; objetivo integral continua25 specs.
