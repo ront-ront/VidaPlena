@@ -15,6 +15,7 @@ export interface Principal {
   consentState?: 'active' | 'pending' | 'revoked'
 }
 export type Capability =
+  | 'document_types'
   | 'clinical_actor'
   | 'grant_substitution'
   | 'import_patients'
@@ -64,6 +65,10 @@ export function mayAccess(
     actor.permissions.includes('privacy.dpo') &&
     actor.roles.some((role) => role === 'admin' || role === 'manager')
   switch (capability) {
+    case 'document_types':
+      return actor.roles.some(
+        (role) => role === 'admin' || role === 'professional',
+      )
     case 'clinical_actor':
       return actor.roles.includes('professional')
     case 'grant_substitution':

@@ -269,8 +269,9 @@ A cobertura documental está completa. Ao implementar, atualizar por requisito s
 | BE-035 | RF-017/RNF-008 parcial | Draft cifrado, recuperação, versão/nonce/HMAC, snapshot CID e guard da consulta;42/42 regressão,12/12 específicos,28/28 Node e lint266 | Temporizador/UX FE-022; finalização/adendo BE-036 integrados; dados oficiais P-13 |
 | BE-036 | RF-017/RN-008/RN-012/RNF-005 parcial | Finalização/adendo/retenção e integridade de arquivos,12/12 específicas,120/120 regressão, restore lógico1/1,28/28 Node,2/2 Vitest e lint | P-62 validação clínica, P-02 assinatura legal e P-07 operação produtiva pendentes; não é assinatura ICP-Brasil |
 | BE-037 | RF-018/RN-007 parcial | Alertas/eventos imutáveis cifrados, confirmação/desativação e header;82/82 regressão,10/10 revisão específica,28/28 Node,2/2 Vitest e lint285 | Associação/ciência na prescrição BE-039 e UI FE-023 pendentes; vocabulário/validação clínica P-13 |
+| BE-038 | RN-009/RNF-017 parcial | Catálogo/versões, engine documental cifrado/imutável, provider dev/disabled e verificação pública limitada;13/13 específicas,53/53 regressão,31/31 Node,2/2 Vitest e lint297 | Templates/PDF/policies concretas BE-039/040/042 e publicação BE-043 pendentes; assinatura ICP-Brasil/prod P-02 não atendida pela simulação |
 
 P-06/P-11 resolvidas para implementação conforme respostas de24/11/2026; P-13 limitado a testes simples de desenvolvimento. Não afirmar cobertura global M2 por entrega de fundação; objetivo integral continua25 specs.
 
 
-BE-030 fecha critério de autoria com evolução real após expiração; prontuário integral continua negado. Evidências sobrepostas não são somadas.17 specs M2 ainda sem implementação.
+BE-030 fecha critério de autoria com evolução real após expiração; prontuário integral continua negado. Evidências sobrepostas não são somadas.16 specs M2 ainda sem implementação.

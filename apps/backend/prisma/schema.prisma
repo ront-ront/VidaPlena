@@ -68,6 +68,7 @@ model User {
   grantedCareLinks CareLink[] @relation("CareLinkGrantor")
   emergencyReviews EmergencyAccessReview[]
   importedClinicalHistories ImportedHistory[]
+  documentTypeChanges DocumentTypeVersion[]
   evolutionDraftCommands EvolutionDraftCommand[]
 
   @@index([status])
@@ -439,6 +440,8 @@ model ProfessionalProfile {
   emergencyAccess EmergencyAccessGrant[]
   clinicalEncounters ClinicalEncounter[]
   importedHistoryChecks ImportedHistoryCheck[]
+  clinicalDocuments ClinicalDocument[]
+  clinicalDocumentVoids ClinicalDocumentVoid[]
   clinicalEvolutions ClinicalEvolution[]
   clinicalAlerts ClinicalAlert[]
   clinicalAlertEvents ClinicalAlertEvent[]
@@ -888,6 +891,7 @@ model ClinicalRecord {
   patient PatientProfile @relation(fields:[patientId],references:[id],onDelete:Restrict)
   encounters ClinicalEncounter[]
   importedHistories ImportedHistory[]
+  documents ClinicalDocument[]
   retentionEvents ClinicalRetentionEvent[]
   timelineEntries ClinicalTimelineEntry[]
 }
@@ -900,6 +904,7 @@ model ClinicalEncounter {
   endedAt DateTime? @db.Timestamptz(3)
   status String @default("in_progress")
   appointment Appointment @relation(fields:[appointmentId],references:[id],onDelete:Restrict)
+  documents ClinicalDocument[]
   evolution ClinicalEvolution?
   retentionEvent ClinicalRetentionEvent?
   record ClinicalRecord @relation(fields:[recordId],references:[id],onDelete:Restrict)
@@ -1079,4 +1084,62 @@ model ClinicalAlertEvent {
   alert ClinicalAlert @relation(fields:[alertId],references:[id],onDelete:Restrict)
   author ProfessionalProfile @relation(fields:[authorProfessionalId],references:[id],onDelete:Restrict)
   @@unique([alertId,version])
+}
+
+model DocumentType {
+  id String @id @default(uuid()) @db.Uuid
+  code String @unique
+  label String
+  versions DocumentTypeVersion[]
+}
+model DocumentTypeVersion {
+  id String @id @default(uuid()) @db.Uuid
+  typeId String @db.Uuid
+  version Int
+  requiredSignatureLevel String
+  templateVersion String
+  active Boolean
+  reasonEncrypted String?
+  changedByUserId String? @db.Uuid
+  createdAt DateTime @db.Timestamptz(3)
+  type DocumentType @relation(fields:[typeId],references:[id],onDelete:Restrict)
+  changedBy User? @relation(fields:[changedByUserId],references:[id],onDelete:Restrict)
+  documents ClinicalDocument[]
+  @@unique([typeId,version])
+}
+model ClinicalDocument {
+  id String @id @default(uuid()) @db.Uuid
+  recordId String @db.Uuid
+  encounterId String @db.Uuid
+  authorProfessionalId String @db.Uuid
+  typeVersionId String @db.Uuid
+  payloadVersion Int @default(1)
+  payloadEncrypted String
+  version Int @default(1)
+  status String @default("draft")
+  createdAt DateTime @db.Timestamptz(3)
+  savedAt DateTime @db.Timestamptz(3)
+  canonicalEncrypted String?
+  signatureEncrypted String?
+  sha256 String?
+  verificationCodeHash String? @unique
+  issuedAt DateTime? @db.Timestamptz(3)
+  record ClinicalRecord @relation(fields:[recordId],references:[id],onDelete:Restrict)
+  encounter ClinicalEncounter @relation(fields:[encounterId],references:[id],onDelete:Restrict)
+  author ProfessionalProfile @relation(fields:[authorProfessionalId],references:[id],onDelete:Restrict)
+  typeVersion DocumentTypeVersion @relation(fields:[typeVersionId],references:[id],onDelete:Restrict)
+  voidEvent ClinicalDocumentVoid? @relation("VoidedDocument")
+  replaces ClinicalDocumentVoid[] @relation("ReplacementDocument")
+  @@index([recordId,status,createdAt,id])
+}
+model ClinicalDocumentVoid {
+  id String @id @default(uuid()) @db.Uuid
+  documentId String @unique @db.Uuid
+  authorProfessionalId String @db.Uuid
+  reasonEncrypted String
+  replacementDocumentId String? @db.Uuid
+  createdAt DateTime @db.Timestamptz(3)
+  document ClinicalDocument @relation("VoidedDocument",fields:[documentId],references:[id],onDelete:Restrict)
+  replacement ClinicalDocument? @relation("ReplacementDocument",fields:[replacementDocumentId],references:[id],onDelete:Restrict)
+  author ProfessionalProfile @relation(fields:[authorProfessionalId],references:[id],onDelete:Restrict)
 }

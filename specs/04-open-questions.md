@@ -450,3 +450,7 @@ Usuário respondeu “Adotar queixa e conduta obrigatórias” em25/11/2026. Ess
 ## P-63 — concretização técnica dos alertas RF-018 (25/11/2026)
 
 Eventos imutáveis de criação/confirmação/desativação, versão esperada, limites de campos e cursor conforme api-contracts.md. Confirmação/desativação por profissional com vínculo durante atendimento, preservando autoria original. Pré-consulta vê ativos sem histórico. substanceCode é opcional/opaco até integração demonstrativa BE-039; não permite declarar segurança por ausência de mapeamento. Proposta técnica dentro RF-018, sem nova decisão clínica presumida. P-13/validação clínica permanecem antes de produção.
+
+## P-64 — fundação documental técnica (25/11/2026)
+
+Catálogo versionado com seed Q-10, políticas por tipo, bytes JSON canônicos RFC8785 com biblioteca canonicalize, provider dev/disabled e anulação append-only conforme contrato compartilhado. Templates/PDF e validação clínica vêm das specs consumidoras; hash da simulação não é assinatura ICP-Brasil/PAdES. Sem policy/provedor, emissão falha fechada. Criar/editar/emitir/anular exige atendimento corrente; fora dele preserva leitura conforme vínculo. Limite de verificação pública é parâmetro provisório de baixo risco; P-02 jurídico/provedor real segue portão antes de produção.

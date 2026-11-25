@@ -2110,6 +2110,11 @@ caniuse-lite@^1.0.30001579, caniuse-lite@^1.0.30001810:
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001812.tgz#55b32ed819d120b384149a4f9fd59d179ce008f9"
   integrity sha512-qN+QNNBr93TCmFrmte0bBCjSDMuRvt78VlHT99qIGPszm4QsqCX8lnyWUFkHi8B7ZBAPq8SH+UqyXNy/odMdng==
 
+canonicalize@^5.1.0:
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/canonicalize/-/canonicalize-5.1.0.tgz#4e429a81a542933e8db7647b7e916cbdb60d272c"
+  integrity sha512-bab9+WefZljqQ8jT0qRwVmTyzAUU63K97QIQD3agynIBrb6sa5M2eAy8Hv8K3p4V9+ONVYZKtGYl4Dg+/5Gumw==
+
 chai@^6.3.0:
   version "6.3.0"
   resolved "https://registry.yarnpkg.com/chai/-/chai-6.3.0.tgz#91f89eb789c2bb1ae1787d78c8518e1d3cebfc07"
@@ -3326,6 +3331,11 @@ jsonfile@^6.0.1:
   optionalDependencies:
     graceful-fs "^4.1.6"
 
+jsqr@^1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/jsqr/-/jsqr-1.4.0.tgz#8efb8d0a7cc6863cb6d95116b9069123ce9eb2d1"
+  integrity sha512-dxLob7q65Xg2DvstYkRpkYtmKm2sPJ9oFhrhmudT1dZvNFFTlroai3AWSpLey/w5vMcLBXRgOJsbXpdN9HzU/A==
+
 kleur@^3.0.3:
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/kleur/-/kleur-3.0.3.tgz#a79c9ecc86ee1ce3fa6206d1216c501f147fc07e"
@@ -4176,6 +4186,11 @@ pure-rand@^6.1.0:
   version "6.1.0"
   resolved "https://registry.yarnpkg.com/pure-rand/-/pure-rand-6.1.0.tgz#d173cf23258231976ccbdb05247c9787957604f2"
   integrity sha512-bVWawvoZoBYpp6yIoQtQXHZjmz35RSVHnUOTefl8Vcjr8snTPY1wnpSPMWekcFwbxI6gtmT7rSYPFvz71ldiOA==
+
+qrcode.react@^4.2.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/qrcode.react/-/qrcode.react-4.2.0.tgz#1bce8363f348197d145c0da640929a24c83cbca3"
+  integrity sha512-QpgqWi8rD9DsS9EP3z7BT+5lY5SFhsqGjpgW5DY/i3mK4M9DTBNz3ErMi8BWYEfI3L0d8GIbGmcdFAS1uIRGjA==
 
 qs@^6.14.0, qs@^6.15.2:
   version "6.16.0"
@@ -5095,13 +5110,3 @@ zod@^4.6.7:
   version "4.6.7"
   resolved "https://registry.yarnpkg.com/zod/-/zod-4.6.7.tgz#e806cf64a7f4e37635ce9f2f52c04c3766f75e5b"
   integrity sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==
-
-jsqr@^1.4.0:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/jsqr/-/jsqr-1.4.0.tgz#8efb8d0a7cc6863cb6d95116b9069123ce9eb2d1"
-  integrity sha512-dxLob7q65Xg2DvstYkRpkYtmKm2sPJ9oFhrhmudT1dZvNFFTlroai3AWSpLey/w5vMcLBXRgOJsbXpdN9HzU/A==
-
-qrcode.react@^4.2.0:
-  version "4.2.0"
-  resolved "https://registry.yarnpkg.com/qrcode.react/-/qrcode.react-4.2.0.tgz#1bce8363f348197d145c0da640929a24c83cbca3"
-  integrity sha512-QpgqWi8rD9DsS9EP3z7BT+5lY5SFhsqGjpgW5DY/i3mK4M9DTBNz3ErMi8BWYEfI3L0d8GIbGmcdFAS1uIRGjA==

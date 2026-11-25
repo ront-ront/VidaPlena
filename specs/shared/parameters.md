@@ -172,3 +172,11 @@ TOTP: seis dígitos, SHA-1, período de 30 s e tolerância de um passo, parâmet
 | `import.transaction_timeout_ms` | 30000 | Q-19, BE-028 | Equipe técnica; aguardando medição |
 
 Ambiente: `IMPORT_MAX_FILE_MB`, `IMPORT_MAX_ROWS`, `IMPORT_PREVIEW_TTL_MINUTES`, `IMPORT_TRANSACTION_TIMEOUT_MS`; Zod valida. `MIGRATION_CUTOFF_DATE` é opcional e mapeia `migration.cutoff_date`, ainda pendente para dados reais. TTL vencido impede confirmar uma prévia; não autoriza excluir evidência histórica nem define retenção jurídica. Ler relatório continua permitido ao dono. CSV de pacientes não possui data original do cadastro; estado de data desconhecida não é substituído pela data de nascimento.
+
+### Verificação documental —BE-038/P-64
+
+| Chave | Default provisório | Origem / quem decide | Status |
+| --- | --- | --- | --- |
+| `document.verify_requests_per_minute` | 30 | RNF-017/BE-038, equipe técnica | aguardando decisão; não bloqueia implementação |
+
+Ambiente `DOCUMENT_VERIFY_REQUESTS_PER_MINUTE`, inteiro positivo. Rate limit por IP pseudonimizado, persistido no PostgreSQL. Código técnico público nunca dá acesso ao conteúdo clínico.

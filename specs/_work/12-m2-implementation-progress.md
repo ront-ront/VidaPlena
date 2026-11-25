@@ -112,3 +112,15 @@ Eventos append-only cifrados, criação/confirmação/desativação com autoria/
 82/82 regressão BE-030–037 (`/tmp/vidaplena-be037-regression.log`, sessão42101 saída0), revisão10/10 (`/tmp/vidaplena-be037-final-integration.log`, sessão19109 saída0),28/28 Node,2/2 Vitest (sessão41107 saída0), lint285 e Prisma validate/generate/diff aprovados. Primeira rodada6/9 falhou em fixtures: nomes de contas inexistentes e tentativa de mudar reserva imutável. Corrigidas fixtures com contas reais e novas reservas/consultas, sem enfraquecer regras;9/9 depois10/10 passaram. Alerta persiste em novo atendimento e pós-consulta só lê. Todos testes em bancos descartáveis, dev intocado, nenhum tsc.
 
 BE-03738 linhas e access-policy45 lidos da primeira à última; constitution48, overview47, ordem160 e matriz271 originais relidos completamente, inclusive continuação de saída truncada.17 specs sem código (6BE+11FE); M2 integral ativa, próxima BE-038. Sem processo de teste vivo neste checkpoint.
+
+## BE-038 — início
+
+BE-037 commitada em4569c51; worktree limpa antes da próxima. Spec38 linhas lida integralmente, da primeira à última; contratos M2/Q-10/P-02/RN-009 e DRS NF017 usados diretamente. P-64 concretiza catálogo/engine/bytes canônicos sem templates clínicos antecipados; dependência explícita BE-032 adicionada (encounters). Biblioteca canonicalize conforme documentação oficial https://github.com/erdtman/canonicalize e RFC8785; Context7 indisponível, docs oficiais consultadas. Instalação autorizada pelo usuário. Nenhuma cobertura declarada ainda; objetivo M2 inteiro ativo.
+
+## BE-038 — fundação verificada localmente
+
+Catálogo versionado/semeado e engine documental cifrado com canonicalize5.1.0, provider dev/disabled, anulação append-only e verificação pública segura. Políticas de payload concretas permanecem BE-039/040/042; runtime sem policy nega503, fake de payload só no teste. Assinatura simulada nunca é issued_valid, bloqueada em staging/production. JSON canônico é artefato técnico; PDF/templates integram consumidores.
+
+53/53 regressão BE-032/033/036/037/038 (`/tmp/vidaplena-be038-regression.log`, sessão66201 saída0), revisão13/13 (`/tmp/vidaplena-be038-final-integration.log`, sessão45013 saída0),31/31 Node (sessão95881 saída0),2/2 Vitest (sessão99535 saída0), lint297 e Prisma validate/generate/diff aprovados. Instalação canonicalize terminou em217s, sem mudar versões das outras libs; lock reordenou entradas QR existentes. Testes provam migrate deploy repetido, versão/concorrência, leitura/urgência, anulação/substituição, arquivo imutável, rollback e hash após alteração de restore simulado. Código público expõe somente metadados, rate limit persistente ignora XFF não confiável. Sem banco dev/tsc.
+
+BE-03838 linhas, service509 e adapter348 revistos integralmente da primeira à última, sequencialmente; último bloco relido após revisão de autorização da substituição. Sem processos de teste vivos.16 specs sem código (5BE+11FE). Próxima BE-039; objetivo M2 inteira permanece ativo, sem M3.

@@ -113,3 +113,11 @@ POST `/v1/clinical/evolutions/:id/finalize` exige expectedDraftVersion; GET `/v1
 ### Alertas clínicos (BE-037)
 
 GET/POST `/v1/clinical/records/:patientId/alerts` lê/registra alergia, condição, medicamento contínuo ou outro alerta crítico. POST `/v1/clinical/alerts/:id/confirm` exige expectedVersion; `/deactivate` exige também reason. Não há edição/exclusão do original. Escrita exige vínculo durante atendimento; urgência só lê. Lista aceita active/cursor, páginas30; pré-consulta vê somente ativos sem eventos. Header mostra todos os ativos. Informação relatada permanece identificada até confirmação; código de substância opcional não indica mapeamento clínico validado. Confronto na prescrição integra BE-039.
+
+### Catálogo documental e assinatura técnica (BE-038)
+
+A migration semeia os seis tipos Q-10, com nível qualificado salvo declaração de comparecimento simples. GET `/v1/document-types` é profissional/admin; PUT `/v1/admin/document-types/:id` é admin/MFA e exige expectedVersion, requiredSignatureLevel, templateVersion, active e reason. Alterações criam versão; emitidos anteriores preservam a configuração.
+
+Engine e rotas `/v1/clinical/documents/:id`/`issue`/`void` são fundação para BE-039/040/042. Nesta entrega não há rota de payload clínico arbitrário: sem policy concreta, emissão503 preserva draft. DevSignatureProvider gera evidência técnica sobre JSON canônico, sem validade jurídica mesmo em nível qualified; configuração dev é recusada em staging/production. Templates/PDF pertencem às specs consumidoras.
+
+GET público `/v1/documents/verify/:code` retorna só metadados técnicos, com auditoria e limite persistente por origem (`DOCUMENT_VERIFY_REQUESTS_PER_MINUTE`/`document.verify_requests_per_minute`). Código aleatório não autoriza leitura clínica/download. Payload, original e evento de anulação permanecem preservados; nenhum código público revela identificação do paciente.

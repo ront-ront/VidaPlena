@@ -16,3 +16,7 @@
 **Critério de escolha:** uso atual verificado em documentação oficial e adequação ao requisito. Popularidade genérica não é critério suficiente para trocar framework, autenticação ou banco. A referência BarberHubAPI orienta a organização modular e o uso de schemas, container e documentação, sem copiar políticas de autenticação incompatíveis com RBAC/DPO, consentimento e vínculo assistencial do VidaPlena.
 
 **Próximo passo técnico:** aplicar container e schemas aos endpoints M0 já implementados, gerar o OpenAPI a partir desses schemas, e concluir BE-008. Continuar BE-009 em diante apenas após os testes e atualização da matriz.
+
+## M2/BE-038 — canonicalização documental (25/11/2026)
+
+Adotada `canonicalize`5.1.0 (Apache-2.0, Node>=22) atrás da porta CanonicalDocuments, para bytes JSON determinísticos conforme [RFC8785](https://www.rfc-editor.org/rfc/rfc8785.html); [documentação oficial](https://github.com/erdtman/canonicalize) consultada, Context7 indisponível. Evita serializador próprio para payloads documentais variáveis. `node:crypto` permanece para SHA-256 e códigos aleatórios; não há implementação própria de assinatura qualificada. Unitários conferem ordem de chaves e rejeição de não finitos, e integrações verificam integridade/imutabilidade. Yarn apenas adicionou canonicalize e reordenou duas entradas já existentes no lockfile, sem trocar versões das demais dependências.

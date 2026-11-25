@@ -1,20 +1,33 @@
+import type { DocumentPolicies } from '../../application/ports/clinical-documents'
+import type {
+  CanonicalDocuments,
+  SignatureProvider,
+} from '../../application/ports/signature-provider'
 import { AuthorizeClinical } from '../../application/use-cases/authorize-clinical'
 import { FindRoomOptions } from '../../application/use-cases/find-room-options'
 import { ImportAppointments } from '../../application/use-cases/import-appointments'
 import { ManageCareLinks } from '../../application/use-cases/manage-care-links'
 import { ManageClinicalAlerts } from '../../application/use-cases/manage-clinical-alerts'
+import { ManageClinicalDocuments } from '../../application/use-cases/manage-clinical-documents'
 import { ManageClinicalEvolutions } from '../../application/use-cases/manage-clinical-evolutions'
+import { ManageDocumentTypes } from '../../application/use-cases/manage-document-types'
 import { ManageEmergencyAccess } from '../../application/use-cases/manage-emergency-access'
 import { ManageEvolutionDrafts } from '../../application/use-cases/manage-evolution-drafts'
 import { ManageImportedHistory } from '../../application/use-cases/manage-imported-history'
 import { ManageTerminologies } from '../../application/use-cases/manage-terminologies'
 import { ReadClinicalRecord } from '../../application/use-cases/read-clinical-record'
+import { JcsCanonicalDocuments } from '../../infrastructure/documents/canonical-documents'
+import {
+  DevSignatureProvider,
+  DisabledSignatureProvider,
+} from '../../infrastructure/documents/dev-signature-provider'
 import { ClinicalFilePolicy } from '../../infrastructure/files/clinical-file-policy'
 import { EvolutionFilePolicy } from '../../infrastructure/files/evolution-file-policy'
 import { CsvParseAppointmentParser } from '../../infrastructure/imports/appointment-csv-parser'
 import { PrismaAppointmentImportStore } from '../../infrastructure/persistence/prisma/appointment-import-store'
 import { PrismaCareLinkStore } from '../../infrastructure/persistence/prisma/care-link-store'
 import { PrismaClinicalAlertStore } from '../../infrastructure/persistence/prisma/clinical-alert-store'
+import { PrismaClinicalDocumentStore } from '../../infrastructure/persistence/prisma/clinical-document-store'
 import { PrismaClinicalEvolutionStore } from '../../infrastructure/persistence/prisma/clinical-evolution-store'
 import { PrismaClinicalRecordStore } from '../../infrastructure/persistence/prisma/clinical-record-store'
 import { PrismaEmergencyAccessStore } from '../../infrastructure/persistence/prisma/emergency-access-store'
@@ -145,6 +158,12 @@ export const services = {
   manageClinicalEvolutions: Symbol('manageClinicalEvolutions'),
   clinicalAlertStore: Symbol('clinicalAlertStore'),
   manageClinicalAlerts: Symbol('manageClinicalAlerts'),
+  signatureProvider: Symbol('signatureProvider'),
+  canonicalDocuments: Symbol('canonicalDocuments'),
+  documentPolicies: Symbol('documentPolicies'),
+  clinicalDocumentStore: Symbol('clinicalDocumentStore'),
+  manageDocumentTypes: Symbol('manageDocumentTypes'),
+  manageClinicalDocuments: Symbol('manageClinicalDocuments'),
   manageEvolutionDrafts: Symbol('manageEvolutionDrafts'),
   manageTerminologies: Symbol('manageTerminologies'),
   manageImportedHistory: Symbol('manageImportedHistory'),
@@ -290,6 +309,51 @@ export function createServiceContainer(
         scope.resolve<AuthorizeClinical>(services.authorizeClinical),
         scope.resolve<ManageCareLinks>(services.manageCareLinks),
         scope.resolve<AuditWriter>(services.audit),
+      ),
+  })
+  scoped.register<SignatureProvider>(services.signatureProvider, {
+    useFactory: () =>
+      config.signatureProvider === 'dev'
+        ? new DevSignatureProvider(config.environment)
+        : new DisabledSignatureProvider(),
+  })
+  scoped.register<CanonicalDocuments>(services.canonicalDocuments, {
+    useFactory: () => new JcsCanonicalDocuments(),
+  })
+  scoped.register<DocumentPolicies>(services.documentPolicies, {
+    useFactory: () => ({ get: () => null }),
+  })
+  scoped.register<PrismaClinicalDocumentStore>(services.clinicalDocumentStore, {
+    useFactory: (scope) =>
+      new PrismaClinicalDocumentStore(
+        scope.resolve<PrismaClient>(services.database),
+        scope.resolve<PrismaClinicalRecordStore>(services.clinicalRecordStore),
+        new AesSecretBox(config.encryptionKey, 'clinical-document'),
+      ),
+  })
+  scoped.register<ManageDocumentTypes>(services.manageDocumentTypes, {
+    useFactory: (scope) =>
+      new ManageDocumentTypes(
+        scope.resolve<PrismaClinicalDocumentStore>(
+          services.clinicalDocumentStore,
+        ),
+        scope.resolve<SignatureProvider>(services.signatureProvider),
+        scope.resolve<AuditWriter>(services.audit),
+      ),
+  })
+  scoped.register<ManageClinicalDocuments>(services.manageClinicalDocuments, {
+    useFactory: (scope) =>
+      new ManageClinicalDocuments(
+        scope.resolve<PrismaClinicalDocumentStore>(
+          services.clinicalDocumentStore,
+        ),
+        scope.resolve<ManageCareLinks>(services.manageCareLinks),
+        scope.resolve<AuthorizeClinical>(services.authorizeClinical),
+        scope.resolve<AuditWriter>(services.audit),
+        scope.resolve<SignatureProvider>(services.signatureProvider),
+        scope.resolve<CanonicalDocuments>(services.canonicalDocuments),
+        scope.resolve<OpaqueTokens>(services.opaqueTokens),
+        scope.resolve<DocumentPolicies>(services.documentPolicies),
       ),
   })
   scoped.register<ReadClinicalRecord>(services.readClinicalRecord, {

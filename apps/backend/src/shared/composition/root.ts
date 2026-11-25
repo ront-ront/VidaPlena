@@ -26,8 +26,10 @@ import type { ManageArrivals } from '../../application/use-cases/manage-arrivals
 import type { ManageCareLinks } from '../../application/use-cases/manage-care-links'
 import type { ManageCatalog } from '../../application/use-cases/manage-catalog'
 import type { ManageClinicalAlerts } from '../../application/use-cases/manage-clinical-alerts'
+import type { ManageClinicalDocuments } from '../../application/use-cases/manage-clinical-documents'
 import type { ManageClinicalEvolutions } from '../../application/use-cases/manage-clinical-evolutions'
 import type { ManageConsent } from '../../application/use-cases/manage-consent'
+import type { ManageDocumentTypes } from '../../application/use-cases/manage-document-types'
 import type { ManageEmergencyAccess } from '../../application/use-cases/manage-emergency-access'
 import type { ManageEvolutionDrafts } from '../../application/use-cases/manage-evolution-drafts'
 import type { ManageFiles } from '../../application/use-cases/manage-files'
@@ -61,6 +63,7 @@ import { createAvailabilityRouter } from '../infra/http/availability-router'
 import { createCareLinkRouter } from '../infra/http/care-link-router'
 import { createCatalogRouter } from '../infra/http/catalog-router'
 import { createClinicalAlertRouter } from '../infra/http/clinical-alert-router'
+import { createClinicalDocumentRouter } from '../infra/http/clinical-document-router'
 import { createClinicalEvolutionRouter } from '../infra/http/clinical-evolution-router'
 import { createClinicalRecordRouter } from '../infra/http/clinical-record-router'
 import { createConsentRouter } from '../infra/http/consent-router'
@@ -148,6 +151,19 @@ export async function composeBackendApplication(config: AppConfig) {
     }
     const routes = Router()
     registerApiDocumentation(routes)
+    routes.use(
+      createClinicalDocumentRouter(
+        tokens,
+        authorize,
+        scope.resolve<ManageDocumentTypes>(services.manageDocumentTypes),
+        scope.resolve<ManageClinicalDocuments>(
+          services.manageClinicalDocuments,
+        ),
+        authStore,
+        scope.resolve<AuditWriter>(services.audit),
+        config.documentVerifyRequestsPerMinute,
+      ),
+    )
     routes.use(
       createClinicalAlertRouter(
         tokens,
