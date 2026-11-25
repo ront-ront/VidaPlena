@@ -128,6 +128,7 @@ export const environmentSchema = z
         return key.length === 32 && key.toString('base64') === value
       }, 'Informe chave base64 canônica de 32 bytes.')
       .transform((value) => Buffer.from(value, 'base64')),
+    EXAM_PENDING_RESULT_ALERT_DAYS: integer(7, 1, 36500),
     DOCUMENT_VERIFY_REQUESTS_PER_MINUTE: integer(30, 1, 1000),
     SIGNATURE_PROVIDER: provider.default('dev'),
     MALWARE_SCANNER: provider.default('dev'),
@@ -263,6 +264,7 @@ export const environmentSchema = z
       encryptionKey: env.FILE_ENCRYPTION_KEY,
       cookieSecure: deployed,
       cookieSameSite: 'lax' as const,
+      examPendingResultAlertDays: env.EXAM_PENDING_RESULT_ALERT_DAYS,
       documentVerifyRequestsPerMinute: env.DOCUMENT_VERIFY_REQUESTS_PER_MINUTE,
       signatureProvider: env.SIGNATURE_PROVIDER,
       malwareScanner: env.MALWARE_SCANNER,

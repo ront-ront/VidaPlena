@@ -12,6 +12,7 @@ import {
 import type { PrismaClient } from '../../../generated/prisma/client'
 import { readPrincipal } from './access-store'
 import { PrismaAuditWriter } from './audit-writer'
+import { dataConsentState } from './consent-state'
 import {
   enqueueNotification,
   lockNotificationRecipient,
@@ -52,6 +53,21 @@ export class PrismaProvisioningStore implements ProvisioningStore {
             return existing ? account({ id: existing.userId }) : null
           },
           account: (id) => account({ id }),
+          patientAccount: async (patientId) => {
+            const patient = await tx.patientProfile.findUnique({
+              where: { id: patientId },
+              select: { userId: true },
+            })
+            if (!patient) return null
+            if (patient.userId)
+              await lockNotificationRecipient(tx, patient.userId)
+            return {
+              account: patient.userId
+                ? await account({ id: patient.userId })
+                : null,
+              consentState: await dataConsentState(tx, patientId),
+            }
+          },
           byEmail: (email) => account({ email: email.trim().toLowerCase() }),
           create: async (input) => {
             const user = await tx.user.create({

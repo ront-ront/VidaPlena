@@ -1,4 +1,17 @@
+import { z } from 'zod'
 import { apiClient } from './api-client'
+
+export type OnsitePatientMatch = {
+  patientId: string
+  fullName: string
+  birthDate: string
+  invitation?: { canResend: boolean; unavailableReason: string | null }
+}
+const invitationReceipt = z.object({
+  patientId: z.uuid(),
+  status: z.literal('invited'),
+  invitationExpiresAt: z.iso.datetime(),
+})
 
 export type OnsitePatient = {
   fullName: string
@@ -39,11 +52,17 @@ export const onsiteRegistration = {
       `/v1/onsite-guardians?identifier=${encodeURIComponent(identifier)}`,
     ),
   lookupPatient: (cpf: string) =>
-    apiClient.request<{
-      patientId: string
-      fullName: string
-      birthDate: string
-    }>(`/v1/onsite-patients?cpf=${encodeURIComponent(cpf)}`),
+    apiClient.request<OnsitePatientMatch>(
+      `/v1/onsite-patients?cpf=${encodeURIComponent(cpf)}`,
+    ),
+  resendInvitation: async (patientId: string) => {
+    const value = await apiClient.request<unknown>(
+      `/v1/patients/${encodeURIComponent(patientId)}/invitation`,
+      { method: 'POST' },
+      { expectedStatus: 201 },
+    )
+    return invitationReceipt.parse(value)
+  },
   register: (
     patient: OnsitePatient,
     consent: OnsiteConsent,

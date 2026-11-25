@@ -27,7 +27,7 @@ export type TerminologySnapshot = {
 export type TerminologyQuery = { q?: string; cursor?: string }
 export interface TerminologyTransaction
   extends Pick<CareLinkTransaction, 'principal' | 'professional' | 'audit'> {
-  lockTerminology(kind: TerminologyKind): Promise<void>
+  lockTerminology(kind: TerminologyKind, shared?: boolean): Promise<void>
   catalogVersion(
     kind: TerminologyKind,
     version: string,

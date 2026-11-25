@@ -5,9 +5,10 @@ import { PDFDocument, type PDFPage, rgb } from 'pdf-lib'
 import { ApplicationError } from '../../application/errors/application-error'
 import type { ClinicalDocument } from '../../application/ports/clinical-documents'
 import type { DocumentSigner } from '../../application/ports/signature-provider'
+import { parseExamOrder } from '../../application/validation/exam-order'
 import { parsePrescription } from '../../application/validation/prescription'
 
-export class PrescriptionPdfRenderer {
+export class ClinicalDocumentPdfRenderer {
   private fontBytes: Promise<Buffer> | undefined
   constructor(private readonly frontendOrigin: string) {}
   async render(
@@ -23,8 +24,20 @@ export class PrescriptionPdfRenderer {
   ) {
     if (!input.developmentOnly)
       throw new ApplicationError('SERVICE_UNAVAILABLE')
-    const payload = parsePrescription(document.payload),
-      pdf = await PDFDocument.create()
+    const prescription =
+      document.type.code === 'prescription'
+        ? parsePrescription(document.payload)
+        : null
+    const examOrder =
+      document.type.code === 'exam_order'
+        ? parseExamOrder(document.payload)
+        : null
+    if (!prescription && !examOrder)
+      throw new ApplicationError('SERVICE_UNAVAILABLE')
+    const title = prescription
+      ? 'Prescrição demonstrativa'
+      : 'Pedido de exames demonstrativo'
+    const pdf = await PDFDocument.create()
     pdf.registerFontkit(fontkit)
     this.fontBytes ??= readFile(
       resolve(__dirname, 'assets/NotoSans-Regular.ttf'),
@@ -38,7 +51,7 @@ export class PrescriptionPdfRenderer {
       input.signer.council.type,
       input.signer.council.region,
       input.signer.council.number,
-      ...payload.items.flatMap((i) => [
+      ...(prescription?.items ?? []).flatMap((i) => [
         i.name ?? '',
         i.activeSubstance ?? '',
         i.dose,
@@ -46,6 +59,12 @@ export class PrescriptionPdfRenderer {
         i.frequency,
         i.quantity,
         i.instructions,
+      ]),
+      ...(examOrder?.exams ?? []).flatMap((e) => [
+        e.description ?? '',
+        e.indication,
+        e.tussCode ?? '',
+        e.procedureSnapshot?.version ?? '',
       ]),
     ]
     if (
@@ -59,12 +78,12 @@ export class PrescriptionPdfRenderer {
     )
       throw new ApplicationError('VALIDATION_ERROR', [
         {
-          field: 'items',
+          field: prescription ? 'items' : 'exams',
           reason:
             'Há caracteres sem suporte no PDF. Revise o texto; o rascunho permanece preservado.',
         },
       ])
-    pdf.setTitle('Prescrição demonstrativa — sem validade jurídica')
+    pdf.setTitle(`${title} — sem validade jurídica`)
     pdf.setCreator('VidaPlena')
     pdf.setCreationDate(input.issuedAt)
     pdf.setModificationDate(input.issuedAt)
@@ -127,7 +146,7 @@ export class PrescriptionPdfRenderer {
     const newPage = () => {
       page = pdf.addPage([width, height])
       y = height - margin
-      draw('VidaPlena | Prescrição demonstrativa', 14)
+      draw(`VidaPlena | ${title}`, 14)
       draw('sem validade jurídica', 11, rgb(0.65, 0.12, 0.12))
       y -= 6
       for (const line of wrap(`Paciente: ${patient.name}`, 11)) draw(line)
@@ -150,8 +169,7 @@ export class PrescriptionPdfRenderer {
       }
     }
     newPage()
-    for (let index = 0; index < payload.items.length; index++) {
-      const item = payload.items[index]
+    for (const [index, item] of (prescription?.items ?? []).entries()) {
       paragraph(`${index + 1}. ${item.name ?? 'Medicamento manual'}`)
       if (item.activeSubstance)
         paragraph(`Princípio ativo: ${item.activeSubstance}`, 10)
@@ -163,6 +181,25 @@ export class PrescriptionPdfRenderer {
       paragraph(`Quantidade: ${item.quantity}`)
       if (item.instructions) paragraph(`Orientações: ${item.instructions}`)
       y -= 12
+    }
+    if (examOrder) {
+      paragraph(
+        examOrder.privateVisit
+          ? 'Pedido particular'
+          : 'Pedido com classificação não particular',
+        10,
+      )
+      for (let index = 0; index < examOrder.exams.length; index++) {
+        const exam = examOrder.exams[index]
+        paragraph(`${index + 1}. ${exam.description ?? 'Exame solicitado'}`)
+        if (exam.procedureSnapshot)
+          paragraph(
+            `TUSS: ${exam.procedureSnapshot.code} | Versão: ${exam.procedureSnapshot.version}`,
+            10,
+          )
+        paragraph(`Indicação clínica: ${exam.indication}`)
+        y -= 12
+      }
     }
     const council = input.signer.council
     paragraph(`Profissional: ${input.signer.name}`)

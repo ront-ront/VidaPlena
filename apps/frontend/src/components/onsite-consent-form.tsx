@@ -27,7 +27,10 @@ import {
 } from '@/lib/onsite-validation'
 import { ApiError } from '@/services/api-client'
 import { publicEnv } from '@/services/env'
-import { onsiteRegistration } from '@/services/onsite-registration'
+import {
+  type OnsitePatientMatch,
+  onsiteRegistration,
+} from '@/services/onsite-registration'
 import {
   type ConsentDocument,
   currentConsentDocument,
@@ -69,12 +72,16 @@ export function OnsiteConsentForm({ mode, patientId }: Props) {
   const fileInput = useRef<HTMLInputElement>(null)
   const fileValidation = useRef(0)
   const [existingCpf, setExistingCpf] = useState('')
-  const [existingMatch, setExistingMatch] = useState<{
-    patientId: string
-    fullName: string
-    birthDate: string
-  } | null>(null)
+  const [existingMatch, setExistingMatch] = useState<OnsitePatientMatch | null>(
+    null,
+  )
   const [existingError, setExistingError] = useState('')
+  const lookupAttempt = useRef(0)
+  const invitationInFlight = useRef(false)
+  const [lookupBusy, setLookupBusy] = useState(false)
+  const [invitationBusy, setInvitationBusy] = useState(false)
+  const [invitationError, setInvitationError] = useState('')
+  const [invitationExpiresAt, setInvitationExpiresAt] = useState('')
   const [representing, setRepresenting] = useState(false)
   const [guardianIdentifier, setGuardianIdentifier] = useState('')
   const [guardian, setGuardian] = useState<{
@@ -162,10 +169,15 @@ export function OnsiteConsentForm({ mode, patientId }: Props) {
   }
 
   async function lookupExisting() {
+    const attempt = ++lookupAttempt.current
+    setLookupBusy(true)
     setExistingError('')
     setExistingMatch(null)
+    setInvitationError('')
+    setInvitationExpiresAt('')
     try {
       const found = await onsiteRegistration.lookupPatient(existingCpf.trim())
+      if (attempt !== lookupAttempt.current) return
       if (mode === 'existing' && found.patientId !== patientId) {
         setExistingError(
           'O CPF informado pertence a outro cadastro. Confira a identificação do paciente.',
@@ -174,11 +186,50 @@ export function OnsiteConsentForm({ mode, patientId }: Props) {
       }
       setExistingMatch(found)
     } catch (cause) {
+      if (attempt !== lookupAttempt.current) return
       setExistingError(
         cause instanceof ApiError
           ? cause.message
           : 'Não foi possível localizar o cadastro.',
       )
+    } finally {
+      if (attempt === lookupAttempt.current) setLookupBusy(false)
+    }
+  }
+
+  async function resendPatientInvitation() {
+    if (!existingMatch?.invitation?.canResend || invitationInFlight.current)
+      return
+    invitationInFlight.current = true
+    setInvitationBusy(true)
+    setInvitationError('')
+    setInvitationExpiresAt('')
+    try {
+      const receipt = await onsiteRegistration.resendInvitation(
+        existingMatch.patientId,
+      )
+      if (receipt.patientId !== existingMatch.patientId)
+        throw new Error('Invalid receipt')
+      setInvitationExpiresAt(receipt.invitationExpiresAt)
+    } catch (cause) {
+      const reason =
+        cause instanceof ApiError
+          ? (cause.details.find((detail) => detail.field === 'invitation')
+              ?.reason ?? cause.message)
+          : 'Não foi possível reenviar o convite. Tente novamente.'
+      setInvitationError(reason)
+      if (cause instanceof ApiError && cause.status === 409)
+        setExistingMatch((current) =>
+          current
+            ? {
+                ...current,
+                invitation: { canResend: false, unavailableReason: reason },
+              }
+            : null,
+        )
+    } finally {
+      invitationInFlight.current = false
+      setInvitationBusy(false)
     }
   }
 
@@ -373,7 +424,7 @@ export function OnsiteConsentForm({ mode, patientId }: Props) {
           <CardTitle>Localizar cadastro existente</CardTitle>
           <CardDescription>
             {mode === 'new'
-              ? 'Se a pessoa já está cadastrada, registre apenas um novo termo. Não crie duplicidade.'
+              ? 'Se a pessoa já está cadastrada, localize para reenviar o convite ou registrar um novo termo. Não crie duplicidade.'
               : 'Confirme o CPF do paciente correspondente a esta página antes de gravar.'}
           </CardDescription>
         </CardHeader>
@@ -384,10 +435,15 @@ export function OnsiteConsentForm({ mode, patientId }: Props) {
               label="CPF do paciente"
               inputMode="numeric"
               value={existingCpf}
+              disabled={invitationBusy}
               onChange={(event) => {
+                lookupAttempt.current++
+                setLookupBusy(false)
                 setExistingCpf(event.target.value)
                 setExistingMatch(null)
                 setExistingError('')
+                setInvitationError('')
+                setInvitationExpiresAt('')
               }}
               error={existingError}
             />
@@ -396,9 +452,11 @@ export function OnsiteConsentForm({ mode, patientId }: Props) {
             type="button"
             variant="outline"
             onClick={() => void lookupExisting()}
-            disabled={!existingCpf.trim() || busy}
+            disabled={
+              !existingCpf.trim() || busy || lookupBusy || invitationBusy
+            }
           >
-            Localizar
+            {lookupBusy ? 'Localizando…' : 'Localizar'}
           </Button>
           {existingMatch && (
             <div role="status" className="w-full text-sm">
@@ -418,6 +476,42 @@ export function OnsiteConsentForm({ mode, patientId }: Props) {
                 >
                   Registrar termo neste cadastro
                 </Button>
+              )}
+              {existingMatch.invitation && (
+                <div className="mt-3 space-y-3">
+                  {existingMatch.invitation.canResend ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={invitationBusy || busy}
+                      onClick={() => void resendPatientInvitation()}
+                    >
+                      {invitationBusy
+                        ? 'Reenviando convite…'
+                        : 'Reenviar convite'}
+                    </Button>
+                  ) : (
+                    <p className="text-muted-foreground">
+                      {existingMatch.invitation.unavailableReason}
+                    </p>
+                  )}
+                  {process.env.NODE_ENV === 'development' &&
+                    existingMatch.invitation.canResend && (
+                      <p className="text-xs text-muted-foreground">
+                        Em desenvolvimento, o novo link fica na caixa local de
+                        e-mail.
+                      </p>
+                    )}
+                  {invitationError && (
+                    <FieldError>{invitationError}</FieldError>
+                  )}
+                  {invitationExpiresAt && (
+                    <SuccessNotice
+                      title="Novo convite solicitado"
+                      description={`O convite anterior foi invalidado. O novo link para definir a senha é válido até ${date(invitationExpiresAt)}.`}
+                    />
+                  )}
+                </div>
               )}
             </div>
           )}

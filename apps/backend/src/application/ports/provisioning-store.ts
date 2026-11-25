@@ -14,6 +14,10 @@ export interface ProvisioningTransaction {
   principal(proof: SessionProof): Promise<Principal | null>
   firstAdmin(): Promise<ProvisionedAccount | null>
   account(id: string): Promise<ProvisionedAccount | null>
+  patientAccount(patientId: string): Promise<{
+    account: ProvisionedAccount | null
+    consentState: 'active' | 'pending' | 'revoked'
+  } | null>
   byEmail(email: string): Promise<ProvisionedAccount | null>
   create(input: {
     email: string

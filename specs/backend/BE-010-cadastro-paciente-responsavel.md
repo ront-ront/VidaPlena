@@ -26,6 +26,7 @@ Ler `specs/shared/data-model.md` (`PatientProfile`/`GuardianLink`), `specs/share
 - [x] Dado responsável com dois dependentes, quando listar, então vê ambos; outro usuário não os vê.
 - [x] Dado menor sem responsável, quando tentar cadastro digital, então validação impede conclusão.
 - [ ] Dado cadastro pela recepção, quando ativar portal, então senha não é enviada em claro e consentimento vigente é exigido.
+- [x] Dado convite de paciente expirado, quando admin/recepção com MFA solicitar reenvio, então novo convite é enfileirado, todos os anteriores são invalidados e o cadastro permanece idêntico; conta já ativada/sem conta própria/consentimento indisponível recebe409.
 
 ## 6. Testes esperados
 Validação/normalização CPF e contatos, concorrência de CPF, vínculos múltiplos, IDOR por dependente e transação preparada para BE-011. Lint.
@@ -41,3 +42,7 @@ Documentos de prova de responsabilidade e exceções de sigilo do menor dependem
 ## Evidência de integração presencial
 
 Em P-21, foi removida a exigência indevida de telefone próprio no modo presencial; ela permanece no autocadastro adulto. Um menor sem contato próprio, com responsável legal vinculado, termo assinado e consentimento registrado passou no navegador com API/banco reais. O teste PostgreSQL de consentimento agora cobre menor sem telefone, e a suíte de integração M0 passou 24/24. A interpretação jurídica de contato do menor continua P-01.
+
+### Correção P-67 —25/11/2026
+
+Reenvio aprovado pelo usuário em POST `/v1/patients/{id}/invitation`, com resolução do destinatário no servidor, consentimento vigente, MFA e RBAC administrativo presencial. Reaproveita lock de identidade, invalidação de tokens/outbox, prazo auth.invite_link_hours e auditoria; sem migration ou criação de paciente/conta.6/6 específicos HTTP/PostgreSQL incluindo e-mail dev, ativação e login, mais regressão do convite interno1/1; regressão consentimento/cadastro/auth7/7, Node31/31 e lint aprovados. Evidências em `_work/13-patient-invitation-resend.md`; sem envio SMTP real.

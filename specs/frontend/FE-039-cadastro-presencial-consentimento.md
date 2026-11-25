@@ -29,6 +29,8 @@ Ler `specs/00-constitution.md`, `specs/frontend/screens-map.md` (`/recepcao/paci
 - [ ] Dado paciente existente e termo novo, quando a recepção anexar aceite presencial, então só um novo ConsentEvent é criado e o cadastro anterior permanece.
 - [ ] Dado CPF duplicado ou falha no upload, quando API responder erro, então não há sucesso parcial e a recepção pode corrigir sem redigitar campos válidos.
 - [ ] Dado usuário sem papel de recepção/admin, quando abrir rota ou forçar requisição, então API nega e a tela não revela dados do formulário alheio.
+- [x] Dado paciente localizado por CPF com convite elegível, quando reenviar, então botão bloqueia envio duplicado e apresenta prazo/sucesso sem cadastrar de novo ou exigir outro termo assinado.
+- [x] Dada conta não elegível ou conflito no reenvio, quando consultar/tentar, então motivo acionável é apresentado; erro técnico permite nova tentativa sem apagar formulário.
 
 ## 6. Testes esperados
 Fluxos adulto/menor, anexo ausente/inválido/excessivo, CPF duplicado, sucesso transacional, teclado/leitor de tela e autorização com API contratual. Lint do frontend.
@@ -50,3 +52,7 @@ Versão/publicador do termo e regras legais de representação estão em P-01/P-
 Ausência404 e erro técnico deixam de manter loading na seção do termo. Retry conserva dados; admin pode publicar em outra aba; conclusão fica bloqueada sem termo carregado. Nova versão limpa aceite e arquivo (estado e input), invalida validação assíncrona antiga e exige nova evidência. Mesma versão preserva evidência em erro cadastral. Fluxo de paciente existente continua criando somente novo aceite.
 
 5/5 Firefox específicos aprovados inicialmente; **execução final26/26** inclui6 casos FE-039 (mais contrato inválido),5 FE-007,11 FE-042 e4 MFA. Integrações de consentimento backend5/5, clienteHTTP6/6 e lint221/91 aprovados. Screenshots mobile de ausência e revisão inspecionados. Logs `/tmp/vidaplena-consent-{onsite-browser,final-browser,publication-backend,final-lint,final-api}.log`. Sem termo fictício no produto, bypass, migração, tsc ou commit. Revisão manual com leitor de tela e P-01 permanecem.
+
+### Correção P-67 —25/11/2026
+
+Busca por CPF mostra elegibilidade e botão Reenviar convite para admin/recepção. Ref de operação impede clique duplicado; troca de CPF descarta resposta antiga/limpa feedback; loading, erro, conflito e sucesso mantêm formulário. Em dev indica caixa local de e-mail.5/5 casos Firefox deste botão aprovados na revisão7/7 (inclui2 ativações FE-006), com teclado/360px e contrato real no backend; regressão anterior22/22 dos fluxos de termo passou no lote27/29, cujas duas falhas FE-006 foram corrigidas e revalidadas separadamente. Detalhes e limites em `_work/13-patient-invitation-resend.md`.

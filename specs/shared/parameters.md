@@ -180,3 +180,5 @@ Ambiente: `IMPORT_MAX_FILE_MB`, `IMPORT_MAX_ROWS`, `IMPORT_PREVIEW_TTL_MINUTES`,
 | `document.verify_requests_per_minute` | 30 | RNF-017/BE-038, equipe técnica | aguardando decisão; não bloqueia implementação |
 
 Ambiente `DOCUMENT_VERIFY_REQUESTS_PER_MINUTE`, inteiro positivo. Rate limit por IP pseudonimizado, persistido no PostgreSQL. Código técnico público nunca dá acesso ao conteúdo clínico.
+
+BE-040: `EXAM_PENDING_RESULT_ALERT_DAYS` mapeia `exam.pending_result_alert_days` (default já aprovado provisoriamente Q-16); inteiro positivo, dias decorridos UTC. A fila de pendência não faz envio clínico à recepção.

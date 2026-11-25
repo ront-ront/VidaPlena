@@ -9,6 +9,7 @@ import type {
   SignatureEvidence,
   SignatureLevel,
 } from './signature-provider'
+import type { TerminologyTransaction } from './terminologies'
 export const documentTypeCodes = [
   'prescription',
   'certificate',
@@ -38,6 +39,7 @@ export type ClinicalDocument = {
   encounterId: string
   authorProfessionalId: string
   type: DocumentTypeVersion
+  examOrder: { id: string; resultReceivedAt: string | null } | null
   copiedFromDocumentId: string | null
   files: ClinicalDocumentFile[]
   allergyAcknowledgements: {
@@ -83,7 +85,9 @@ export type DocumentEncounter = {
 }
 export interface ClinicalDocumentTransaction
   extends ClinicalRecordTransaction,
-    MedicationTransaction {
+    MedicationTransaction,
+    TerminologyTransaction {
+  registerExamOrder(documentId: string, now: Date): Promise<void>
   documentTypes(): Promise<
     { type: DocumentTypeVersion; history: DocumentTypeVersion[] }[]
   >

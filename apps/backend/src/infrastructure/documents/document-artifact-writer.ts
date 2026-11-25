@@ -6,10 +6,10 @@ import type {
   FileStorage,
   MalwareScanner,
 } from '../../application/ports/files'
-import type { PrescriptionPdfRenderer } from './prescription-pdf-renderer'
+import type { ClinicalDocumentPdfRenderer } from './clinical-document-pdf-renderer'
 export class LocalDocumentArtifactWriter implements DocumentArtifactWriter {
   constructor(
-    private readonly renderer: PrescriptionPdfRenderer,
+    private readonly renderer: ClinicalDocumentPdfRenderer,
     private readonly storage: FileStorage,
     private readonly scanner: MalwareScanner,
     private readonly files: FileRepository,
@@ -19,7 +19,8 @@ export class LocalDocumentArtifactWriter implements DocumentArtifactWriter {
   async stage(
     ...[tx, document, input]: Parameters<DocumentArtifactWriter['stage']>
   ) {
-    if (document.type.code !== 'prescription') return null
+    if (!['prescription', 'exam_order'].includes(document.type.code))
+      return null
     const patient = await tx.identification(document.patientId),
       record = await tx.record(document.patientId)
     if (!patient) throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
@@ -37,7 +38,7 @@ export class LocalDocumentArtifactWriter implements DocumentArtifactWriter {
     try {
       const scan = await this.scanner.scan({
         category: 'attachment',
-        filename: 'prescricao-demonstrativa.pdf',
+        filename: 'documento-demonstrativo.pdf',
         firstBytes: stored.firstBytes,
         size: stored.size,
         maxBytes: this.maxBytes,

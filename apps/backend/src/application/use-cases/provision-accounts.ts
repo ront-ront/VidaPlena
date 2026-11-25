@@ -71,6 +71,70 @@ export class ProvisionAccounts {
     })
   }
 
+  private async patientInvitation(
+    tx: ProvisioningTransaction,
+    actor: Principal,
+    patientId: string,
+  ) {
+    const current = await tx.principal(actor)
+    if (!current || !mayAccess(current, 'onsite_registration'))
+      throw new ApplicationError('FORBIDDEN')
+    const target = await tx.patientAccount(patientId)
+    if (!target) throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
+    const user = target.account
+    const unavailableReason = !user
+      ? 'Este paciente não tem conta própria. O acesso de dependentes é feito pela conta do responsável.'
+      : user.roles.length !== 1 || user.roles[0] !== 'patient'
+        ? 'Esta conta não permite convite de paciente. Consulte a administração.'
+        : user.status === 'active'
+          ? 'A conta já foi ativada. Use a recuperação de senha na tela de login.'
+          : user.status !== 'invited'
+            ? 'A conta não está aguardando ativação. Consulte a administração.'
+            : target.consentState !== 'active'
+              ? 'Registre o aceite do termo vigente antes de reenviar o convite.'
+              : null
+    return {
+      current,
+      user,
+      invitation: { canResend: !unavailableReason, unavailableReason },
+    }
+  }
+
+  patientInvitationStatus(actor: Principal, patientId: string) {
+    return this.store.transaction(
+      async (tx) =>
+        (await this.patientInvitation(tx, actor, patientId)).invitation,
+    )
+  }
+
+  resendPatient(actor: Principal, patientId: string, context: AuditContext) {
+    return this.store.transaction(async (tx) => {
+      const target = await this.patientInvitation(tx, actor, patientId)
+      if (!target.invitation.canResend || !target.user)
+        throw new ApplicationError('CONFLICT', [
+          {
+            field: 'invitation',
+            reason:
+              target.invitation.unavailableReason ??
+              'O convite não está disponível para este cadastro.',
+          },
+        ])
+      await tx.consumeInvitations(target.user.id, this.now())
+      const issued = await this.issue(
+        tx,
+        target.current,
+        target.user.id,
+        context,
+        patientId,
+      )
+      return {
+        patientId,
+        status: issued.status,
+        invitationExpiresAt: issued.invitationExpiresAt,
+      }
+    })
+  }
+
   private async requireInviter(
     tx: ProvisioningTransaction,
     actor: Principal,
@@ -94,6 +158,7 @@ export class ProvisionAccounts {
     actor: Principal,
     userId: string,
     context: AuditContext,
+    patientId?: string,
   ) {
     const token = this.tokens.issue()
     const expiresAt = new Date(
@@ -122,7 +187,10 @@ export class ProvisionAccounts {
       action: 'account.invited',
       resourceType: 'User',
       resourceId: userId,
-      authorizationBasis: 'role:inviter',
+      subjectPatientId: patientId,
+      authorizationBasis: patientId
+        ? 'role:onsite_registration'
+        : 'role:inviter',
     })
     return { userId, status: 'invited', invitationExpiresAt: expiresAt }
   }

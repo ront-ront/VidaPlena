@@ -19,6 +19,7 @@ import { ApiError } from '@/services/api-client'
 import { publicEnv } from '@/services/env'
 
 const roleLabels: Record<string, string> = {
+  patient: 'Paciente',
   receptionist: 'Recepção',
   professional: 'Profissional de saúde',
   manager: 'Gestor',
@@ -91,7 +92,7 @@ export default function InvitationPage() {
   return (
     <AccessCard
       title="Ativar acesso à clínica"
-      description="Confirme o convite e defina uma senha para sua conta interna."
+      description="Confirme o convite e defina uma senha para sua conta."
     >
       {!ready ||
       (token && !invitation && !invalid && !inspectError && !done) ? (
@@ -100,7 +101,11 @@ export default function InvitationPage() {
         <div className="space-y-5">
           <SuccessNotice
             title="Conta ativada"
-            description="Entre com sua senha. O acesso interno também solicitará o aplicativo autenticador."
+            description={
+              invitation?.roles.some((role) => role !== 'patient')
+                ? 'Entre com sua senha. O acesso interno também solicitará o aplicativo autenticador.'
+                : 'Entre com seu e-mail ou CPF e a senha que você acabou de definir.'
+            }
           />
           <Button render={<Link href="/login" />} className="w-full">
             Ir para o login
@@ -127,7 +132,7 @@ export default function InvitationPage() {
         <div className="space-y-4">
           <FieldError>
             Este convite expirou ou já foi usado. Solicite um novo convite ao
-            administrador da clínica.
+            atendimento da clínica.
           </FieldError>
           <Button
             render={<Link href="/login" />}

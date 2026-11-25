@@ -45,6 +45,7 @@ import type { ProcessReminders } from '../../application/use-cases/process-remin
 import type { ProcessWaitlist } from '../../application/use-cases/process-waitlist'
 import type { ProvisionAccounts } from '../../application/use-cases/provision-accounts'
 import type { ReadClinicalRecord } from '../../application/use-cases/read-clinical-record'
+import type { ReadPendingExamOrders } from '../../application/use-cases/read-pending-exam-orders'
 import type { RecoverAccess } from '../../application/use-cases/recover-access'
 import type { RescheduleAppointment } from '../../application/use-cases/reschedule-appointment'
 import type { RespondAttendance } from '../../application/use-cases/respond-attendance'
@@ -71,6 +72,7 @@ import { createConsentRouter } from '../infra/http/consent-router'
 import { maintenanceBody } from '../infra/http/contracts/maintenance'
 import { createEmergencyAccessRouter } from '../infra/http/emergency-access-router'
 import { createEvolutionDraftRouter } from '../infra/http/evolution-draft-router'
+import { createExamOrderRouter } from '../infra/http/exam-order-router'
 import { createFileRouter } from '../infra/http/file-router'
 import { createImportRouter } from '../infra/http/import-router'
 import { createImportedHistoryRouter } from '../infra/http/imported-history-router'
@@ -153,6 +155,13 @@ export async function composeBackendApplication(config: AppConfig) {
     }
     const routes = Router()
     registerApiDocumentation(routes)
+    routes.use(
+      createExamOrderRouter(
+        tokens,
+        authorize,
+        scope.resolve<ReadPendingExamOrders>(services.readPendingExamOrders),
+      ),
+    )
     routes.use(
       createMedicationRouter(
         tokens,
@@ -398,6 +407,7 @@ export async function composeBackendApplication(config: AppConfig) {
           services.patientRegistrationStore,
         ),
         scope.resolve<AuditWriter>(services.audit),
+        scope.resolve<ProvisionAccounts>(services.provisionAccounts),
       ),
     )
     routes.use(

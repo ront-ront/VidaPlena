@@ -43,7 +43,9 @@ export function useOneTimeToken() {
   useEffect(() => {
     const url = new URL(window.location.href)
     const value = url.searchParams.get('token')
-    setToken(value)
+    // Strict Mode replays this effect after the token has been removed from the URL.
+    // Preserve the captured value; forget() still clears it after successful use.
+    setToken((current) => current ?? value)
     if (value) {
       url.searchParams.delete('token')
       window.history.replaceState(

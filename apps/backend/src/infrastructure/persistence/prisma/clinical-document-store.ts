@@ -11,6 +11,7 @@ import type { SecretBox } from '../../../application/ports/secret-box'
 import type { Prisma, PrismaClient } from '../../../generated/prisma/client'
 import type { PrismaClinicalRecordStore } from './clinical-record-store'
 import type { PrismaMedicationStore } from './medication-store'
+import type { PrismaTerminologyStore } from './terminology-store'
 
 const namedUser = { select: { id: true, fullName: true } } as const
 const typeInclude = { type: true, changedBy: namedUser } as const
@@ -19,6 +20,7 @@ const documentInclude = {
   typeVersion: { include: typeInclude },
   voidEvent: true,
   prescriptionAcknowledgements: true,
+  examOrder: true,
 } as const
 export class PrismaClinicalDocumentStore implements ClinicalDocumentStore {
   constructor(
@@ -26,6 +28,7 @@ export class PrismaClinicalDocumentStore implements ClinicalDocumentStore {
     private readonly records: PrismaClinicalRecordStore,
     private readonly secrets: SecretBox,
     private readonly medications: PrismaMedicationStore,
+    private readonly terminologies: PrismaTerminologyStore,
   ) {}
   transaction<T>(
     run: (tx: ClinicalDocumentTransaction) => Promise<T>,
@@ -73,6 +76,13 @@ export class PrismaClinicalDocumentStore implements ClinicalDocumentStore {
         encounterId: row.encounterId,
         authorProfessionalId: row.authorProfessionalId,
         type: this.type(row.typeVersion),
+        examOrder: row.examOrder
+          ? {
+              id: row.examOrder.id,
+              resultReceivedAt:
+                row.examOrder.resultReceivedAt?.toISOString() ?? null,
+            }
+          : null,
         copiedFromDocumentId: row.copiedFromDocumentId,
         files: [],
         allergyAcknowledgements: row.prescriptionAcknowledgements.map((a) => ({
@@ -157,6 +167,10 @@ export class PrismaClinicalDocumentStore implements ClinicalDocumentStore {
     return {
       ...this.records.scope(tx),
       ...this.medications.scope(tx),
+      ...this.terminologies.scope(tx),
+      registerExamOrder: async (documentId, now) => {
+        await tx.examOrder.create({ data: { documentId, createdAt: now } })
+      },
       documentTypes: async () => {
         const rows = await tx.documentType.findMany({
           orderBy: { code: 'asc' },

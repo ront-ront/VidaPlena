@@ -5,6 +5,7 @@ import type {
   SignatureProvider,
 } from '../../application/ports/signature-provider'
 import { AuthorizeClinical } from '../../application/use-cases/authorize-clinical'
+import { ExamOrderPolicy } from '../../application/use-cases/exam-order-policy'
 import { FindRoomOptions } from '../../application/use-cases/find-room-options'
 import { ImportAppointments } from '../../application/use-cases/import-appointments'
 import { ManageCareLinks } from '../../application/use-cases/manage-care-links'
@@ -19,13 +20,14 @@ import { ManageMedications } from '../../application/use-cases/manage-medication
 import { ManageTerminologies } from '../../application/use-cases/manage-terminologies'
 import { PrescriptionPolicy } from '../../application/use-cases/prescription-policy'
 import { ReadClinicalRecord } from '../../application/use-cases/read-clinical-record'
+import { ReadPendingExamOrders } from '../../application/use-cases/read-pending-exam-orders'
 import { JcsCanonicalDocuments } from '../../infrastructure/documents/canonical-documents'
+import { ClinicalDocumentPdfRenderer } from '../../infrastructure/documents/clinical-document-pdf-renderer'
 import {
   DevSignatureProvider,
   DisabledSignatureProvider,
 } from '../../infrastructure/documents/dev-signature-provider'
 import { LocalDocumentArtifactWriter } from '../../infrastructure/documents/document-artifact-writer'
-import { PrescriptionPdfRenderer } from '../../infrastructure/documents/prescription-pdf-renderer'
 import { ClinicalFilePolicy } from '../../infrastructure/files/clinical-file-policy'
 import { DocumentFilePolicy } from '../../infrastructure/files/document-file-policy'
 import { EvolutionFilePolicy } from '../../infrastructure/files/evolution-file-policy'
@@ -38,6 +40,7 @@ import { PrismaClinicalEvolutionStore } from '../../infrastructure/persistence/p
 import { PrismaClinicalRecordStore } from '../../infrastructure/persistence/prisma/clinical-record-store'
 import { PrismaEmergencyAccessStore } from '../../infrastructure/persistence/prisma/emergency-access-store'
 import { PrismaEvolutionDraftStore } from '../../infrastructure/persistence/prisma/evolution-draft-store'
+import { PrismaExamOrderStore } from '../../infrastructure/persistence/prisma/exam-order-store'
 import { PrismaImportedHistoryStore } from '../../infrastructure/persistence/prisma/imported-history-store'
 import { PrismaMedicationStore } from '../../infrastructure/persistence/prisma/medication-store'
 import { PrismaTerminologyStore } from '../../infrastructure/persistence/prisma/terminology-store'
@@ -174,6 +177,8 @@ export const services = {
   clinicalDocumentStore: Symbol('clinicalDocumentStore'),
   manageDocumentTypes: Symbol('manageDocumentTypes'),
   manageClinicalDocuments: Symbol('manageClinicalDocuments'),
+  examOrderStore: Symbol('examOrderStore'),
+  readPendingExamOrders: Symbol('readPendingExamOrders'),
   manageEvolutionDrafts: Symbol('manageEvolutionDrafts'),
   manageTerminologies: Symbol('manageTerminologies'),
   manageImportedHistory: Symbol('manageImportedHistory'),
@@ -336,13 +341,24 @@ export function createServiceContainer(
         scope.resolve<ManageMedications>(services.manageMedications),
         scope.resolve<CanonicalDocuments>(services.canonicalDocuments),
       )
-      return { get: (code) => (code === 'prescription' ? prescription : null) }
+      const exams = new ExamOrderPolicy(
+        scope.resolve<ManageTerminologies>(services.manageTerminologies),
+        scope.resolve<CanonicalDocuments>(services.canonicalDocuments),
+      )
+      return {
+        get: (code) =>
+          code === 'prescription'
+            ? prescription
+            : code === 'exam_order'
+              ? exams
+              : null,
+      }
     },
   })
   scoped.register<DocumentArtifactWriter>(services.documentArtifactWriter, {
     useFactory: (scope) =>
       new LocalDocumentArtifactWriter(
-        new PrescriptionPdfRenderer(config.frontendOrigin),
+        new ClinicalDocumentPdfRenderer(config.frontendOrigin),
         scope.resolve<FileStorage>(services.fileStorage),
         scope.resolve<MalwareScanner>(services.malwareScanner),
         scope.resolve<FileRepository>(services.fileRepository),
@@ -373,6 +389,25 @@ export function createServiceContainer(
         scope.resolve<PrismaClinicalRecordStore>(services.clinicalRecordStore),
         new AesSecretBox(config.encryptionKey, 'clinical-document'),
         scope.resolve<PrismaMedicationStore>(services.medicationStore),
+        scope.resolve<PrismaTerminologyStore>(services.terminologyStore),
+      ),
+  })
+  scoped.register<PrismaExamOrderStore>(services.examOrderStore, {
+    useFactory: (scope) =>
+      new PrismaExamOrderStore(
+        scope.resolve<PrismaClient>(services.database),
+        scope.resolve<PrismaClinicalDocumentStore>(
+          services.clinicalDocumentStore,
+        ),
+      ),
+  })
+  scoped.register<ReadPendingExamOrders>(services.readPendingExamOrders, {
+    useFactory: (scope) =>
+      new ReadPendingExamOrders(
+        scope.resolve<PrismaExamOrderStore>(services.examOrderStore),
+        scope.resolve<AuthorizeClinical>(services.authorizeClinical),
+        scope.resolve<AuditWriter>(services.audit),
+        config.examPendingResultAlertDays,
       ),
   })
   scoped.register<ManageDocumentTypes>(services.manageDocumentTypes, {

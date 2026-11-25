@@ -169,3 +169,7 @@ DocumentType é identidade imutável com code/label; DocumentTypeVersion append-
 ### BE-039 — prescrição demonstrativa (P-65)
 
 MedicationCatalog/MedicationEntry/MedicationSelection versionam dados sintéticos, substâncias, ativo/controlado e checksum, sem alterar CID/TUSS. PrescriptionItem é value object no payload JSON cifrado de ClinicalDocument, com snapshot de medicamento/substâncias/versão, sem tabela independente: V1 não exige consulta de item separada do documento. PrescriptionAllergyAcknowledgement append-only liga documento, alerta/versão, profissional e instante; constraints verificam paciente/autor/alergia ativa. ClinicalDocument.copiedFromDocumentId é FK de origem imutável, sempre novo documento sem reaproveitar assinatura/ciência. Arquivos de apresentação permanecem FileObject ligados ao documento; JSON canônico v2 congela seus hashes e origem da cópia, leitura de v1 preservada.
+
+### BE-040 — índice de pedidos de exame (P-66)
+
+ExamOrder: id UUID, documentId único/FK ClinicalDocument, createdAt e resultReceivedAt? (projeção de recebimento BE-041). Solicitação/paciente/autor/data emitida e payload de exames/indicação/TUSS têm fonte única no documento/registro; sem duplicar conteúdo clínico em colunas abertas. Identidade/pedido emitido imutáveis e sem exclusão. Nesta spec recebimento é null; BE-041 habilita atualização apenas junto ao registro de resultado real. Índice de documentos por autor/status/issuedAt/id apoia fila paginada.

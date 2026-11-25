@@ -239,6 +239,7 @@ export class ManageClinicalDocuments {
       typeVersion: row.type.version,
       templateVersion: row.type.templateVersion,
       requiredSignatureLevel: row.type.requiredSignatureLevel,
+      examOrder: row.examOrder,
       copiedFromDocumentId: row.copiedFromDocumentId,
       files: row.files,
       allergyAcknowledgements: row.allergyAcknowledgements,

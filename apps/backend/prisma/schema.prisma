@@ -1135,9 +1135,11 @@ model ClinicalDocument {
   copiedFrom ClinicalDocument? @relation("DocumentCopy",fields:[copiedFromDocumentId],references:[id],onDelete:Restrict)
   copies ClinicalDocument[] @relation("DocumentCopy")
   prescriptionAcknowledgements PrescriptionAllergyAcknowledgement[]
+  examOrder ExamOrder?
   voidEvent ClinicalDocumentVoid? @relation("VoidedDocument")
   replaces ClinicalDocumentVoid[] @relation("ReplacementDocument")
   @@index([recordId,status,createdAt,id])
+  @@index([authorProfessionalId,status,issuedAt,id])
 }
 model ClinicalDocumentVoid {
   id String @id @default(uuid()) @db.Uuid
@@ -1192,4 +1194,12 @@ model PrescriptionAllergyAcknowledgement {
   alertEvent ClinicalAlertEvent @relation(fields:[alertId,alertVersion],references:[alertId,version],onDelete:Restrict)
   professional ProfessionalProfile @relation(fields:[professionalId],references:[id],onDelete:Restrict)
   @@unique([documentId,alertId])
+}
+
+model ExamOrder {
+  id String @id @default(uuid()) @db.Uuid
+  documentId String @unique @db.Uuid
+  createdAt DateTime @db.Timestamptz(3)
+  resultReceivedAt DateTime? @db.Timestamptz(3)
+  document ClinicalDocument @relation(fields:[documentId],references:[id],onDelete:Restrict)
 }

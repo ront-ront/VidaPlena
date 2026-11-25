@@ -70,6 +70,12 @@ Senhas usam [bcryptjs](https://github.com/dcodeIO/bcrypt.js) com custo de `AUTH_
 
 O teste `tests/integration/provisioning.test.ts` exige permissão de criar banco no servidor **de testes**. Ele cria nome aleatório terminado em `_test`, aplica migrations e remove somente o banco criado por ele. Nunca aponta para banco produtivo nem restaura dados reais.
 
+## Reenviar convite de paciente
+
+Como admin ou recepção com MFA, abra `/recepcao/pacientes/novo`, use **Localizar cadastro existente** com o CPF e clique em **Reenviar convite**. Funciona para contas próprias de paciente ainda não ativadas e com consentimento vigente; a tela explica quando indisponível. Não cadastre a pessoa de novo. A operação é `POST /v1/patients/:id/invitation`, sem destinatário no payload; invalida links anteriores e preserva cadastro/termos.
+
+Sucesso significa novo convite enfileirado. Com `EMAIL_SENDER=dev`, mantenha o backend rodando e abra o novo `actionUrl` no JSON destinado ao paciente em `EMAIL_MAILBOX_PATH` (normalmente `apps/backend/var/mailbox` quando executado no workspace). O prazo vem de `AUTH_INVITE_LINK_HOURS`. E-mails antigos na caixa local não são apagados, mas seus links deixam de ser utilizáveis. Conta já ativada usa recuperação de senha. Nenhum adaptador SMTP foi adicionado.
+
 ## Observabilidade e backup M0
 
 `/health/live` e `/health/ready` são sondas de processo e PostgreSQL; a segunda usa `OPS_READINESS_TIMEOUT_MS` e não divulga detalhes da dependência. `/v1/admin/ops/metrics` exige admin com MFA e devolve métricas Prometheus. Pino emite logs JSON com requestId, rota template, método, status e duração, sem URL concreta, payload ou cabeçalhos sensíveis. `OPS_SLOW_REQUEST_MS`, `OPS_ALERTS_ENABLED` e `OPS_LOG_LEVEL` ajustam alertas locais; o destino real de coleta e a comprovação do SLA são P-07. Janelas de manutenção são registradas por admin com referência de aviso externo, antecedência e teto mensal configuráveis; ver `specs/_work/05-operational-runbook.md`.
@@ -129,3 +135,11 @@ Após migrations/client, `yarn workspace vida-plena-backend medications:demo` ca
 POST `/v1/clinical/encounters/:id/documents/drafts` recebe typeCode=prescription e payload.items com seleção medicationCode/medicationVersion ou nome manual, dose/route/frequency/quantity/instructions; PATCH `/v1/clinical/documents/:id/draft` exige expectedVersion. `/v1/clinical/encounters/:id/documents/reuse` recebe sourceDocumentId e cria nova cópia. Antes de emitir, GET `/v1/clinical/documents/:id/allergy-check`; issue exige ciência explícita por acknowledgedAllergyIds e revalida alertas/catálogo no servidor.409 allergyConflict retorna só IDs para reconsulta autorizada. Controlados identificados são bloqueados e manual só simula em dev/test.
 
 Emissão produz PDF demonstrativo com selo em todas as páginas, guardado cifrado pelo FileStorage. GET do documento informa files; download usa o fluxo BE-013, com vínculo/urgência, integridade/auditoria/expiração. JSON v2 vincula arquivos e ciência; v1 continua legível. Publicação ao portal é BE-043, sem disponibilização automática. PDF/lib/fonte local não são assinatura qualificada; P-02/P-13 permanecem bloqueios de produção.
+
+### Pedidos de exame demonstrativos (BE-040)
+
+No encontro próprio em andamento, POST `/v1/clinical/encounters/:id/documents/drafts` com `typeCode=exam_order` e `payload={privateVisit,exams:[{tussCode?,tussVersion?,description?,indication}]}` cria o pedido em rascunho. Para selecionar TUSS sintético, carregue `terminologies:demo` e use código/versão devolvidos pela busca. O servidor resolve a descrição e congela o snapshot. Sem TUSS, exige `privateVisit=true`, descrição e indicação; essa declaração no pedido não configura convênio/faturamento. PATCH/issue/reuse/void usam o mesmo fluxo documental da prescrição.
+
+Emissão dev cria `ExamOrder`, PDF cifrado/imutável e timeline na mesma transação auditada, com selo “sem validade jurídica”. GET do documento inclui `examOrder:{id,resultReceivedAt}`; o recebimento permanece nulo até a BE-041. Não há upload de resultados nem publicação automática nesta entrega.
+
+GET `/v1/clinical/exam-orders/pending?patientId=&cursor=` lista somente pedidos emitidos pelo solicitante autenticado/MFA, não anulados e sem resultado, com idade a partir de `exam.pending_result_alert_days` (`EXAM_PENDING_RESULT_ALERT_DAYS`). Requer vínculo clínico integral ou urgência vigente em cada leitura; pré-consulta e papéis administrativos não permitem a lista clínica. A paginação devolve `nextCursor`; não reutilize o cursor com outro filtro. Integração após resultado e telas pertencem à BE-041/FE-025; catálogo oficial/provedor qualificado continuam pendências de produção.

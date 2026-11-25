@@ -15,7 +15,6 @@ import {
   registrationResponse,
   revokeConsentBody,
 } from './contracts/consent'
-import { patientImportOriginSchema } from './contracts/imports'
 import {
   acceptInvitationBody,
   cursorQuery,
@@ -37,6 +36,13 @@ import {
   userListQuery,
 } from './contracts/m0'
 import { maintenanceBody, maintenanceResponse } from './contracts/maintenance'
+import {
+  onsitePatientQuery,
+  onsitePatientResponse,
+  patientInvitationBody,
+  patientInvitationParams,
+  patientInvitationResponse,
+} from './contracts/patient-invitations'
 import {
   consentMetadataQuery,
   subjectCreatedResponse,
@@ -341,19 +347,33 @@ export const openApiDocument = createDocument({
     '/onsite-patients': {
       get: {
         operationId: 'lookupOnsitePatient',
-        summary: 'Localizar cadastro por CPF exato para termo presencial',
+        summary:
+          'Localizar cadastro por CPF exato e consultar disponibilidade do convite',
         tags: ['Pacientes'],
         security: bearer,
-        requestParams: { query: z.object({ cpf: z.string().min(11).max(14) }) },
+        requestParams: { query: onsitePatientQuery },
         responses: {
           '200': response(
-            z.object({
-              patientId: z.uuid(),
-              fullName: z.string(),
-              birthDate: z.iso.datetime(),
-              importOrigin: patientImportOriginSchema.nullable(),
-            }),
+            onsitePatientResponse,
             'Identidade mínima do cadastro',
+          ),
+          ...errors,
+        },
+      },
+    },
+    '/patients/{id}/invitation': {
+      post: {
+        operationId: 'resendPatientInvitation',
+        summary:
+          'Reenfileirar convite de ativação de paciente; admin ou recepção com MFA',
+        tags: ['Pacientes'],
+        security: bearer,
+        requestParams: { path: patientInvitationParams },
+        requestBody: { required: false, ...json(patientInvitationBody) },
+        responses: {
+          '201': response(
+            patientInvitationResponse,
+            'Novo convite enfileirado; anteriores invalidados',
           ),
           ...errors,
         },

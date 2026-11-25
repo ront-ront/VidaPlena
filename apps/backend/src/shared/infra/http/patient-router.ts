@@ -5,8 +5,14 @@ import type { AuditWriter } from '../../../application/ports/audit-writer'
 import type { AccessTokens } from '../../../application/ports/authentication'
 import type { PatientRegistrationStore } from '../../../application/ports/patient-registration'
 import type { Authorize } from '../../../application/use-cases/authorize'
+import type { ProvisionAccounts } from '../../../application/use-cases/provision-accounts'
 import { normalizeCpf } from '../../../domain/rules/patient-identity'
 import { idSchema } from './contracts/m0'
+import {
+  onsitePatientQuery,
+  patientInvitationBody,
+  patientInvitationParams,
+} from './contracts/patient-invitations'
 import { fitInPatientQuery } from './contracts/waitlist'
 import { accessGuard, auditContext, principalOf } from './middleware/access'
 import { parseInput } from './parse-input'
@@ -16,6 +22,7 @@ export function createPatientRouter(
   authorize: Authorize,
   store: PatientRegistrationStore,
   audit: AuditWriter,
+  provisioning: ProvisionAccounts,
 ) {
   const router = Router()
   router.get(
@@ -81,10 +88,7 @@ export function createPatientRouter(
     '/onsite-patients',
     accessGuard(tokens, authorize, 'onsite_registration'),
     async (req, res) => {
-      const { cpf: input } = parseInput(
-        z.object({ cpf: z.string().trim().min(11).max(14) }),
-        req.query,
-      )
+      const { cpf: input } = parseInput(onsitePatientQuery, req.query)
       const cpf = normalizeCpf(input)
       if (!cpf)
         throw new ApplicationError('VALIDATION_ERROR', [
@@ -103,7 +107,31 @@ export function createPatientRouter(
       })
       if (!patient) throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
       res.setHeader('Cache-Control', 'no-store')
-      res.json(patient)
+      res.json({
+        ...patient,
+        invitation: await provisioning.patientInvitationStatus(
+          actor,
+          patient.patientId,
+        ),
+      })
+    },
+  )
+  router.post(
+    '/patients/:id/invitation',
+    accessGuard(tokens, authorize, 'onsite_registration'),
+    async (req, res) => {
+      const { id } = parseInput(patientInvitationParams, req.params)
+      parseInput(patientInvitationBody, req.body ?? {})
+      res.setHeader('Cache-Control', 'no-store')
+      res
+        .status(201)
+        .json(
+          await provisioning.resendPatient(
+            principalOf(res),
+            id,
+            auditContext(req, res),
+          ),
+        )
     },
   )
   router.get(

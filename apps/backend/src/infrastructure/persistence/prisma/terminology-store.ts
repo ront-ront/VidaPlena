@@ -39,8 +39,11 @@ export class PrismaTerminologyStore implements TerminologyStore {
       principal: identity.principal,
       professional: identity.professional,
       audit: identity.audit,
-      lockTerminology: async (kind) => {
-        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`terminology:${kind}`},0))`
+      lockTerminology: async (kind, shared = false) => {
+        if (shared)
+          await tx.$executeRaw`SELECT pg_advisory_xact_lock_shared(hashtextextended(${`terminology:${kind}`},0))`
+        else
+          await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`terminology:${kind}`},0))`
       },
       catalogVersion: async (terminology, version) => {
         const row = await tx.terminologyCatalog.findUnique({

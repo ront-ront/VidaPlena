@@ -458,3 +458,11 @@ Catálogo versionado com seed Q-10, políticas por tipo, bytes JSON canônicos R
 ## P-65 — prescrição demonstrativa e conferência de alergias (25/11/2026)
 
 Concretização RF-019/P-13 no contrato compartilhado: dataset de medicamentos sintéticos, snapshot versionado, reuso para novo draft e ciência por alerta/versão na emissão. Manual/sem mapeamento exige ciência conservadora, catálogo demonstrativo não certifica ausência de risco. Controlados recusados até aprovação de regra; produção continua bloqueada por P-02/P-13. PDF é apresentação da simulação com selo, via bibliotecas existentes de mercado e fonte licenciada, sem assinatura ICP-Brasil. Limites de campos técnicos são proposta de validação, não conteúdo clínico inventado.
+
+## P-66 — pedido de exames e pendência (25/11/2026)
+
+Q-08 operacionalizada por privateVisit explícito do profissional no payload do pedido, pois a agenda não tem classificação financeira. É proposta técnica, sem inferir convênio/faturamento nem alterar M1. Indicação e descrição/TUSS seguem contrato; pendência usa dias decorridos UTC e autorização clínica na consulta. ExamOrder.resultReceivedAt é projeção reservada à integração transacional BE-041; nenhum resultado é fabricado nesta spec. Catálogo TUSS/assinatura reais dependem P-13/P-02; publicação/visibilidade da indicação BE-043.
+
+## P-67 — reenvio de convite de paciente (25/11/2026)
+
+Plano aprovado e correção M0 implementada: admin/recepção com MFA reenviam convite pela busca de CPF, apenas conta própria patient/invited e consentimento vigente. Não amplia permissão de convites internos; utiliza prazo auth.invite_link_hours, transação/outbox e invalidação anteriores. Sem SMTP, novo cadastro ou alteração de e-mail. Dependente/assistido sem conta própria não recebe nova conta; conta ativa usa recuperação. Texto de ativação distingue paciente/interno e captura do token é idempotente em dev. Evidências em `_work/13-patient-invitation-resend.md`. M2 permanece pausada a pedido do usuário; BE-040 em andamento preservada.

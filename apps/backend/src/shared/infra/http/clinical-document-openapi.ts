@@ -11,6 +11,10 @@ import {
   documentVoidBody,
   publicDocumentVerificationResponse,
 } from './contracts/clinical-documents'
+import {
+  pendingExamOrderQuery,
+  pendingExamOrderResponse,
+} from './contracts/exam-orders'
 import { errorResponse } from './contracts/m0'
 import {
   allergyCheckResponse,
@@ -37,6 +41,16 @@ const common = {
   requestParams: { path: documentParams },
 }
 export const clinicalDocumentOpenApiPaths = {
+  '/clinical/exam-orders/pending': {
+    get: {
+      tags: common.tags,
+      security: common.security,
+      operationId: 'listPendingExamOrders',
+      requestParams: { query: pendingExamOrderQuery },
+      responses: { '200': response(pendingExamOrderResponse), ...errors },
+    },
+  },
+
   '/terminologies/medications': {
     get: {
       tags: common.tags,

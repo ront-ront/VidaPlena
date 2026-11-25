@@ -276,3 +276,7 @@ P-06/P-11 resolvidas para implementação conforme respostas de24/11/2026; P-13 
 
 
 BE-030 fecha critério de autoria com evolução real após expiração; prontuário integral continua negado. Evidências sobrepostas não são somadas.15 specs M2 ainda sem implementação.
+
+## Correção M0 — reenvio de convite de paciente (25/11/2026)
+
+RF-001: BE-010/FE-039 complementadas com reenvio autorizado e auditado para conta convidada existente, invalidação transacional e elegibilidade por consentimento, sem duplicar paciente. FE-006 mantém captura do token em dev e distingue paciente/interno. Backend7/7 (6 específicos+convite interno1), regressão consentimento/cadastro/auth7/7, Node31/31 e clienteHTTP7/7 aprovados; Firefox7/7 específicos e2/2 links, além de22 casos de termo aprovados na rodada anterior. Lint backend322/front94 aprovados. Não somar conjuntos sobrepostos nem declarar full29/29: primeira rodada27/29 expôs duas falhas de primeiro acesso, corrigidas e revalidadas nos lotes posteriores. Evidências/limites em `_work/13-patient-invitation-resend.md`; sem tsc, commit, SMTP ou retomada de M2.

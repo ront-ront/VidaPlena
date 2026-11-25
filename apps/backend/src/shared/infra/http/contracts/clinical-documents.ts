@@ -88,6 +88,9 @@ export const clinicalDocumentResponse = z.object({
   typeVersion: z.number().int().positive(),
   templateVersion: z.string(),
   requiredSignatureLevel: z.enum(['simple', 'qualified']),
+  examOrder: z
+    .object({ id: z.uuid(), resultReceivedAt: z.iso.datetime().nullable() })
+    .nullable(),
   copiedFromDocumentId: z.uuid().nullable(),
   files: z.array(
     z.object({

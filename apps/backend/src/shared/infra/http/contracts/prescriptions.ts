@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { ApplicationError } from '../../../../application/errors/application-error'
 import { documentTypeCodes } from '../../../../application/ports/clinical-documents'
+import { examOrderInputSchema } from '../../../../application/validation/exam-order'
 import { prescriptionInputSchema } from '../../../../application/validation/prescription'
 import { parseInput } from '../parse-input'
 export const documentDraftBody = z
@@ -18,6 +19,8 @@ export const documentReuseBody = z
 export function parsePublicDocumentPayload(typeCode: string, payload: unknown) {
   if (typeCode === 'prescription')
     return parseInput(prescriptionInputSchema, payload)
+  if (typeCode === 'exam_order')
+    return parseInput(examOrderInputSchema, payload)
   throw new ApplicationError('SERVICE_UNAVAILABLE')
 }
 export const medicationListResponse = z.object({
