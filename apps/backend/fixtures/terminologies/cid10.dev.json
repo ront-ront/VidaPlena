@@ -1,0 +1,29 @@
+{
+  "terminology": "CID10",
+  "version": "vidaplena-demo-1",
+  "source": "VidaPlena — dados sintéticos para desenvolvimento, sem uso clínico",
+  "license": "MIT — dados sintéticos deste repositório; ver LICENSE na raiz",
+  "demo": true,
+  "entries": [
+    {
+      "code": "DEV-CID-001",
+      "description": "Diagnóstico fictício 1 — exclusivamente para teste",
+      "active": true
+    },
+    {
+      "code": "DEV-CID-002",
+      "description": "Diagnóstico fictício 2 — exclusivamente para teste",
+      "active": true
+    },
+    {
+      "code": "DEV-CID-003",
+      "description": "Diagnóstico fictício 3 — exclusivamente para teste",
+      "active": true
+    },
+    {
+      "code": "DEV-CID-004",
+      "description": "Diagnóstico fictício 4 — exclusivamente para teste",
+      "active": false
+    }
+  ]
+}

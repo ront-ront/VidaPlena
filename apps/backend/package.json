@@ -22,7 +22,9 @@
     "accounts:review": "tsx src/shared/infra/cli/accounts.ts review",
     "test:vitest": "vitest run --config vitest.config.mts",
     "backup:cycle": "tsx ops/backup/backup-cycle.ts",
-    "backup:files": "tsx ops/backup/file-snapshots.ts"
+    "backup:files": "tsx ops/backup/file-snapshots.ts",
+    "terminologies:demo": "tsx src/shared/infra/cli/terminologies.ts demo",
+    "terminologies:load": "tsx src/shared/infra/cli/terminologies.ts load"
   },
   "dependencies": {
     "@js-temporal/polyfill": "^0.5.1",

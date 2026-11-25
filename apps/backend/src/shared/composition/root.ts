@@ -33,6 +33,7 @@ import type { ManageMaintenance } from '../../application/use-cases/manage-maint
 import type { ManageRooms } from '../../application/use-cases/manage-rooms'
 import type { ManageSchedule } from '../../application/use-cases/manage-schedule'
 import type { ManageSubjectRequests } from '../../application/use-cases/manage-subject-requests'
+import type { ManageTerminologies } from '../../application/use-cases/manage-terminologies'
 import type { ManageWaitlist } from '../../application/use-cases/manage-waitlist'
 import type { ProcessReminders } from '../../application/use-cases/process-reminders'
 import type { ProcessWaitlist } from '../../application/use-cases/process-waitlist'
@@ -78,6 +79,7 @@ import { createRecoveryRouter } from '../infra/http/recovery-router'
 import { createRoomRouter } from '../infra/http/room-router'
 import { createScheduleRouter } from '../infra/http/schedule-router'
 import { createSubjectRequestRouter } from '../infra/http/subject-request-router'
+import { createTerminologyRouter } from '../infra/http/terminology-router'
 import { createWaitlistRouter } from '../infra/http/waitlist-router'
 import { createServiceContainer, services } from './container'
 
@@ -140,6 +142,13 @@ export async function composeBackendApplication(config: AppConfig) {
     }
     const routes = Router()
     registerApiDocumentation(routes)
+    routes.use(
+      createTerminologyRouter(
+        tokens,
+        authorize,
+        scope.resolve<ManageTerminologies>(services.manageTerminologies),
+      ),
+    )
     routes.use(
       createImportedHistoryRouter(
         tokens,

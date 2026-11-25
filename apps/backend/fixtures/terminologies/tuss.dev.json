@@ -1,0 +1,29 @@
+{
+  "terminology": "TUSS",
+  "version": "vidaplena-demo-1",
+  "source": "VidaPlena — dados sintéticos para desenvolvimento, sem uso clínico",
+  "license": "MIT — dados sintéticos deste repositório; ver LICENSE na raiz",
+  "demo": true,
+  "entries": [
+    {
+      "code": "DEV-TUSS-001",
+      "description": "Procedimento fictício 1 — exclusivamente para teste",
+      "active": true
+    },
+    {
+      "code": "DEV-TUSS-002",
+      "description": "Procedimento fictício 2 — exclusivamente para teste",
+      "active": true
+    },
+    {
+      "code": "DEV-TUSS-003",
+      "description": "Procedimento fictício 3 — exclusivamente para teste",
+      "active": true
+    },
+    {
+      "code": "DEV-TUSS-004",
+      "description": "Procedimento fictício 4 — exclusivamente para teste",
+      "active": false
+    }
+  ]
+}

@@ -432,3 +432,9 @@ Projeção pré-consulta restrita e campos nulos, cursor por item no mesmo escop
 ## P-59 — Entrada cega de histórico (BE-033,25/11/2026)
 
 P-11 aprovada pelo usuário, concretizada em multipart metadados+arquivo obrigatório para evitar leitura administrativa e referências remotas. Recibo sem conteúdo/ID do arquivo; download só profissional com vínculo/urgência fora da pré-consulta e base auditada. Conferência única append-only (repetir devolve a existente); adendos por profissional com vínculo, preservando original. Urgência permite leitura, não conferência/adendo. Arquivo órfão não pode ser baixado e usa reconciliação BE-013. Decisões técnicas dentro do fluxo aprovado, sem integração/OCR/migração massiva. Fontes reais/data de corte/validação clínica seguem P-07; sem presumir consentimento nem assinatura.
+
+## P-60 — Catálogos demonstrativos BE-034
+
+P-13 foi limitada pelo usuário a testes simples de desenvolvimento. Fixtures CID10/TUSS são explicitamente sintéticas (códigos DEV-* sem uso clínico), versionadas e licenciadas como o repositório, com carga local idempotente e bloqueio em staging/production. Versões anteriores imutáveis, snapshots nos consumidores BE-035/040 e sem integração FHIR/TISS. Dataset oficial e aprovação/licença antes de produção continuam pendentes. A forma de determinar atendimento particular para TUSS deve ser concretizada pelo consumidor BE-040, sem inferir convênio/faturamento novo na BE-034.
+
+BE-034 explicita dependências técnicas BE-004/BE-030 para reusar auditoria e escopo transacional de identidade/perfil ativo, sem exigir vínculo com paciente para busca de catálogo. São anteriores na ordem; nenhum ciclo novo.

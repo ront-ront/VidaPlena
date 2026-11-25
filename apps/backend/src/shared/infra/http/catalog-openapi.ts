@@ -84,6 +84,7 @@ import {
 } from './contracts/waitlist'
 import { emergencyAccessOpenApiPaths } from './emergency-access-openapi'
 import { importedHistoryOpenApiPaths } from './imported-history-openapi'
+import { terminologyOpenApiPaths } from './terminology-openapi'
 
 const response = (schema: z.ZodType) => ({
   description: 'Resposta do catalogo',
@@ -119,6 +120,7 @@ const command = (
 })
 export const catalogOpenApiPaths = {
   ...careLinkOpenApiPaths,
+  ...terminologyOpenApiPaths,
   ...importedHistoryOpenApiPaths,
   ...clinicalRecordOpenApiPaths,
   ...emergencyAccessOpenApiPaths,

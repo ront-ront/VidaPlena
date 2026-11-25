@@ -948,3 +948,45 @@ model ImportedHistoryAddendum {
   professional ProfessionalProfile @relation(fields:[professionalId],references:[id],onDelete:Restrict)
   @@index([historyId,createdAt,id])
 }
+
+model TerminologyCatalog {
+  id String @id @default(uuid()) @db.Uuid
+  terminology String
+  version String
+  source String
+  license String
+  demo Boolean
+  checksum String
+  loadedAt DateTime @default(now()) @db.Timestamptz(3)
+  diagnoses DiagnosisCode[]
+  procedures ProcedureCode[]
+  selections TerminologySelection[]
+  @@unique([terminology,version])
+}
+model TerminologySelection {
+  terminology String @id
+  catalogId String @db.Uuid
+  catalog TerminologyCatalog @relation(fields:[catalogId],references:[id],onDelete:Restrict)
+}
+model DiagnosisCode {
+  id String @id @default(uuid()) @db.Uuid
+  catalogId String @db.Uuid
+  code String
+  description String
+  searchText String
+  active Boolean
+  catalog TerminologyCatalog @relation(fields:[catalogId],references:[id],onDelete:Restrict)
+  @@unique([catalogId,code])
+  @@index([catalogId,active,code,id])
+}
+model ProcedureCode {
+  id String @id @default(uuid()) @db.Uuid
+  catalogId String @db.Uuid
+  code String
+  description String
+  searchText String
+  active Boolean
+  catalog TerminologyCatalog @relation(fields:[catalogId],references:[id],onDelete:Restrict)
+  @@unique([catalogId,code])
+  @@index([catalogId,active,code,id])
+}

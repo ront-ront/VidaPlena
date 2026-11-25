@@ -4,6 +4,7 @@ import { ImportAppointments } from '../../application/use-cases/import-appointme
 import { ManageCareLinks } from '../../application/use-cases/manage-care-links'
 import { ManageEmergencyAccess } from '../../application/use-cases/manage-emergency-access'
 import { ManageImportedHistory } from '../../application/use-cases/manage-imported-history'
+import { ManageTerminologies } from '../../application/use-cases/manage-terminologies'
 import { ReadClinicalRecord } from '../../application/use-cases/read-clinical-record'
 import { ClinicalFilePolicy } from '../../infrastructure/files/clinical-file-policy'
 import { CsvParseAppointmentParser } from '../../infrastructure/imports/appointment-csv-parser'
@@ -12,6 +13,7 @@ import { PrismaCareLinkStore } from '../../infrastructure/persistence/prisma/car
 import { PrismaClinicalRecordStore } from '../../infrastructure/persistence/prisma/clinical-record-store'
 import { PrismaEmergencyAccessStore } from '../../infrastructure/persistence/prisma/emergency-access-store'
 import { PrismaImportedHistoryStore } from '../../infrastructure/persistence/prisma/imported-history-store'
+import { PrismaTerminologyStore } from '../../infrastructure/persistence/prisma/terminology-store'
 import 'reflect-metadata'
 import { hkdfSync } from 'node:crypto'
 import { hashSync } from 'bcryptjs'
@@ -129,6 +131,8 @@ export const services = {
   careLinkStore: Symbol('careLinkStore'),
   clinicalRecordStore: Symbol('clinicalRecordStore'),
   importedHistoryStore: Symbol('importedHistoryStore'),
+  terminologyStore: Symbol('terminologyStore'),
+  manageTerminologies: Symbol('manageTerminologies'),
   manageImportedHistory: Symbol('manageImportedHistory'),
   readClinicalRecord: Symbol('readClinicalRecord'),
   emergencyAccessStore: Symbol('emergencyAccessStore'),
@@ -285,6 +289,21 @@ export function createServiceContainer(
         scope.resolve<ManageCareLinks>(services.manageCareLinks),
         scope.resolve<AuditWriter>(services.audit),
         config.clinicTimeZone,
+      ),
+  })
+  scoped.register<PrismaTerminologyStore>(services.terminologyStore, {
+    useFactory: (scope) =>
+      new PrismaTerminologyStore(
+        scope.resolve<PrismaClient>(services.database),
+        scope.resolve<PrismaCareLinkStore>(services.careLinkStore),
+      ),
+  })
+  scoped.register<ManageTerminologies>(services.manageTerminologies, {
+    useFactory: (scope) =>
+      new ManageTerminologies(
+        scope.resolve<PrismaTerminologyStore>(services.terminologyStore),
+        scope.resolve<AuditWriter>(services.audit),
+        config.environment,
       ),
   })
   scoped.register<ImportAppointments>(services.importAppointments, {

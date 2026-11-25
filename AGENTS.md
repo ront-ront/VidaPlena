@@ -35,6 +35,8 @@
 | Testes funcionais frontend | `yarn workspace vida-plena-frontend test:e2e` (Playwright/Firefox; servidor isolado na porta 3400, APIs simuladas) |
 | Testes HTTP novos | `yarn workspace vida-plena-backend test:vitest` |
 | Reconciliar vínculos da agenda | `yarn workspace vida-plena-backend care-links:reconcile` (automático no startup; repetição idempotente) |
+| Catálogos sintéticos dev (CID/TUSS) | `yarn workspace vida-plena-backend terminologies:demo` (somente development/test) |
+| Carregar versão local demonstrativa | `yarn workspace vida-plena-backend terminologies:load <arquivo.json>` |
 | Ciclo de backup operacional | `yarn workspace vida-plena-backend backup:cycle full` ou `backup:cycle incremental` (ambiente protegido; runbook em `apps/backend/ops/backup/README.md`) |
 | Restauração de arquivos | `yarn workspace vida-plena-backend backup:files restore <repo> <diretório-vazio>` |
 
