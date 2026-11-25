@@ -337,7 +337,9 @@ test('BE-033: tipos inválidos, extensão falsa, limite e multipart recusados se
     { origin: 'Teste' },
     Buffer.alloc(f.config.fileAttachmentMaxMb * 1024 * 1024 + 1),
     'arquivo.pdf',
-  ).expect(422)
+  )
+    .timeout({ response: 10000, deadline: 15000 })
+    .expect(422)
   await create(p.patientId, f.admin.token, { origin: '' }).expect(400)
   await create(p.patientId, f.admin.token, {
     origin: 'Teste',

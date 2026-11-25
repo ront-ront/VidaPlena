@@ -1,4 +1,4 @@
-import type { Readable } from 'node:stream'
+import { Readable } from 'node:stream'
 import Busboy from 'busboy'
 import type { Request } from 'express'
 import { ApplicationError } from '../../../application/errors/application-error'
@@ -89,7 +89,8 @@ export async function parseImportedHistoryMultipart(
             linkedResourceType: 'ImportedHistory',
             linkedResourceId: intent.id,
             filename: info.filename,
-            source: stream,
+            // Storage pipeline errors must leave Busboy free to drain the request.
+            source: Readable.from(stream.iterator({ destroyOnReturn: false })),
             context,
           })
           fileId = saved.fileId

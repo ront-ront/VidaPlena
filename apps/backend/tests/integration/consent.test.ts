@@ -410,6 +410,17 @@ test('recepção registra consentimento presencial com termo real e sem arquivo 
       .field('data', JSON.stringify(data))
       .attach('signedTerm', pdf, 'falso.jpg')
       .expect(422)
+    await request(app.app)
+      .post('/v1/patients')
+      .set('Authorization', token)
+      .field('data', JSON.stringify(data))
+      .attach(
+        'signedTerm',
+        Buffer.alloc(config.fileAttachmentMaxMb * 1024 * 1024 + 1),
+        'termo.pdf',
+      )
+      .timeout({ response: 10000, deadline: 15000 })
+      .expect(422)
     assert.equal(
       await db.patientProfile.count({ where: { cpf: patient.cpf } }),
       0,

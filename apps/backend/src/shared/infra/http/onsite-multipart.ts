@@ -1,3 +1,4 @@
+import { Readable } from 'node:stream'
 import Busboy from 'busboy'
 import type { Request } from 'express'
 import { ApplicationError } from '../../../application/errors/application-error'
@@ -68,7 +69,7 @@ export async function parseOnsiteEvidence(
             linkedResourceType: 'ConsentEvent',
             linkedResourceId: eventId,
             filename: info.filename,
-            source: stream,
+            source: Readable.from(stream.iterator({ destroyOnReturn: false })),
             context,
           })
           .then((saved) => {
