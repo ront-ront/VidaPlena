@@ -2,7 +2,6 @@ import type { z } from 'zod'
 import {
   evolutionCommandHeader,
   evolutionCreateBody,
-  evolutionDraftResponse,
   evolutionId,
   evolutionLookupResponse,
   evolutionPatchBody,
@@ -36,13 +35,6 @@ export const evolutionDraftOpenApiPaths = {
       ...common,
       operationId: 'findEncounterDraft',
       responses: { '200': response(evolutionLookupResponse), ...errors },
-    },
-  },
-  '/clinical/evolutions/{id}': {
-    get: {
-      ...common,
-      operationId: 'readEvolution',
-      responses: { '200': response(evolutionDraftResponse), ...errors },
     },
   },
   '/clinical/evolutions/{id}/draft': {

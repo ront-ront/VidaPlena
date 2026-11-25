@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { terminologySelection, terminologySnapshot } from './terminologies'
-export const evolutionId = z.object({ id: z.uuid() })
+export const evolutionId = z.object({ id: z.uuid().toLowerCase() })
 const diagnosisSelections = z
   .array(terminologySelection)
   .max(50)
@@ -20,17 +20,19 @@ export const evolutionPatchBody = evolutionCreateBody
   .refine((value) => Object.keys(value).length > 1, {
     message: 'Informe ao menos um campo clínico.',
   })
-export const evolutionCommandHeader = z.object({ 'idempotency-key': z.uuid() })
+export const evolutionCommandHeader = z.object({
+  'idempotency-key': z.uuid().toLowerCase(),
+})
 export const evolutionSavedResponse = z.object({
-  evolutionId: z.uuid(),
+  evolutionId: z.uuid().toLowerCase(),
   draftVersion: z.number().int().positive(),
   savedAt: z.iso.datetime(),
   status: z.literal('draft'),
 })
 export const evolutionDraftResponse = evolutionSavedResponse.extend({
-  encounterId: z.uuid(),
-  patientId: z.uuid(),
-  authorProfessionalId: z.uuid(),
+  encounterId: z.uuid().toLowerCase(),
+  patientId: z.uuid().toLowerCase(),
+  authorProfessionalId: z.uuid().toLowerCase(),
   complaint: z.string(),
   history: z.string(),
   physicalExam: z.string(),

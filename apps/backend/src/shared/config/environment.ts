@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { evolutionTextFields } from '../../application/ports/evolution-drafts'
 import { civilDate } from '../../domain/rules/patient-identity'
 
 export class ConfigurationError extends Error {
@@ -133,6 +134,23 @@ export const environmentSchema = z
     EMAIL_MAILBOX_PATH: requiredText.default('var/mailbox'),
     FRONTEND_ORIGIN: origin.optional(),
     SHUTDOWN_TIMEOUT_MS: integer(10000, 1, 120000),
+    CLINICAL_RETENTION_YEARS: integer(20, 20, 1000),
+    EVOLUTION_REQUIRED_FIELDS: requiredText
+      .transform((value): unknown => {
+        try {
+          return JSON.parse(value)
+        } catch {
+          return null
+        }
+      })
+      .pipe(
+        z
+          .array(z.enum(evolutionTextFields))
+          .min(1)
+          .max(5)
+          .refine((fields) => new Set(fields).size === fields.length),
+      )
+      .default(['complaint', 'conduct']),
     AUDIT_RETENTION_YEARS: integer(5, 5, Number.MAX_SAFE_INTEGER),
     NOTIFICATION_RETRY_SECONDS: integer(60, 1, 86400),
     NOTIFICATION_MAX_ATTEMPTS: integer(3, 1, 100),
@@ -247,6 +265,8 @@ export const environmentSchema = z
       signatureProvider: env.SIGNATURE_PROVIDER,
       malwareScanner: env.MALWARE_SCANNER,
       shutdownTimeoutMs: env.SHUTDOWN_TIMEOUT_MS,
+      clinicalRetentionYears: env.CLINICAL_RETENTION_YEARS,
+      evolutionRequiredFields: env.EVOLUTION_REQUIRED_FIELDS,
       auditRetentionYears: env.AUDIT_RETENTION_YEARS,
       emailSender:
         env.EMAIL_SENDER ??

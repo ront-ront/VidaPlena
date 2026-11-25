@@ -29,6 +29,14 @@
 | `privacy.fiscal_retention_years` | — | Q-09 | Jurídico/DPO; pendente P-01, sujeito à base legal |
 | `privacy.subject_request_days` | 15 | RNF-016 | Jurídico/DPO; fonte DRS |
 
+## Evolução clínica
+
+| Chave | Default | Origem | Dono / estado |
+| --- | --- | --- | --- |
+| `clinical.evolution_required_fields` | `["complaint","conduct"]` | RF-017, resposta P-62 | Usuário aprovou para implementação; configurável por EVOLUTION_REQUIRED_FIELDS; responsável técnico valida antes de produção |
+
+`privacy.clinical_retention_years` usa CLINICAL_RETENTION_YEARS, mínimo obrigatório RN-012; cada finalização registra âncora/prazo UTC sem permitir exclusão física do original. Prazo maior é permitido; redução não apaga evidências ou encurta eventos já gravados.
+
 ## Agenda e operação
 
 Todos os defaults deste quadro foram autorizados como **provisórios e aguardando decisão** em Q-16; não são políticas finais da clínica.

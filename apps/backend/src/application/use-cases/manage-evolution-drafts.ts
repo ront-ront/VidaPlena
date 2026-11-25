@@ -194,6 +194,14 @@ export class ManageEvolutionDrafts {
       ...row.payload,
     }
   }
+  readInTransaction(
+    tx: EvolutionDraftTransaction,
+    actor: Principal,
+    id: string,
+    context: AuditContext,
+  ) {
+    return this.read(tx, actor, id, context)
+  }
   get(actor: Principal, id: string, context: AuditContext) {
     return this.run(actor, id, context, (tx) =>
       this.read(tx, actor, id, context),

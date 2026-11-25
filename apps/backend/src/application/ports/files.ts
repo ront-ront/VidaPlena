@@ -16,7 +16,11 @@ export interface FileStorage {
     source: Readable,
     maxBytes: number,
   ): Promise<StoredFile>
-  read(category: FileCategory, storageKey: string): Promise<Readable>
+  read(
+    category: FileCategory,
+    storageKey: string,
+    expectedSha256?: string,
+  ): Promise<Readable>
   remove(category: FileCategory, storageKey: string): Promise<void>
 }
 export interface ScanResult {

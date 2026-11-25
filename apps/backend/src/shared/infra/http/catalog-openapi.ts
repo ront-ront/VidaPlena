@@ -1,5 +1,6 @@
 import type { z } from 'zod'
 import { careLinkOpenApiPaths } from './care-link-openapi'
+import { clinicalEvolutionOpenApiPaths } from './clinical-evolution-openapi'
 import { clinicalRecordOpenApiPaths } from './clinical-record-openapi'
 import {
   absenceBody,
@@ -122,6 +123,7 @@ const command = (
 export const catalogOpenApiPaths = {
   ...careLinkOpenApiPaths,
   ...evolutionDraftOpenApiPaths,
+  ...clinicalEvolutionOpenApiPaths,
   ...terminologyOpenApiPaths,
   ...importedHistoryOpenApiPaths,
   ...clinicalRecordOpenApiPaths,

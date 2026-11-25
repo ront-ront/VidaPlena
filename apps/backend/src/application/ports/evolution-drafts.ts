@@ -41,6 +41,7 @@ export type EvolutionRecord = EvolutionSubject & {
   createdAt: Date
   finalizedAt: Date | null
   contentHash: string | null
+  integrityVersion: number
 }
 export type DraftCommand = {
   requestKey: string

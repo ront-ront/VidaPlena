@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { ApplicationError } from '../../../application/errors/application-error'
+import { ClinicalIntegrityError } from '../../../application/errors/clinical-integrity-error'
 import type {
   EvolutionDraftStore,
   EvolutionDraftTransaction,
@@ -23,11 +24,16 @@ type EvolutionRow = {
   createdAt: Date
   finalizedAt: Date | null
   contentHash: string | null
+  integrityVersion: number
 }
 const subject = (
   row: Omit<
     EvolutionRow,
-    'payloadEncrypted' | 'createdAt' | 'finalizedAt' | 'contentHash'
+    | 'payloadEncrypted'
+    | 'createdAt'
+    | 'finalizedAt'
+    | 'contentHash'
+    | 'integrityVersion'
   >,
 ): EvolutionSubject => ({
   id: row.id,
@@ -52,15 +58,22 @@ export class PrismaEvolutionDraftStore implements EvolutionDraftStore {
     private readonly terms: PrismaTerminologyStore,
     private readonly secrets: SecretBox,
   ) {}
-  private row(row: EvolutionRow): EvolutionRecord {
+  project(row: EvolutionRow): EvolutionRecord {
+    let payload: EvolutionPayload
+    try {
+      payload = JSON.parse(
+        this.secrets.open(row.payloadEncrypted, `clinical_evolution:${row.id}`),
+      ) as EvolutionPayload
+    } catch {
+      throw new ClinicalIntegrityError(row.id)
+    }
     return {
       ...subject(row),
       createdAt: row.createdAt,
       finalizedAt: row.finalizedAt,
       contentHash: row.contentHash,
-      payload: JSON.parse(
-        this.secrets.open(row.payloadEncrypted, `clinical_evolution:${row.id}`),
-      ) as EvolutionPayload,
+      integrityVersion: row.integrityVersion,
+      payload,
     }
   }
   transaction<T>(
@@ -116,11 +129,11 @@ export class PrismaEvolutionDraftStore implements EvolutionDraftStore {
       },
       evolution: async (id) => {
         const row = await tx.clinicalEvolution.findUnique({ where: { id } })
-        return row ? this.row(row) : null
+        return row ? this.project(row) : null
       },
       createEvolution: async (encounterId, professionalId, payload, now) => {
         const id = randomUUID()
-        return this.row(
+        return this.project(
           await tx.clinicalEvolution.create({
             data: {
               id,
@@ -149,7 +162,7 @@ export class PrismaEvolutionDraftStore implements EvolutionDraftStore {
           },
         })
         if (result.count !== 1) throw new ApplicationError('CONFLICT')
-        return this.row(
+        return this.project(
           await tx.clinicalEvolution.findUniqueOrThrow({ where: { id } }),
         )
       },

@@ -34,6 +34,7 @@
 | Testes de idempotência do agendamento frontend | `yarn workspace vida-plena-frontend test:booking` |
 | Testes funcionais frontend | `yarn workspace vida-plena-frontend test:e2e` (Playwright/Firefox; servidor isolado na porta 3400, APIs simuladas) |
 | Testes HTTP novos | `yarn workspace vida-plena-backend test:vitest` |
+| Restore lógico clínico isolado | `yarn workspace vida-plena-backend test:clinical-restore` (`TEST_DATABASE_URL` descartável; `TEST_POSTGRES_CONTAINER` opcional para ferramentas PostgreSQL17 via Docker) |
 | Reconciliar vínculos da agenda | `yarn workspace vida-plena-backend care-links:reconcile` (automático no startup; repetição idempotente) |
 | Catálogos sintéticos dev (CID/TUSS) | `yarn workspace vida-plena-backend terminologies:demo` (somente development/test) |
 | Carregar versão local demonstrativa | `yarn workspace vida-plena-backend terminologies:load <arquivo.json>` |

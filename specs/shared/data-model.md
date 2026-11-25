@@ -153,3 +153,7 @@ ClinicalRecord usa recordNumber UUID prefixado VP (sem dados pessoais), criado u
 ### Versões terminológicas demonstrativas (BE-034/P-60)
 
 Catálogo e entradas são append-only; a seleção ativa muda atomicamente. Repetição da mesma versão/conteúdo é idempotente, alteração exige versão nova. Atos clínicos guardam snapshot independente com code/description/version/source/demo, sem FK mutável. Loader V1 aceita somente fixture demonstrativa de até1000 entradas por arquivo, em development/test; dataset oficial/carga real requer validação P-13 e extensão deliberada. A busca/validação em staging/production ignora demo, mesmo se base de desenvolvimento tiver sido copiada. Demonstração não comprova conteúdo médico CID/TUSS real.
+
+### Finalização e retenção BE-036 (P-62)
+
+ClinicalEvolution ganha integrityVersion (v1) para a projeção determinística de hash. EvolutionAddendum mantém originalEvolutionId, authorProfessionalId, contentEncrypted (reason/correctionText), createdAt/contentHash e é append-only. ClinicalRetentionEvent é append-only por encounterId único: recordId, anchorAt (encerramento UTC), retentionYears (mínimo RN-012), retainUntil, createdAt. Não substitui parecer jurídico nem ativa purga. Finalização encerra encontro/agenda na mesma transação e a janela CareLink usa clinicalEndedAt real, preservando o intervalo agendado/reserva no histórico. Arquivos vinculados são congelados junto à evolução; hashes dos anexos ativos compõem a integridade. Nenhum item é publicado automaticamente.

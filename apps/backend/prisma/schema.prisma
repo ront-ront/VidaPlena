@@ -439,6 +439,7 @@ model ProfessionalProfile {
   clinicalEncounters ClinicalEncounter[]
   importedHistoryChecks ImportedHistoryCheck[]
   clinicalEvolutions ClinicalEvolution[]
+  evolutionAddenda EvolutionAddendum[]
   importedHistoryAddenda ImportedHistoryAddendum[]
   timelineEntries ClinicalTimelineEntry[]
   schedules ScheduleVersion[]
@@ -884,6 +885,7 @@ model ClinicalRecord {
   patient PatientProfile @relation(fields:[patientId],references:[id],onDelete:Restrict)
   encounters ClinicalEncounter[]
   importedHistories ImportedHistory[]
+  retentionEvents ClinicalRetentionEvent[]
   timelineEntries ClinicalTimelineEntry[]
 }
 model ClinicalEncounter {
@@ -896,6 +898,7 @@ model ClinicalEncounter {
   status String @default("in_progress")
   appointment Appointment @relation(fields:[appointmentId],references:[id],onDelete:Restrict)
   evolution ClinicalEvolution?
+  retentionEvent ClinicalRetentionEvent?
   record ClinicalRecord @relation(fields:[recordId],references:[id],onDelete:Restrict)
   professional ProfessionalProfile @relation(fields:[professionalId],references:[id],onDelete:Restrict)
   @@index([recordId,status,startedAt,id])
@@ -1005,9 +1008,11 @@ model ClinicalEvolution {
   createdAt DateTime @db.Timestamptz(3)
   finalizedAt DateTime? @db.Timestamptz(3)
   contentHash String?
+  integrityVersion Int @default(1)
   encounter ClinicalEncounter @relation(fields:[encounterId],references:[id],onDelete:Restrict)
   author ProfessionalProfile @relation(fields:[authorProfessionalId],references:[id],onDelete:Restrict)
   commands EvolutionDraftCommand[]
+  addenda EvolutionAddendum[]
   @@index([authorProfessionalId,status,finalizedAt,id])
 }
 model EvolutionDraftCommand {
@@ -1021,4 +1026,28 @@ model EvolutionDraftCommand {
   actor User @relation(fields:[actorId],references:[id],onDelete:Restrict)
   evolution ClinicalEvolution @relation(fields:[evolutionId],references:[id],onDelete:Restrict)
   @@index([evolutionId,resultVersion])
+}
+
+model EvolutionAddendum {
+  id String @id @default(uuid()) @db.Uuid
+  originalEvolutionId String @db.Uuid
+  authorProfessionalId String @db.Uuid
+  contentEncrypted String
+  contentHash String
+  createdAt DateTime @db.Timestamptz(3)
+  original ClinicalEvolution @relation(fields:[originalEvolutionId],references:[id],onDelete:Restrict)
+  author ProfessionalProfile @relation(fields:[authorProfessionalId],references:[id],onDelete:Restrict)
+  @@index([originalEvolutionId,createdAt,id])
+}
+model ClinicalRetentionEvent {
+  id String @id @default(uuid()) @db.Uuid
+  recordId String @db.Uuid
+  encounterId String @unique @db.Uuid
+  anchorAt DateTime @db.Timestamptz(3)
+  retentionYears Int
+  retainUntil DateTime @db.Timestamptz(3)
+  createdAt DateTime @db.Timestamptz(3)
+  record ClinicalRecord @relation(fields:[recordId],references:[id],onDelete:Restrict)
+  encounter ClinicalEncounter @relation(fields:[encounterId],references:[id],onDelete:Restrict)
+  @@index([recordId,retainUntil])
 }

@@ -47,20 +47,6 @@ export function createEvolutionDraftRouter(
       )
     },
   )
-  router.get(
-    '/clinical/evolutions/:id',
-    accessGuard(tokens, authorize, 'clinical_actor'),
-    async (req, res) => {
-      res.setHeader('Cache-Control', 'no-store')
-      res.json(
-        await service.get(
-          principalOf(res),
-          parseInput(evolutionId, req.params).id,
-          auditContext(req, res),
-        ),
-      )
-    },
-  )
   router.patch(
     '/clinical/evolutions/:id/draft',
     accessGuard(tokens, authorize, 'clinical_actor'),

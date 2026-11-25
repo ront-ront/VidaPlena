@@ -142,7 +142,11 @@ export class ManageFiles {
       proof.fileId,
       context,
     )
-    const stream = await this.storage.read(file.category, file.storageKey)
+    const stream = await this.storage.read(
+      file.category,
+      file.storageKey,
+      file.sha256,
+    )
     await this.repository.audit.append({
       ...context,
       actorUserId: actor.userId,

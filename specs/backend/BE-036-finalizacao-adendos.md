@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M2 Prontuário
-- **Status:** pendente
+- **Status:** implementada e verificada localmente; assinatura jurídica/produção permanecem pendentes
 - **Depende de:** BE-035, BE-004
 - **Requisitos cobertos:** RF-017, RN-008, RN-012, RNF-005
 
@@ -22,17 +22,23 @@ Ler `specs/shared/data-model.md#m2`, `specs/shared/api-contracts.md#m2` (finaliz
 - A redação de RN-008 com janela de 24 h foi substituída por Q-04: **nenhum prazo permite editar original**. Arquivo de evolução assinada/finalizada é imutável também em FileStorage.
 
 ## 5. Critérios de aceite
-- [ ] Dada evolução finalizada, quando qualquer papel tentar PATCH/DELETE direto ou via repository, então conteúdo/hash originais permanecem.
-- [ ] Dado autor com justificativa, quando criar adendo, então original e adendo aparecem juntos com autores/datas e auditoria.
-- [ ] Dado outro profissional ou justificativa vazia, quando tentar adendo, então 403/400 e nada é gravado.
-- [ ] Dado prazo de retenção ainda vigente, quando executar limpeza/restauração, então evolução não é apagada fisicamente.
+- [x] Dada evolução finalizada, quando qualquer papel tentar PATCH/DELETE direto ou via repository, então conteúdo/hash originais permanecem.
+- [x] Dado autor com justificativa, quando criar adendo, então original e adendo aparecem juntos com autores/datas e auditoria.
+- [x] Dado outro profissional ou justificativa vazia, quando tentar adendo, então 403/400 e nada é gravado.
+- [x] Dado prazo de retenção ainda vigente, quando executar limpeza/restauração, então evolução não é apagada fisicamente.
 
 ## 6. Testes esperados
 Finalização concorrente, hash, UPDATE/DELETE deliberado, adendo/autoria/justificativa, leitura conjunta, retenção e auditoria; lint.
 
 ## 7. Definition of Done
-- [ ] Imutabilidade provada no banco e API; original sempre consultável.
-- [ ] Testes/lint passam; desvio Q-04 visível na matriz, sem `tsc`.
+- [x] Imutabilidade provada no banco e API; original sempre consultável.
+- [x] Testes/lint passam; desvio Q-04 visível na matriz, sem `tsc`.
 
 ## 8. Suposições e pontos em aberto
 Assinatura legal da evolução, se exigida por responsável técnico, não foi detalhada; esta spec garante finalização/imutabilidade, e P-02 governa documentos emitidos.
+
+## Evidência local —25/11/2026
+
+Finalização transacional com versão/locks, queixa e conduta obrigatórias (P-62), SHA-256 de projeção versionada, adendos cifrados append-only do autor e leitura conjunta. Encerramento real do encontro/consulta, liberação da reserva, janela pós-atendimento e evento de retenção ancorado na mesma transação. Banco impede UPDATE/DELETE/TRUNCATE de finalizadas/adendos/retenção e alteração dos arquivos associados. Leitura própria após expiração não abre o prontuário inteiro. Integridade é verificada antes de fornecer conteúdo/download; hash não equivale a assinatura jurídica (`legalSignatureStatus=not_provided`).
+
+12/12 integrações específicas (incluindo CID snapshot e leitura/adendo após expiração),120/120 regressões M0/M1/M2 (conjuntos sobrepostos),28/28 Node,2/2 Vitest, lint e dump/restore lógico1/1 passaram. Restore usa apenas PostgreSQL descartável; não comprova pgBackRest/RPO/RTO produtivos. UUID em caixa alta é normalizado e o adendo usa identidade canônica do original. Logs `/tmp/vidaplena-be036-{canonical,regression,node,vitest,final-restore}.log`. Limites jurídicos P-02, clínicos P-62 e operacionais P-07 continuam.

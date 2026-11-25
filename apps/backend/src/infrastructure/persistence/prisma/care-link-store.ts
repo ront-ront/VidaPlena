@@ -24,10 +24,39 @@ const professionalWhere = {
     roles: { some: { roleCode: 'professional', revokedAt: null } },
   },
 }
-const include = {
-  appointment: true,
-  parent: { include: { appointment: true } },
+const appointmentInclude = {
+  include: { clinicalEncounter: { select: { endedAt: true } } },
 } as const
+const include = {
+  appointment: appointmentInclude,
+  parent: { include: { appointment: appointmentInclude } },
+} as const
+const projectAppointment = (
+  row:
+    | (CareAppointment & {
+        clinicalEncounter?: { endedAt: Date | null } | null
+      })
+    | null,
+): CareAppointment | null =>
+  row
+    ? { ...row, clinicalEndedAt: row.clinicalEncounter?.endedAt ?? null }
+    : null
+function projectLink(
+  row: Prisma.CareLinkGetPayload<{ include: typeof include }>,
+): CareLinkRecord {
+  return {
+    ...row,
+    source: row.source as CareLinkRecord['source'],
+    appointment: projectAppointment(row.appointment),
+    parent: row.parent
+      ? {
+          ...row.parent,
+          source: row.parent.source as CareLinkRecord['source'],
+          appointment: projectAppointment(row.parent.appointment),
+        }
+      : null,
+  }
+}
 async function revokeDerived(
   tx: Prisma.TransactionClient,
   parent: { id: string; patientId: string },
@@ -96,7 +125,16 @@ export async function syncAppointmentCareLink(
       },
     })
   }
-  const window = careWindow(appointment, policy)
+  const clinicalEndedAt =
+    appointment.status === 'completed'
+      ? (
+          await tx.clinicalEncounter.findUnique({
+            where: { appointmentId: appointment.id },
+            select: { endedAt: true },
+          })
+        )?.endedAt
+      : null
+  const window = careWindow({ ...appointment, clinicalEndedAt }, policy)
   if (!window) return closed.length
   const prior = await tx.careLink.findUnique({
     where: {
@@ -253,26 +291,30 @@ export class PrismaCareLinkStore implements CareLinkStore {
           include,
         })
         return {
-          items: rows.slice(0, 30) as CareLinkRecord[],
+          items: rows.slice(0, 30).map(projectLink),
           nextCursor: rows.length > 30 ? rows[29].id : null,
         }
       },
       links: async (professionalId, patientId) =>
-        (await tx.careLink.findMany({
-          where: { professionalId, patientId },
-          include,
-        })) as CareLinkRecord[],
+        (
+          await tx.careLink.findMany({
+            where: { professionalId, patientId },
+            include,
+          })
+        ).map(projectLink),
       grant: async (input) => {
         const { reason, ...data } = input,
           id = randomUUID()
-        return (await tx.careLink.create({
-          data: {
-            ...data,
-            id,
-            reasonEncrypted: this.secrets.seal(reason, `care_link:${id}`),
-          },
-          include,
-        })) as CareLinkRecord
+        return projectLink(
+          await tx.careLink.create({
+            data: {
+              ...data,
+              id,
+              reasonEncrypted: this.secrets.seal(reason, `care_link:${id}`),
+            },
+            include,
+          }),
+        )
       },
       audit: new PrismaAuditWriter(tx),
     }

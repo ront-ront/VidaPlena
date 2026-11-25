@@ -24,7 +24,8 @@
     "backup:cycle": "tsx ops/backup/backup-cycle.ts",
     "backup:files": "tsx ops/backup/file-snapshots.ts",
     "terminologies:demo": "tsx src/shared/infra/cli/terminologies.ts demo",
-    "terminologies:load": "tsx src/shared/infra/cli/terminologies.ts load"
+    "terminologies:load": "tsx src/shared/infra/cli/terminologies.ts load",
+    "test:clinical-restore": "node --import tsx --test tests/ops/clinical-restore.test.ts"
   },
   "dependencies": {
     "@js-temporal/polyfill": "^0.5.1",

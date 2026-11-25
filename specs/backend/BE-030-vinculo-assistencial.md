@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M2 Prontuário
-- **Status:** fundação implementada e verificada localmente; integração de autoria em BE-035/036 pendente; leitura clínica BE-032 integrada
+- **Status:** implementada e verificada localmente; leitura BE-032 e autoria BE-035/036 integradas
 - **Depende de:** BE-005, BE-021, BE-023, BE-027
 - **Requisitos cobertos:** RN-007, RF-016, RNF-012
 
@@ -22,7 +22,7 @@ Ler `specs/shared/data-model.md#m2`, `specs/shared/api-contracts.md#m2` (víncul
 - Guard resolve base por recurso/tempo em toda requisição, registra `CareLink.id` em auditoria e falha fechado sem parâmetro decidido. Política provisória entre especialidades aprovada em24/11/2026, descrita em `shared/access-policy.md`; pré-consulta continua limitada e leitura integra BE-032.
 
 ## 5. Critérios de aceite
-- [ ] Dado profissional sem vínculo, quando acessar recurso clínico, então 404/negação auditada; vínculo expirado também nega, exceto evolução própria.
+- [x] Dado profissional sem vínculo, quando acessar recurso clínico, então 404/negação auditada; vínculo expirado também nega, exceto evolução própria.
 - [x] Dada consulta M1 já confirmada, quando rodar reconciliação duas vezes, então um único vínculo válido é criado.
 - [x] Dado cancelamento prévio/no-show/novo atendimento, quando atualizar, então janelas usam `access.link_pre_hours`, `access.link_noshow_days` e `access.link_post_days` sem órfãos.
 - [x] Dado compartilhamento/cobertura, quando conceder, então motivo, concedente, prazo e alvo ficam auditados; gestor não passa a ler prontuário.
@@ -42,3 +42,5 @@ P-06 liberada pelo usuário em24/11/2026 com defaults provisórios/política de 
 Migration `202611240030_care_links`, origem/FKs/identidade imutável/sem DELETE; janelas por Zod/Temporal, sincronização transacional no histórico da agenda, cancelamento/remarcação/ausência/encaixe/CSV e reconciliação CLI/startup. Base atual da consulta é revalidada no guard; concessões derivadas não contornam fase pré-consulta e são revogadas/auditadas quando a origem termina ou muda de janela. Motivos cifrados, metadados mínimos, papéis/MFA recarregados, paginação própria no banco e schemas únicos Zod/OpenAPI.
 
 89/89 integrações de consumidores M1+fundação e revisão posterior10/10 BE-030 aprovadas;28/28 Node,2/2 Vitest, lint do escopo e diff aprovados. Conjuntos se sobrepõem. Testes cobrem fronteiras/DST, reconciliação/reinício, no-show, troca profissional, rollback consulta/reserva/vínculo por falha de auditoria, compartilhamento/limite/flag/delegação, revogação de derivados, substituição sem leitura administrativa, papéis/MFA, paginação/cursor, cifragem e OpenAPI. Logs `/tmp/vidaplena-be030-{consumers,audit-final-integration,final-node,vitest,scope-lint}.log`. Banco descartável (porta atual32769, não desenvolvimento). Nenhum tsc. BE-032 ainda não expõe prontuário; autoria própria será exercitada com evolução real, sem declarar critério concluído antecipadamente.
+
+**Integração BE-036 —25/11/2026:** evolução real finalizada permanece legível e aditável somente pelo autor após expiração, sem acesso ao header/histórico integral. Teste HTTP/PostgreSQL aprovado; primeiro critério agora concluído. Janela pós-atendimento usa término real do encontro. Texto histórico acima descreve o checkpoint anterior.

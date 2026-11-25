@@ -14,6 +14,7 @@ export type CareAppointment = {
   endsAt: Date
   status: string
   version: number
+  clinicalEndedAt?: Date | null
 }
 export type CarePhase = 'pre' | 'during' | 'post'
 export function careWindow(
@@ -25,7 +26,10 @@ export function careWindow(
     appointment.startsAt.toISOString(),
   ).toZonedDateTimeISO(policy.timeZone)
   const end = Temporal.Instant.from(
-    appointment.endsAt.toISOString(),
+    (appointment.status === 'completed' && appointment.clinicalEndedAt
+      ? appointment.clinicalEndedAt
+      : appointment.endsAt
+    ).toISOString(),
   ).toZonedDateTimeISO(policy.timeZone)
   return {
     startsAt: new Date(

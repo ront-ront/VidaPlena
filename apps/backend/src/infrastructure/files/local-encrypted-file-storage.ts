@@ -92,7 +92,11 @@ export class LocalEncryptedFileStorage implements FileStorage {
       throw error
     }
   }
-  async read(category: FileCategory, storageKey: string) {
+  async read(
+    category: FileCategory,
+    storageKey: string,
+    expectedSha256?: string,
+  ) {
     const path = this.path(category, storageKey)
     const file = await stat(path)
     if (file.size < 28) throw new Error('Arquivo cifrado inválido.')
@@ -113,9 +117,10 @@ export class LocalEncryptedFileStorage implements FileStorage {
       )
     }
     // GCM authenticates at EOF. Verify once before any plaintext is handed to HTTP.
-    for await (const _chunk of decrypt()) {
-      // Streaming verification keeps memory bounded for recordings.
-    }
+    const hash = createHash('sha256')
+    for await (const chunk of decrypt()) hash.update(chunk)
+    if (expectedSha256 && hash.digest('hex') !== expectedSha256)
+      throw new Error('File integrity mismatch')
     return decrypt()
   }
   async remove(category: FileCategory, storageKey: string) {
