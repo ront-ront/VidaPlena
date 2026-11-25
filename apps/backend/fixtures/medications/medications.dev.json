@@ -1,0 +1,35 @@
+{
+  "version": "dev-2026-01",
+  "source": "VidaPlena: catálogo sintético para testes, sem uso clínico",
+  "license": "CC0-1.0; dados fictícios criados para demonstração",
+  "demo": true,
+  "entries": [
+    {
+      "code": "DEV-MED-A",
+      "name": "Medicamento demonstrativo A",
+      "activeSubstances": [
+        { "code": "DEV-SUB-A", "description": "Substância demonstrativa A" }
+      ],
+      "active": true,
+      "controlled": false
+    },
+    {
+      "code": "DEV-MED-B",
+      "name": "Medicamento demonstrativo B",
+      "activeSubstances": [
+        { "code": "DEV-SUB-B", "description": "Substância demonstrativa B" }
+      ],
+      "active": true,
+      "controlled": false
+    },
+    {
+      "code": "DEV-MED-CONTROL",
+      "name": "Medicamento demonstrativo bloqueado (controle especial)",
+      "activeSubstances": [
+        { "code": "DEV-SUB-C", "description": "Substância demonstrativa C" }
+      ],
+      "active": true,
+      "controlled": true
+    }
+  ]
+}

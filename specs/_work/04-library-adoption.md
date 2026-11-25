@@ -20,3 +20,7 @@
 ## M2/BE-038 — canonicalização documental (25/11/2026)
 
 Adotada `canonicalize`5.1.0 (Apache-2.0, Node>=22) atrás da porta CanonicalDocuments, para bytes JSON determinísticos conforme [RFC8785](https://www.rfc-editor.org/rfc/rfc8785.html); [documentação oficial](https://github.com/erdtman/canonicalize) consultada, Context7 indisponível. Evita serializador próprio para payloads documentais variáveis. `node:crypto` permanece para SHA-256 e códigos aleatórios; não há implementação própria de assinatura qualificada. Unitários conferem ordem de chaves e rejeição de não finitos, e integrações verificam integridade/imutabilidade. Yarn apenas adicionou canonicalize e reordenou duas entradas já existentes no lockfile, sem trocar versões das demais dependências.
+
+## M2/BE-039 — PDF demonstrativo (25/11/2026)
+
+pdf-lib1.17.1 e @pdf-lib/fontkit para renderização/embedding Unicode, conforme [API oficial](https://pdf-lib.js.org/docs/api/classes/pdfdocument). Noto Sans do commit ffebf8c1ee449e544955a7e813c54f9b73848eac, sem alteração, com OFL94 linhas/copyright e manifesto SHA em infrastructure/documents/assets. PDF conserva selo e identificação em todas as páginas; glyph ausente gera erro seguro mantendo draft. Arquivo usa FileStorage/Scanner existentes, sem biblioteca própria de PDF/cripto. Revisão manual com Poppler já disponível na máquina (não dependência de runtime) conferiu22 páginas e30 marcadores; testes Node carregam o PDF com pdf-lib.

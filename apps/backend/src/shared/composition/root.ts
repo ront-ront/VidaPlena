@@ -35,6 +35,7 @@ import type { ManageEvolutionDrafts } from '../../application/use-cases/manage-e
 import type { ManageFiles } from '../../application/use-cases/manage-files'
 import type { ManageImportedHistory } from '../../application/use-cases/manage-imported-history'
 import type { ManageMaintenance } from '../../application/use-cases/manage-maintenance'
+import type { ManageMedications } from '../../application/use-cases/manage-medications'
 import type { ManageRooms } from '../../application/use-cases/manage-rooms'
 import type { ManageSchedule } from '../../application/use-cases/manage-schedule'
 import type { ManageSubjectRequests } from '../../application/use-cases/manage-subject-requests'
@@ -73,6 +74,7 @@ import { createEvolutionDraftRouter } from '../infra/http/evolution-draft-router
 import { createFileRouter } from '../infra/http/file-router'
 import { createImportRouter } from '../infra/http/import-router'
 import { createImportedHistoryRouter } from '../infra/http/imported-history-router'
+import { createMedicationRouter } from '../infra/http/medication-router'
 import {
   accessGuard,
   auditContext,
@@ -151,6 +153,13 @@ export async function composeBackendApplication(config: AppConfig) {
     }
     const routes = Router()
     registerApiDocumentation(routes)
+    routes.use(
+      createMedicationRouter(
+        tokens,
+        authorize,
+        scope.resolve<ManageMedications>(services.manageMedications),
+      ),
+    )
     routes.use(
       createClinicalDocumentRouter(
         tokens,

@@ -88,6 +88,23 @@ export const clinicalDocumentResponse = z.object({
   typeVersion: z.number().int().positive(),
   templateVersion: z.string(),
   requiredSignatureLevel: z.enum(['simple', 'qualified']),
+  copiedFromDocumentId: z.uuid().nullable(),
+  files: z.array(
+    z.object({
+      id: z.uuid(),
+      contentType: z.string(),
+      size: z.number().int().nonnegative(),
+      sha256,
+    }),
+  ),
+  allergyAcknowledgements: z.array(
+    z.object({
+      alertId: z.uuid(),
+      alertVersion: z.number().int().positive(),
+      professionalId: z.uuid(),
+      acknowledgedAt: z.iso.datetime(),
+    }),
+  ),
   payloadVersion: z.number().int().positive(),
   payload: z.unknown(),
   version: z.number().int().positive(),

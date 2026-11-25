@@ -9,9 +9,12 @@ import type {
   DocumentPolicies,
   DocumentTypeCode,
 } from '../ports/clinical-documents'
+import type { DocumentArtifactWriter } from '../ports/document-artifacts'
+import type { FileRecord } from '../ports/files'
 import type { OpaqueTokens } from '../ports/passwords'
 import type {
   CanonicalDocuments,
+  DocumentSigner,
   SignatureProvider,
 } from '../ports/signature-provider'
 import { type AuthorizeClinical, clinicalBasisId } from './authorize-clinical'
@@ -26,6 +29,7 @@ export class ManageClinicalDocuments {
     private readonly canonical: CanonicalDocuments,
     private readonly tokens: OpaqueTokens,
     private readonly policies: DocumentPolicies,
+    private readonly artifacts: DocumentArtifactWriter | null = null,
     private readonly now = () => new Date(),
   ) {}
   private async run<T>(
@@ -135,6 +139,48 @@ export class ManageClinicalDocuments {
       metadata: { version: row.version, status: row.status },
     })
   }
+  private envelope(
+    row: ClinicalDocument,
+    signer: DocumentSigner,
+    issuedAt: Date,
+    version: 1 | 2,
+  ) {
+    return {
+      integrityVersion: version,
+      documentId: row.id,
+      recordId: row.recordId,
+      patientId: row.patientId,
+      encounterId: row.encounterId,
+      authorProfessionalId: row.authorProfessionalId,
+      type: {
+        code: row.type.code,
+        label: row.type.label,
+        version: row.type.version,
+        templateVersion: row.type.templateVersion,
+        requiredSignatureLevel: row.type.requiredSignatureLevel,
+      },
+      payloadVersion: row.payloadVersion,
+      payload: row.payload,
+      signer,
+      issuedAt: issuedAt.toISOString(),
+      ...(version === 2
+        ? {
+            copiedFromDocumentId: row.copiedFromDocumentId,
+            allergyAcknowledgements: [...row.allergyAcknowledgements].sort(
+              (a, b) => a.alertId.localeCompare(b.alertId),
+            ),
+            files: row.files
+              .map((f) => ({
+                id: f.id,
+                sha256: f.sha256,
+                contentType: f.contentType,
+                size: f.size,
+              }))
+              .sort((a, b) => a.id.localeCompare(b.id)),
+          }
+        : {}),
+    }
+  }
   private checked(row: ClinicalDocument) {
     if (row.status === 'draft') return row
     const fail = () => {
@@ -151,25 +197,17 @@ export class ManageClinicalDocuments {
       return fail()
     try {
       const envelope = JSON.parse(row.canonical)
-      const expected = {
-        integrityVersion: 1,
-        documentId: row.id,
-        recordId: row.recordId,
-        patientId: row.patientId,
-        encounterId: row.encounterId,
-        authorProfessionalId: row.authorProfessionalId,
-        type: {
-          code: row.type.code,
-          label: row.type.label,
-          version: row.type.version,
-          templateVersion: row.type.templateVersion,
-          requiredSignatureLevel: row.type.requiredSignatureLevel,
-        },
-        payloadVersion: row.payloadVersion,
-        payload: row.payload,
-        signer: row.signature.signer,
-        issuedAt: row.issuedAt.toISOString(),
-      }
+      if (
+        ![1, 2].includes(envelope.integrityVersion) ||
+        (envelope.integrityVersion === 1 && row.copiedFromDocumentId)
+      )
+        return fail()
+      const expected = this.envelope(
+        row,
+        row.signature.signer,
+        row.issuedAt,
+        envelope.integrityVersion,
+      )
       if (
         this.canonical.serialize(envelope) !== row.canonical ||
         this.canonical.serialize(expected) !== row.canonical ||
@@ -201,6 +239,9 @@ export class ManageClinicalDocuments {
       typeVersion: row.type.version,
       templateVersion: row.type.templateVersion,
       requiredSignatureLevel: row.type.requiredSignatureLevel,
+      copiedFromDocumentId: row.copiedFromDocumentId,
+      files: row.files,
+      allergyAcknowledgements: row.allergyAcknowledgements,
       payloadVersion: row.payloadVersion,
       payload: row.payload,
       version: row.version,
@@ -227,10 +268,16 @@ export class ManageClinicalDocuments {
       const { basis, encounter } = await this.writer(tx, actor, encounterId),
         type = await tx.documentType(typeCode)
       if (!type?.active) throw new ApplicationError('VALIDATION_ERROR')
-      const value = this.policy(typeCode).validate(
-        payload,
-        type.templateVersion,
-      )
+      const policy = this.policy(typeCode),
+        validated = policy.validate(payload, type.templateVersion)
+      const value = policy.prepare
+        ? await policy.prepare(tx, validated, type.templateVersion, {
+            actor,
+            patientId: encounter.patientId,
+            encounterId: encounter.id,
+            reusing: false,
+          })
+        : validated
       const row = await tx.createDocument(
         encounter,
         type,
@@ -242,6 +289,55 @@ export class ManageClinicalDocuments {
         actor,
         context,
         'document.draft_created',
+        row,
+        clinicalBasisId(basis),
+      )
+      return this.view(row)
+    })
+  }
+  reuse(
+    actor: Principal,
+    encounterId: string,
+    sourceDocumentId: string,
+    context: AuditContext,
+  ) {
+    return this.run(actor, sourceDocumentId, context, async (tx) => {
+      const { basis, encounter } = await this.writer(tx, actor, encounterId),
+        subject = await tx.documentSubject(sourceDocumentId)
+      if (
+        !subject ||
+        subject.patientId !== encounter.patientId ||
+        subject.status === 'draft'
+      )
+        throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
+      const source = await tx.document(subject.id)
+      if (!source || source.voidEvent)
+        throw new ApplicationError('VALIDATION_ERROR')
+      this.checked(source)
+      const type = await tx.documentType(source.type.typeId)
+      if (!type?.active) throw new ApplicationError('VALIDATION_ERROR')
+      const policy = this.policy(type.code),
+        validated = policy.validate(source.payload, type.templateVersion)
+      const value = policy.prepare
+        ? await policy.prepare(tx, validated, type.templateVersion, {
+            actor,
+            patientId: encounter.patientId,
+            encounterId: encounter.id,
+            reusing: true,
+          })
+        : validated
+      const row = await tx.createDocument(
+        encounter,
+        type,
+        JSON.parse(this.canonical.serialize(value)),
+        this.now(),
+        source.id,
+      )
+      await this.log(
+        tx,
+        actor,
+        context,
+        'document.draft_reused',
         row,
         clinicalBasisId(basis),
       )
@@ -261,10 +357,16 @@ export class ManageClinicalDocuments {
         throw new ApplicationError('CONFLICT')
       const type = await tx.documentType(row.type.typeId)
       if (!type?.active) throw new ApplicationError('VALIDATION_ERROR')
-      const value = this.policy(type.code).validate(
-        payload,
-        type.templateVersion,
-      )
+      const policy = this.policy(type.code),
+        validated = policy.validate(payload, type.templateVersion)
+      const value = policy.prepare
+        ? await policy.prepare(tx, validated, type.templateVersion, {
+            actor,
+            patientId: row.patientId,
+            encounterId: row.encounterId,
+            reusing: false,
+          })
+        : validated
       const next = await tx.updateDocument(
         id,
         type.id,
@@ -289,6 +391,7 @@ export class ManageClinicalDocuments {
     input: { expectedVersion: number; acknowledgedAllergyIds?: string[] },
     context: AuditContext,
   ) {
+    const staged: { discard(): Promise<void> }[] = []
     return this.run(actor, id, context, async (tx) => {
       const { row, basis, encounter } = await this.written(tx, actor, id)
       if (row.status !== 'draft' || row.version !== input.expectedVersion)
@@ -306,29 +409,30 @@ export class ManageClinicalDocuments {
         row,
         actor,
         input.acknowledgedAllergyIds ?? [],
+        { ...context, authorizationBasis: clinicalBasisId(basis) },
       )
       const signer = await tx.documentSigner(row.authorProfessionalId)
       if (!signer) throw new ApplicationError('FORBIDDEN')
       const now = this.now(),
-        canonical = this.canonical.serialize({
-          integrityVersion: 1,
-          documentId: row.id,
-          recordId: row.recordId,
-          patientId: row.patientId,
-          encounterId: row.encounterId,
-          authorProfessionalId: row.authorProfessionalId,
-          type: {
-            code: type.code,
-            label: type.label,
-            version: type.version,
-            templateVersion: type.templateVersion,
-            requiredSignatureLevel: type.requiredSignatureLevel,
-          },
-          payloadVersion: row.payloadVersion,
-          payload: row.payload,
-          signer,
-          issuedAt: now.toISOString(),
-        })
+        code = this.tokens.issue()
+      const artifact = await this.artifacts?.stage(tx, row, {
+        signer,
+        issuedAt: now,
+        verificationCode: code,
+        developmentOnly: this.provider.developmentOnly,
+        context: {
+          ...context,
+          actorUserId: actor.userId,
+          actorRoles: actor.roles,
+          authorizationBasis: clinicalBasisId(basis),
+        },
+      })
+      if (artifact) staged.push(artifact)
+      const prepared = await tx.document(row.id)
+      if (!prepared) throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
+      const canonical = this.canonical.serialize(
+        this.envelope(prepared, signer, now, 2),
+      )
       const signature = await this.provider.sign({
         bytes: this.canonical.bytes(canonical),
         signer,
@@ -349,17 +453,16 @@ export class ManageClinicalDocuments {
         (!this.provider.developmentOnly && !signature.legalValidity)
       )
         throw new ApplicationError('SERVICE_UNAVAILABLE')
-      const code = this.tokens.issue(),
-        next = this.checked(
-          await tx.issueDocument(id, {
-            canonical,
-            signature,
-            verificationCode: code,
-            verificationCodeHash: this.tokens.digest(code),
-            issuedAt: now,
-            status: signature.legalValidity ? 'issued_valid' : 'issued_dev',
-          }),
-        )
+      const next = this.checked(
+        await tx.issueDocument(id, {
+          canonical,
+          signature,
+          verificationCode: code,
+          verificationCodeHash: this.tokens.digest(code),
+          issuedAt: now,
+          status: signature.legalValidity ? 'issued_valid' : 'issued_dev',
+        }),
+      )
       await tx.appendTimeline({
         recordId: row.recordId,
         resourceId: row.id,
@@ -384,6 +487,9 @@ export class ManageClinicalDocuments {
         clinicalBasisId(basis),
       )
       return this.view(next)
+    }).catch(async (error) => {
+      await Promise.allSettled(staged.map((file) => file.discard()))
+      throw error
     })
   }
   get(actor: Principal, id: string, context: AuditContext) {
@@ -417,6 +523,55 @@ export class ManageClinicalDocuments {
         clinicalBasisId(basis),
       )
       return this.view(row)
+    })
+  }
+  reviewForIssue(actor: Principal, id: string, context: AuditContext) {
+    return this.run(actor, id, context, async (tx) => {
+      const { row, basis } = await this.written(tx, actor, id)
+      if (row.status !== 'draft') throw new ApplicationError('CONFLICT')
+      const policy = this.policy(row.type.code)
+      if (!policy.review) throw new ApplicationError('SERVICE_UNAVAILABLE')
+      const review = await policy.review(tx, row)
+      await this.log(
+        tx,
+        actor,
+        context,
+        'document.reviewed',
+        row,
+        clinicalBasisId(basis),
+      )
+      return { ...review, documentId: row.id, version: row.version }
+    })
+  }
+  fileBasis(actor: Principal, file: FileRecord, context: AuditContext) {
+    return this.run(actor, file.linkedResourceId, context, async (tx) => {
+      const subject = await tx.documentSubject(file.linkedResourceId)
+      if (
+        !subject ||
+        subject.patientId !== file.ownerPatientId ||
+        file.category !== 'attachment'
+      )
+        throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
+      const current = await tx.principal(actor)
+      if (
+        !current ||
+        !mayAccess(current, 'clinical_actor') ||
+        !(await tx.professional(current))
+      )
+        throw new ApplicationError('FORBIDDEN')
+      const basis = await this.authorization.basis(
+        tx,
+        current,
+        subject.patientId,
+      )
+      if (basis.phase === 'pre' || subject.status === 'draft')
+        throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
+      const row = await tx.document(subject.id)
+      if (!row) throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
+      this.checked(row)
+      if (!row.files.some((f) => f.id === file.id && f.sha256 === file.sha256))
+        throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
+      return { authorizationBasis: clinicalBasisId(basis) }
     })
   }
   void(

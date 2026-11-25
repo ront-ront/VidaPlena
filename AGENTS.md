@@ -37,6 +37,7 @@
 | Restore lógico clínico isolado | `yarn workspace vida-plena-backend test:clinical-restore` (`TEST_DATABASE_URL` descartável; `TEST_POSTGRES_CONTAINER` opcional para ferramentas PostgreSQL17 via Docker) |
 | Reconciliar vínculos da agenda | `yarn workspace vida-plena-backend care-links:reconcile` (automático no startup; repetição idempotente) |
 | Catálogos sintéticos dev (CID/TUSS) | `yarn workspace vida-plena-backend terminologies:demo` (somente development/test) |
+| Medicamentos sintéticos dev | `yarn workspace vida-plena-backend medications:demo` ou `medications:load <arquivo.json>` (somente development/test; controlados não emitem) |
 | Carregar versão local demonstrativa | `yarn workspace vida-plena-backend terminologies:load <arquivo.json>` |
 | Ciclo de backup operacional | `yarn workspace vida-plena-backend backup:cycle full` ou `backup:cycle incremental` (ambiente protegido; runbook em `apps/backend/ops/backup/README.md`) |
 | Restauração de arquivos | `yarn workspace vida-plena-backend backup:files restore <repo> <diretório-vazio>` |

@@ -441,6 +441,7 @@ model ProfessionalProfile {
   clinicalEncounters ClinicalEncounter[]
   importedHistoryChecks ImportedHistoryCheck[]
   clinicalDocuments ClinicalDocument[]
+  prescriptionAcknowledgements PrescriptionAllergyAcknowledgement[]
   clinicalDocumentVoids ClinicalDocumentVoid[]
   clinicalEvolutions ClinicalEvolution[]
   clinicalAlerts ClinicalAlert[]
@@ -1070,6 +1071,7 @@ model ClinicalAlert {
   createdAt DateTime @db.Timestamptz(3)
   patient PatientProfile @relation(fields:[patientId],references:[id],onDelete:Restrict)
   author ProfessionalProfile @relation(fields:[authorProfessionalId],references:[id],onDelete:Restrict)
+  prescriptionAcknowledgements PrescriptionAllergyAcknowledgement[]
   events ClinicalAlertEvent[]
   @@index([patientId,createdAt,id])
 }
@@ -1081,6 +1083,7 @@ model ClinicalAlertEvent {
   authorProfessionalId String @db.Uuid
   reasonEncrypted String?
   createdAt DateTime @db.Timestamptz(3)
+  acknowledgements PrescriptionAllergyAcknowledgement[]
   alert ClinicalAlert @relation(fields:[alertId],references:[id],onDelete:Restrict)
   author ProfessionalProfile @relation(fields:[authorProfessionalId],references:[id],onDelete:Restrict)
   @@unique([alertId,version])
@@ -1113,6 +1116,7 @@ model ClinicalDocument {
   encounterId String @db.Uuid
   authorProfessionalId String @db.Uuid
   typeVersionId String @db.Uuid
+  copiedFromDocumentId String? @db.Uuid
   payloadVersion Int @default(1)
   payloadEncrypted String
   version Int @default(1)
@@ -1128,6 +1132,9 @@ model ClinicalDocument {
   encounter ClinicalEncounter @relation(fields:[encounterId],references:[id],onDelete:Restrict)
   author ProfessionalProfile @relation(fields:[authorProfessionalId],references:[id],onDelete:Restrict)
   typeVersion DocumentTypeVersion @relation(fields:[typeVersionId],references:[id],onDelete:Restrict)
+  copiedFrom ClinicalDocument? @relation("DocumentCopy",fields:[copiedFromDocumentId],references:[id],onDelete:Restrict)
+  copies ClinicalDocument[] @relation("DocumentCopy")
+  prescriptionAcknowledgements PrescriptionAllergyAcknowledgement[]
   voidEvent ClinicalDocumentVoid? @relation("VoidedDocument")
   replaces ClinicalDocumentVoid[] @relation("ReplacementDocument")
   @@index([recordId,status,createdAt,id])
@@ -1142,4 +1149,47 @@ model ClinicalDocumentVoid {
   document ClinicalDocument @relation("VoidedDocument",fields:[documentId],references:[id],onDelete:Restrict)
   replacement ClinicalDocument? @relation("ReplacementDocument",fields:[replacementDocumentId],references:[id],onDelete:Restrict)
   author ProfessionalProfile @relation(fields:[authorProfessionalId],references:[id],onDelete:Restrict)
+}
+
+model MedicationCatalog {
+  id String @id @default(uuid()) @db.Uuid
+  version String @unique
+  source String
+  license String
+  demo Boolean
+  checksum String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  entries MedicationEntry[]
+  selection MedicationSelection?
+}
+model MedicationEntry {
+  id String @id @default(uuid()) @db.Uuid
+  catalogId String @db.Uuid
+  code String
+  name String
+  activeSubstances Json
+  searchText String
+  active Boolean
+  controlled Boolean
+  catalog MedicationCatalog @relation(fields:[catalogId],references:[id],onDelete:Restrict)
+  @@unique([catalogId,code])
+  @@index([catalogId,active,code,id])
+}
+model MedicationSelection {
+  id String @id
+  catalogId String @unique @db.Uuid
+  catalog MedicationCatalog @relation(fields:[catalogId],references:[id],onDelete:Restrict)
+}
+model PrescriptionAllergyAcknowledgement {
+  id String @id @default(uuid()) @db.Uuid
+  documentId String @db.Uuid
+  alertId String @db.Uuid
+  alertVersion Int
+  professionalId String @db.Uuid
+  acknowledgedAt DateTime @db.Timestamptz(3)
+  document ClinicalDocument @relation(fields:[documentId],references:[id],onDelete:Restrict)
+  alert ClinicalAlert @relation(fields:[alertId],references:[id],onDelete:Restrict)
+  alertEvent ClinicalAlertEvent @relation(fields:[alertId,alertVersion],references:[alertId,version],onDelete:Restrict)
+  professional ProfessionalProfile @relation(fields:[professionalId],references:[id],onDelete:Restrict)
+  @@unique([documentId,alertId])
 }

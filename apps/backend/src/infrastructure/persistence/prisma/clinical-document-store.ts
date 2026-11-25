@@ -10,6 +10,7 @@ import type {
 import type { SecretBox } from '../../../application/ports/secret-box'
 import type { Prisma, PrismaClient } from '../../../generated/prisma/client'
 import type { PrismaClinicalRecordStore } from './clinical-record-store'
+import type { PrismaMedicationStore } from './medication-store'
 
 const namedUser = { select: { id: true, fullName: true } } as const
 const typeInclude = { type: true, changedBy: namedUser } as const
@@ -17,12 +18,14 @@ const documentInclude = {
   record: { select: { patientId: true } },
   typeVersion: { include: typeInclude },
   voidEvent: true,
+  prescriptionAcknowledgements: true,
 } as const
 export class PrismaClinicalDocumentStore implements ClinicalDocumentStore {
   constructor(
     private readonly db: PrismaClient,
     private readonly records: PrismaClinicalRecordStore,
     private readonly secrets: SecretBox,
+    private readonly medications: PrismaMedicationStore,
   ) {}
   transaction<T>(
     run: (tx: ClinicalDocumentTransaction) => Promise<T>,
@@ -70,6 +73,14 @@ export class PrismaClinicalDocumentStore implements ClinicalDocumentStore {
         encounterId: row.encounterId,
         authorProfessionalId: row.authorProfessionalId,
         type: this.type(row.typeVersion),
+        copiedFromDocumentId: row.copiedFromDocumentId,
+        files: [],
+        allergyAcknowledgements: row.prescriptionAcknowledgements.map((a) => ({
+          alertId: a.alertId,
+          alertVersion: a.alertVersion,
+          professionalId: a.professionalId,
+          acknowledgedAt: a.acknowledgedAt.toISOString(),
+        })),
         payloadVersion: row.payloadVersion,
         payload: JSON.parse(
           this.secrets.open(row.payloadEncrypted, `document_payload:${row.id}`),
@@ -112,7 +123,31 @@ export class PrismaClinicalDocumentStore implements ClinicalDocumentStore {
         where: { id },
         include: documentInclude,
       })
-      return row ? this.project(row) : null
+      if (!row) return null
+      const result = this.project(row)
+      const files = await tx.fileObject.findMany({
+        where: {
+          linkedResourceType: 'ClinicalDocument',
+          linkedResourceId: row.id,
+          revokedAt: null,
+          ownerPatientId: row.record.patientId,
+          category: 'attachment',
+        },
+        select: {
+          id: true,
+          contentTypeDetected: true,
+          size: true,
+          sha256: true,
+        },
+        orderBy: { id: 'asc' },
+      })
+      result.files = files.map((f) => ({
+        id: f.id,
+        contentType: f.contentTypeDetected,
+        size: Number(f.size),
+        sha256: f.sha256,
+      }))
+      return result
     }
     const required = async (id: string) => {
       const row = await document(id)
@@ -121,6 +156,7 @@ export class PrismaClinicalDocumentStore implements ClinicalDocumentStore {
     }
     return {
       ...this.records.scope(tx),
+      ...this.medications.scope(tx),
       documentTypes: async () => {
         const rows = await tx.documentType.findMany({
           orderBy: { code: 'asc' },
@@ -254,7 +290,13 @@ export class PrismaClinicalDocumentStore implements ClinicalDocumentStore {
       lockDocument: async (id) => {
         await tx.$queryRaw`SELECT "id" FROM "ClinicalDocument" WHERE "id"=${id}::uuid FOR UPDATE`
       },
-      createDocument: async (encounter, type, payload, now) => {
+      createDocument: async (
+        encounter,
+        type,
+        payload,
+        now,
+        copiedFromDocumentId,
+      ) => {
         const id = randomUUID()
         await tx.clinicalDocument.create({
           data: {
@@ -263,6 +305,7 @@ export class PrismaClinicalDocumentStore implements ClinicalDocumentStore {
             encounterId: encounter.id,
             authorProfessionalId: encounter.professionalId,
             typeVersionId: type.id,
+            copiedFromDocumentId,
             payloadVersion: 1,
             payloadEncrypted: this.secrets.seal(
               JSON.stringify(payload),
@@ -273,6 +316,69 @@ export class PrismaClinicalDocumentStore implements ClinicalDocumentStore {
           },
         })
         return required(id)
+      },
+      attachDocumentFile: async (
+        document,
+        stored,
+        scan,
+        maxPerRecord,
+        context,
+      ) => {
+        const count = await tx.fileObject.count({
+          where: {
+            linkedResourceType: 'ClinicalDocument',
+            linkedResourceId: document.id,
+            revokedAt: null,
+          },
+        })
+        if (count >= maxPerRecord)
+          throw new ApplicationError('UNPROCESSABLE_FILE')
+        const file = await tx.fileObject.create({
+          data: {
+            category: 'attachment',
+            ownerPatientId: document.patientId,
+            linkedResourceType: 'ClinicalDocument',
+            linkedResourceId: document.id,
+            storageKey: stored.storageKey,
+            contentTypeDetected: scan.detectedType,
+            size: BigInt(stored.size),
+            sha256: stored.sha256,
+            encryptionKeyRef: 'local:v1',
+            scanStatus: scan.status,
+            uploadedBy: context.actorUserId,
+          },
+        })
+        await this.records.scope(tx).audit.append({
+          ...context,
+          action: 'file.uploaded',
+          resourceType: 'FileObject',
+          resourceId: file.id,
+          subjectPatientId: document.patientId,
+          metadata: { fileCategory: 'attachment', scanStatus: scan.status },
+        })
+        return {
+          id: file.id,
+          contentType: file.contentTypeDetected,
+          size: Number(file.size),
+          sha256: file.sha256,
+        }
+      },
+      acknowledgePrescriptionAllergy: async (
+        documentId,
+        alertId,
+        alertVersion,
+        professionalId,
+        now,
+      ) => {
+        await tx.prescriptionAllergyAcknowledgement.create({
+          data: {
+            documentId,
+            alertId,
+            alertVersion,
+            professionalId,
+            acknowledgedAt: now,
+          },
+        })
       },
       updateDocument: async (
         id,

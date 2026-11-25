@@ -25,10 +25,13 @@
     "backup:files": "tsx ops/backup/file-snapshots.ts",
     "terminologies:demo": "tsx src/shared/infra/cli/terminologies.ts demo",
     "terminologies:load": "tsx src/shared/infra/cli/terminologies.ts load",
-    "test:clinical-restore": "node --import tsx --test tests/ops/clinical-restore.test.ts"
+    "test:clinical-restore": "node --import tsx --test tests/ops/clinical-restore.test.ts",
+    "medications:demo": "tsx src/shared/infra/cli/medications.ts demo",
+    "medications:load": "tsx src/shared/infra/cli/medications.ts load"
   },
   "dependencies": {
     "@js-temporal/polyfill": "^0.5.1",
+    "@pdf-lib/fontkit": "^1.1.1",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "@prometheus-io/client": "^0.16.1",
@@ -43,6 +46,7 @@
     "file-type": "^22.1.1",
     "jose": "^6.2.13",
     "otpauth": "^9.5.2",
+    "pdf-lib": "^1.17.1",
     "pino": "^10.4.0",
     "reflect-metadata": "^0.2.2",
     "tsx": "^4.23.15",

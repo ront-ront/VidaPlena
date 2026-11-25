@@ -15,6 +15,12 @@ import {
   documentVerificationParams,
   documentVoidBody,
 } from './contracts/clinical-documents'
+import {
+  documentDraftBody,
+  documentDraftPatch,
+  documentReuseBody,
+  parsePublicDocumentPayload,
+} from './contracts/prescriptions'
 import { accessGuard, auditContext, principalOf } from './middleware/access'
 import { parseInput } from './parse-input'
 export function createClinicalDocumentRouter(
@@ -27,6 +33,79 @@ export function createClinicalDocumentRouter(
   verifyLimit: number,
 ) {
   const router = Router()
+  router.post(
+    '/clinical/encounters/:id/documents/drafts',
+    accessGuard(tokens, authorize, 'clinical_actor'),
+    async (req, res) => {
+      res.setHeader('Cache-Control', 'no-store')
+      const body = parseInput(documentDraftBody, req.body)
+      res
+        .status(201)
+        .json(
+          await documents.createDraft(
+            principalOf(res),
+            parseInput(documentParams, req.params).id,
+            body.typeCode,
+            parsePublicDocumentPayload(body.typeCode, body.payload),
+            auditContext(req, res),
+          ),
+        )
+    },
+  )
+  router.post(
+    '/clinical/encounters/:id/documents/reuse',
+    accessGuard(tokens, authorize, 'clinical_actor'),
+    async (req, res) => {
+      res.setHeader('Cache-Control', 'no-store')
+      res
+        .status(201)
+        .json(
+          await documents.reuse(
+            principalOf(res),
+            parseInput(documentParams, req.params).id,
+            parseInput(documentReuseBody, req.body).sourceDocumentId,
+            auditContext(req, res),
+          ),
+        )
+    },
+  )
+  router.patch(
+    '/clinical/documents/:id/draft',
+    accessGuard(tokens, authorize, 'clinical_actor'),
+    async (req, res) => {
+      res.setHeader('Cache-Control', 'no-store')
+      const id = parseInput(documentParams, req.params).id,
+        body = parseInput(documentDraftPatch, req.body),
+        current = await documents.get(
+          principalOf(res),
+          id,
+          auditContext(req, res),
+        )
+      res.json(
+        await documents.patchDraft(
+          principalOf(res),
+          id,
+          parsePublicDocumentPayload(current.typeCode, body.payload),
+          body.expectedVersion,
+          auditContext(req, res),
+        ),
+      )
+    },
+  )
+  router.get(
+    '/clinical/documents/:id/allergy-check',
+    accessGuard(tokens, authorize, 'clinical_actor'),
+    async (req, res) => {
+      res.setHeader('Cache-Control', 'no-store')
+      res.json(
+        await documents.reviewForIssue(
+          principalOf(res),
+          parseInput(documentParams, req.params).id,
+          auditContext(req, res),
+        ),
+      )
+    },
+  )
   router.get(
     '/document-types',
     accessGuard(tokens, authorize, 'document_types'),

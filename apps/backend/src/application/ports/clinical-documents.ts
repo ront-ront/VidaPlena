@@ -1,5 +1,9 @@
 import type { Principal } from '../../domain/rules/access'
+import type { AuditContext } from './audit-writer'
 import type { ClinicalRecordTransaction } from './clinical-records'
+import type { ClinicalDocumentFile } from './document-artifacts'
+import type { StoredFile } from './files'
+import type { MedicationTransaction } from './medications'
 import type {
   DocumentSigner,
   SignatureEvidence,
@@ -34,6 +38,14 @@ export type ClinicalDocument = {
   encounterId: string
   authorProfessionalId: string
   type: DocumentTypeVersion
+  copiedFromDocumentId: string | null
+  files: ClinicalDocumentFile[]
+  allergyAcknowledgements: {
+    alertId: string
+    alertVersion: number
+    professionalId: string
+    acknowledgedAt: string
+  }[]
   payloadVersion: number
   payload: unknown
   version: number
@@ -69,7 +81,9 @@ export type DocumentEncounter = {
   specialtyId: string
   modality: 'onsite' | 'remote'
 }
-export interface ClinicalDocumentTransaction extends ClinicalRecordTransaction {
+export interface ClinicalDocumentTransaction
+  extends ClinicalRecordTransaction,
+    MedicationTransaction {
   documentTypes(): Promise<
     { type: DocumentTypeVersion; history: DocumentTypeVersion[] }[]
   >
@@ -97,7 +111,22 @@ export interface ClinicalDocumentTransaction extends ClinicalRecordTransaction {
     type: DocumentTypeVersion,
     payload: unknown,
     now: Date,
+    copiedFromDocumentId?: string,
   ): Promise<ClinicalDocument>
+  attachDocumentFile(
+    document: ClinicalDocument,
+    stored: StoredFile,
+    scan: { detectedType: string; status: string },
+    maxPerRecord: number,
+    context: AuditContext,
+  ): Promise<ClinicalDocumentFile>
+  acknowledgePrescriptionAllergy(
+    documentId: string,
+    alertId: string,
+    alertVersion: number,
+    professionalId: string,
+    now: Date,
+  ): Promise<void>
   updateDocument(
     id: string,
     typeVersionId: string,
@@ -131,12 +160,28 @@ export interface ClinicalDocumentStore {
 }
 export interface DocumentContentPolicy {
   validate(payload: unknown, templateVersion: string): unknown
+  prepare?(
+    tx: ClinicalDocumentTransaction,
+    payload: unknown,
+    templateVersion: string,
+    context: {
+      actor: Principal
+      patientId: string
+      encounterId: string
+      reusing: boolean
+    },
+  ): Promise<unknown>
+  review?(
+    tx: ClinicalDocumentTransaction,
+    document: ClinicalDocument,
+  ): Promise<Record<string, unknown>>
   summary(payload: unknown): string
   beforeIssue(
     tx: ClinicalDocumentTransaction,
     document: ClinicalDocument,
     actor: Principal,
     acknowledgedAllergyIds: string[],
+    context: AuditContext,
   ): Promise<void>
 }
 export interface DocumentPolicies {

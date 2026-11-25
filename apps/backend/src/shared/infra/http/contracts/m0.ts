@@ -91,6 +91,9 @@ export const errorResponse = z.object({
       .array(z.object({ field: z.string(), reason: z.string() }))
       .optional(),
     requestId: idSchema,
+    allergyConflict: z
+      .object({ documentId: idSchema, requiredAlertIds: z.array(idSchema) })
+      .optional(),
     draftConflict: z
       .object({
         evolutionId: idSchema,

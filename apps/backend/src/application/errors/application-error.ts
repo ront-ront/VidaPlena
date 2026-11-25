@@ -26,6 +26,7 @@ export class ApplicationError extends Error {
     readonly code: ErrorCode,
     readonly details?: Array<{ field: string; reason: string }>,
     readonly context?: {
+      allergyConflict?: { documentId: string; requiredAlertIds: string[] }
       draftConflict?: {
         evolutionId: string
         currentDraftVersion: number

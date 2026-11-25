@@ -454,3 +454,7 @@ Eventos imutáveis de criação/confirmação/desativação, versão esperada, l
 ## P-64 — fundação documental técnica (25/11/2026)
 
 Catálogo versionado com seed Q-10, políticas por tipo, bytes JSON canônicos RFC8785 com biblioteca canonicalize, provider dev/disabled e anulação append-only conforme contrato compartilhado. Templates/PDF e validação clínica vêm das specs consumidoras; hash da simulação não é assinatura ICP-Brasil/PAdES. Sem policy/provedor, emissão falha fechada. Criar/editar/emitir/anular exige atendimento corrente; fora dele preserva leitura conforme vínculo. Limite de verificação pública é parâmetro provisório de baixo risco; P-02 jurídico/provedor real segue portão antes de produção.
+
+## P-65 — prescrição demonstrativa e conferência de alergias (25/11/2026)
+
+Concretização RF-019/P-13 no contrato compartilhado: dataset de medicamentos sintéticos, snapshot versionado, reuso para novo draft e ciência por alerta/versão na emissão. Manual/sem mapeamento exige ciência conservadora, catálogo demonstrativo não certifica ausência de risco. Controlados recusados até aprovação de regra; produção continua bloqueada por P-02/P-13. PDF é apresentação da simulação com selo, via bibliotecas existentes de mercado e fonte licenciada, sem assinatura ICP-Brasil. Limites de campos técnicos são proposta de validação, não conteúdo clínico inventado.

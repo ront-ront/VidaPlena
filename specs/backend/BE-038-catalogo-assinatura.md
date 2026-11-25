@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M2 Prontuário
-- **Status:** fundação implementada/verificada localmente; templates/políticas concretas BE-039/040/042 e produção P-02 pendentes
+- **Status:** fundação implementada/verificada localmente; prescrição BE-039 integrada; templates/políticas BE-040/042 e produção P-02 pendentes
 - **Depende de:** BE-013, BE-034, BE-004, BE-032
 - **Requisitos cobertos:** RN-009, RNF-017
 
@@ -44,3 +44,5 @@ Seed migratório idempotente de seis tipos e versões append-only, leitura profi
 Verificação pública por código aleatório/hash, auditoria e rate limit PostgreSQL parametrizado; nenhuma identificação/conteúdo do paciente. Original/arquivo emitido e evento de anulação são imutáveis no banco; substituição exige paciente/tipo/autor correspondentes. Leitura revalida integridade e autorização; urgência não abre draft nem permite emissão.
 
 13/13 integrações específicas (`/tmp/vidaplena-be038-final-integration.log`, sessão45013),53/53 regressão clínica (`/tmp/vidaplena-be038-regression.log`, sessão66201),31/31 Node e2/2 Vitest, lint297 e Prisma validate/generate/diff aprovados. Conjuntos sobrepostos. Testes cobrem reexecução de migrate deploy sem duplicação, corrida de emissão/alteração do catálogo, rollback de auditoria e falha fechada após alteração simulada de restore. Políticas de payload fictícias existem somente no teste da fundação, sem mock clínico genérico no runtime. PDF/apresentação, regras de alergia/TUSS e publicação ao paciente seguem specs consumidoras; não declarar RN-009/RNF-017 plenamente atendidas.
+
+**Integração BE-039:** policy e PDF concretos de prescrição registrados; engine prepara snapshots no tx, JSON v2 congela arquivos/cópia/ciência e leitor mantém v1.14/14 específicos e110/110 regressão aprovados. Demais tipos aguardam BE-040/042; P-02 continua bloqueando assinatura válida.

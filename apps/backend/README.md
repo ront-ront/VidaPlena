@@ -121,3 +121,11 @@ A migration semeia os seis tipos Q-10, com nível qualificado salvo declaração
 Engine e rotas `/v1/clinical/documents/:id`/`issue`/`void` são fundação para BE-039/040/042. Nesta entrega não há rota de payload clínico arbitrário: sem policy concreta, emissão503 preserva draft. DevSignatureProvider gera evidência técnica sobre JSON canônico, sem validade jurídica mesmo em nível qualified; configuração dev é recusada em staging/production. Templates/PDF pertencem às specs consumidoras.
 
 GET público `/v1/documents/verify/:code` retorna só metadados técnicos, com auditoria e limite persistente por origem (`DOCUMENT_VERIFY_REQUESTS_PER_MINUTE`/`document.verify_requests_per_minute`). Código aleatório não autoriza leitura clínica/download. Payload, original e evento de anulação permanecem preservados; nenhum código público revela identificação do paciente.
+
+### Prescrição demonstrativa (BE-039)
+
+Após migrations/client, `yarn workspace vida-plena-backend medications:demo` carrega o catálogo sintético; medications:load aceita JSON local no formato da fixture. DEV-MED/DEV-SUB não são medicamentos/códigos oficiais. GET `/v1/terminologies/medications?q=...` busca por nome/substância com profissional/MFA.
+
+POST `/v1/clinical/encounters/:id/documents/drafts` recebe typeCode=prescription e payload.items com seleção medicationCode/medicationVersion ou nome manual, dose/route/frequency/quantity/instructions; PATCH `/v1/clinical/documents/:id/draft` exige expectedVersion. `/v1/clinical/encounters/:id/documents/reuse` recebe sourceDocumentId e cria nova cópia. Antes de emitir, GET `/v1/clinical/documents/:id/allergy-check`; issue exige ciência explícita por acknowledgedAllergyIds e revalida alertas/catálogo no servidor.409 allergyConflict retorna só IDs para reconsulta autorizada. Controlados identificados são bloqueados e manual só simula em dev/test.
+
+Emissão produz PDF demonstrativo com selo em todas as páginas, guardado cifrado pelo FileStorage. GET do documento informa files; download usa o fluxo BE-013, com vínculo/urgência, integridade/auditoria/expiração. JSON v2 vincula arquivos e ciência; v1 continua legível. Publicação ao portal é BE-043, sem disponibilização automática. PDF/lib/fonte local não são assinatura qualificada; P-02/P-13 permanecem bloqueios de produção.

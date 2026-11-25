@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M2 Prontuário
-- **Status:** implementada/verificada localmente no escopo de alertas/header; associação à prescrição integra BE-039
+- **Status:** implementada/verificada localmente no escopo de alertas/header; associação à prescrição BE-039 integrada
 - **Depende de:** BE-032, BE-004
 - **Requisitos cobertos:** RF-018, RN-007
 
@@ -41,6 +41,8 @@ Vocabulário de substâncias/medicamentos exige fonte P-13. Alertas sem código 
 
 ClinicalAlert/ClinicalAlertEvent append-only, payload/justificativas cifrados, transições confirm/deactivate com versão/locks, autoria/data preservadas e auditoria transacional. Header usa todos os ativos, inclusive pré-consulta, sem histórico/justificativas; lista paginada aplica paciente/estado antes do limite. Sem vínculo nega, urgência só lê; nenhum acesso por papel administrativo/DPO. Criação requer evento inicial no commit do banco; UPDATE/DELETE/TRUNCATE são bloqueados.
 
-10/10 integrações específicas aprovadas (`/tmp/vidaplena-be037-final-integration.log`), incluindo novo atendimento, pós-consulta somente leitura, concorrência e rollback de auditoria;28/28 Node,2/2 Vitest e lint285 aprovados. Associação com medicamento/ciência na prescrição permanece BE-039; substanceCode opaco não atesta mapeamento nem ausência de alergia, conforme P-13/P-63. Nenhum tsc ou alteração em banco dev.
+10/10 integrações específicas aprovadas (`/tmp/vidaplena-be037-final-integration.log`), incluindo novo atendimento, pós-consulta somente leitura, concorrência e rollback de auditoria;28/28 Node,2/2 Vitest e lint285 aprovados. Associação com medicamento/ciência na prescrição integra BE-039 (ver nota de integração abaixo); substanceCode opaco não atesta mapeamento nem ausência de alergia, conforme P-13/P-63. Nenhum tsc ou alteração em banco dev.
 
 Regressão BE-030–037:82/82 aprovadas (`/tmp/vidaplena-be037-regression.log`, sessão42101 saída0); revisão específica10/10 inclui um caso adicional de novo atendimento e prova de evento inicial obrigatório. Conjuntos sobrepostos, não somar como92 testes distintos.
+
+**Integração BE-039:** alergia estruturada, textual e item manual conferidos antes da emissão, ciência com versão/autor em transação e alerta novo entre preview/issue testados;14/14 específicos e110/110 regressão aprovados. FE-023/024 ainda pendentes, P-13 clínico/terminológico permanece.
