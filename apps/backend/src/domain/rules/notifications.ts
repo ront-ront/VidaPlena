@@ -1,4 +1,6 @@
 export const notificationTemplates = [
+  'privacy.emergency_requested',
+  'privacy.dpo_missing',
   'account.invited',
   'account.inactivity_review',
   'auth.account_locked',
@@ -72,6 +74,10 @@ export function deliveryPolicy(
 
 export function safeNotificationText(template: NotificationTemplate): string {
   const texts: Record<NotificationTemplate, string> = {
+    'privacy.emergency_requested':
+      'Há um acesso de urgência aguardando revisão na fila administrativa.',
+    'privacy.dpo_missing':
+      'Não há encarregado de dados designado. A revisão de urgência está na fila do admin.',
     'patient.auto_booking_suspended':
       'Há um paciente com autoagendamento suspenso por faltas. Consulte a agenda da recepção.',
     'auth.account_locked':

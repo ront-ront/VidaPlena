@@ -26,6 +26,7 @@ import type { ManageArrivals } from '../../application/use-cases/manage-arrivals
 import type { ManageCareLinks } from '../../application/use-cases/manage-care-links'
 import type { ManageCatalog } from '../../application/use-cases/manage-catalog'
 import type { ManageConsent } from '../../application/use-cases/manage-consent'
+import type { ManageEmergencyAccess } from '../../application/use-cases/manage-emergency-access'
 import type { ManageFiles } from '../../application/use-cases/manage-files'
 import type { ManageMaintenance } from '../../application/use-cases/manage-maintenance'
 import type { ManageRooms } from '../../application/use-cases/manage-rooms'
@@ -55,6 +56,7 @@ import { createCareLinkRouter } from '../infra/http/care-link-router'
 import { createCatalogRouter } from '../infra/http/catalog-router'
 import { createConsentRouter } from '../infra/http/consent-router'
 import { maintenanceBody } from '../infra/http/contracts/maintenance'
+import { createEmergencyAccessRouter } from '../infra/http/emergency-access-router'
 import { createFileRouter } from '../infra/http/file-router'
 import { createImportRouter } from '../infra/http/import-router'
 import {
@@ -134,6 +136,13 @@ export async function composeBackendApplication(config: AppConfig) {
     }
     const routes = Router()
     registerApiDocumentation(routes)
+    routes.use(
+      createEmergencyAccessRouter(
+        tokens,
+        authorize,
+        scope.resolve<ManageEmergencyAccess>(services.manageEmergencyAccess),
+      ),
+    )
     routes.use(
       createCareLinkRouter(
         tokens,

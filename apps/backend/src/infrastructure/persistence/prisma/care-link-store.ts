@@ -163,118 +163,119 @@ export class PrismaCareLinkStore implements CareLinkStore {
     private readonly secrets: SecretBox,
   ) {}
   transaction<T>(run: (tx: CareLinkTransaction) => Promise<T>): Promise<T> {
-    return this.db.$transaction(async (tx) =>
-      run({
-        principal: (actor) =>
-          readPrincipal(tx, actor.userId, actor.sessionId, this.idle),
-        professional: (actor) =>
-          tx.professionalProfile.findFirst({
-            where: { ...professionalWhere, userId: actor.userId },
-            select: { id: true },
-          }),
-        target: async (id) =>
-          !!(await tx.professionalProfile.findFirst({
-            where: { ...professionalWhere, id },
-            select: { id: true },
-          })),
-        patientExists: async (id) =>
-          !!(await tx.patientProfile.findFirst({
-            where: { id, status: 'active' },
-            select: { id: true },
-          })),
-        lock: async (patientId) => {
-          await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`care_link:${patientId}`},0))`
-        },
-        page: async (professionalId, query, now) => {
-          const active: Prisma.CareLinkWhereInput = {
-            status: 'active',
-            startsAt: { lte: now },
-            endsAt: { gt: now },
-            OR: [
-              { parentLinkId: null },
-              {
-                parent: {
-                  is: {
-                    status: 'active',
-                    startsAt: { lte: now },
-                    endsAt: { gt: now },
-                    appointment: { is: { startsAt: { lte: now } } },
-                  },
+    return this.db.$transaction(async (tx) => run(this.scope(tx)))
+  }
+  scope(tx: Prisma.TransactionClient): CareLinkTransaction {
+    return {
+      principal: (actor) =>
+        readPrincipal(tx, actor.userId, actor.sessionId, this.idle),
+      professional: (actor) =>
+        tx.professionalProfile.findFirst({
+          where: { ...professionalWhere, userId: actor.userId },
+          select: { id: true },
+        }),
+      target: async (id) =>
+        !!(await tx.professionalProfile.findFirst({
+          where: { ...professionalWhere, id },
+          select: { id: true },
+        })),
+      patientExists: async (id) =>
+        !!(await tx.patientProfile.findFirst({
+          where: { id, status: 'active' },
+          select: { id: true },
+        })),
+      lock: async (patientId) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`care_link:${patientId}`},0))`
+      },
+      page: async (professionalId, query, now) => {
+        const active: Prisma.CareLinkWhereInput = {
+          status: 'active',
+          startsAt: { lte: now },
+          endsAt: { gt: now },
+          OR: [
+            { parentLinkId: null },
+            {
+              parent: {
+                is: {
+                  status: 'active',
+                  startsAt: { lte: now },
+                  endsAt: { gt: now },
+                  appointment: { is: { startsAt: { lte: now } } },
                 },
               },
+            },
+          ],
+        }
+        const filters: Record<string, Prisma.CareLinkWhereInput> = {
+          active,
+          revoked: { status: 'revoked' },
+          scheduled: { status: 'active', startsAt: { gt: now } },
+          expired: {
+            status: 'active',
+            OR: [
+              { endsAt: { lte: now } },
+              { parent: { is: { status: 'revoked' } } },
+              { parent: { is: { endsAt: { lte: now } } } },
             ],
-          }
-          const filters: Record<string, Prisma.CareLinkWhereInput> = {
-            active,
-            revoked: { status: 'revoked' },
-            scheduled: { status: 'active', startsAt: { gt: now } },
-            expired: {
-              status: 'active',
-              OR: [
-                { endsAt: { lte: now } },
-                { parent: { is: { status: 'revoked' } } },
-                { parent: { is: { endsAt: { lte: now } } } },
-              ],
-            },
-          }
-          const where: Prisma.CareLinkWhereInput = {
-            professionalId,
-            patientId: query.patientId,
-            ...(query.status ? filters[query.status] : {}),
-          }
-          const cursor = query.cursor
-            ? await tx.careLink.findFirst({
-                where: { AND: [where, { id: query.cursor }] },
-                select: { id: true, startsAt: true },
-              })
-            : null
-          if (query.cursor && !cursor)
-            throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
-          const rows = await tx.careLink.findMany({
-            where: {
-              AND: [
-                where,
-                ...(cursor
-                  ? [
-                      {
-                        OR: [
-                          { startsAt: { lt: cursor.startsAt } },
-                          { startsAt: cursor.startsAt, id: { lt: cursor.id } },
-                        ],
-                      },
-                    ]
-                  : []),
-              ],
-            },
-            orderBy: [{ startsAt: 'desc' }, { id: 'desc' }],
-            take: 31,
-            include,
-          })
-          return {
-            items: rows.slice(0, 30) as CareLinkRecord[],
-            nextCursor: rows.length > 30 ? rows[29].id : null,
-          }
-        },
-        links: async (professionalId, patientId) =>
-          (await tx.careLink.findMany({
-            where: { professionalId, patientId },
-            include,
-          })) as CareLinkRecord[],
-        grant: async (input) => {
-          const { reason, ...data } = input,
-            id = randomUUID()
-          return (await tx.careLink.create({
-            data: {
-              ...data,
-              id,
-              reasonEncrypted: this.secrets.seal(reason, `care_link:${id}`),
-            },
-            include,
-          })) as CareLinkRecord
-        },
-        audit: new PrismaAuditWriter(tx),
-      }),
-    )
+          },
+        }
+        const where: Prisma.CareLinkWhereInput = {
+          professionalId,
+          patientId: query.patientId,
+          ...(query.status ? filters[query.status] : {}),
+        }
+        const cursor = query.cursor
+          ? await tx.careLink.findFirst({
+              where: { AND: [where, { id: query.cursor }] },
+              select: { id: true, startsAt: true },
+            })
+          : null
+        if (query.cursor && !cursor)
+          throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
+        const rows = await tx.careLink.findMany({
+          where: {
+            AND: [
+              where,
+              ...(cursor
+                ? [
+                    {
+                      OR: [
+                        { startsAt: { lt: cursor.startsAt } },
+                        { startsAt: cursor.startsAt, id: { lt: cursor.id } },
+                      ],
+                    },
+                  ]
+                : []),
+            ],
+          },
+          orderBy: [{ startsAt: 'desc' }, { id: 'desc' }],
+          take: 31,
+          include,
+        })
+        return {
+          items: rows.slice(0, 30) as CareLinkRecord[],
+          nextCursor: rows.length > 30 ? rows[29].id : null,
+        }
+      },
+      links: async (professionalId, patientId) =>
+        (await tx.careLink.findMany({
+          where: { professionalId, patientId },
+          include,
+        })) as CareLinkRecord[],
+      grant: async (input) => {
+        const { reason, ...data } = input,
+          id = randomUUID()
+        return (await tx.careLink.create({
+          data: {
+            ...data,
+            id,
+            reasonEncrypted: this.secrets.seal(reason, `care_link:${id}`),
+          },
+          include,
+        })) as CareLinkRecord
+      },
+      audit: new PrismaAuditWriter(tx),
+    }
   }
   async reconcile(context: AuditContext) {
     let cursor: string | undefined,

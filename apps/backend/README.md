@@ -83,3 +83,7 @@ Após migrations e geração Prisma, o startup reconcilia a agenda M1 antes de h
 `ACCESS_LINK_PRE_HOURS`, `ACCESS_LINK_POST_DAYS`, `ACCESS_LINK_NOSHOW_DAYS` e `ACCESS_SHARED_CASE_ENABLED` correspondem às chaves `access.link_*`/`access.shared_case_enabled` de `specs/shared/parameters.md`. Defaults provisórios foram aprovados para implementação; validação clínica pré-produção permanece P-06. A listagem `/v1/clinical/care-links/me` não retorna prontuário; compartilhamento exige vínculo próprio ativo e concessão justificada. Apenas gestor concede substituição; isso não lhe dá acesso clínico.
 
 Usar banco descartável nas integrações. Se usar o container de testes `vp-m1-postgres-test`, obtenha a porta atual com `docker port vp-m1-postgres-test 5432/tcp`: a porta dinâmica pode mudar ao reiniciar. Não reutilizar URL de teste histórica sem conferir o mapeamento.
+
+### Acesso de urgência M2 (BE-031)
+
+Profissional autenticado/MFA solicita `POST /v1/clinical/emergency-access` com patientId/justification. O grant expira por `EMERGENCY_ACCESS_DURATION_MINUTES` (`emergency_access.duration_minutes`) e é revalidado a cada leitura; não basta manter a sessão aberta. Admin/DPO recebem aviso seguro via outbox e revisam em `GET /v1/admin/emergency-access`, detalhe `/v1/clinical/emergency-access/:id` e `POST /v1/admin/emergency-access/:id/review`. Não recebem conteúdo clínico. Revisão é única/imutável, rejeição encerra acesso e aprovação não prorroga. Expiração não precisa de cron. Rotas de prontuário consumidoras são entregues em BE-032.

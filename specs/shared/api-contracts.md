@@ -172,6 +172,12 @@ Toda rota `/v1/clinical/*` exige papel profissional, vínculo `CareLink` vigente
 
 `ClinicalEncounter` é aberto por atendimento confirmado/em andamento; consulta remota/presencial conserva mesmo modelo. O acesso pré-atendimento é leitura limitada, durante permite registrar evolução, após permite leitura temporal; autoria própria permanece apenas para evoluções próprias. Cancelamento/no-show alteram janela conforme Q-21. Conteúdo clínico nunca é retornado ao admin/gestor/recepção por estas rotas.
 
+#### Concretização BE-031 (24/11/2026)
+
+Proposta técnica P-57: `GET /v1/admin/emergency-access?status=pending|reviewed&cursor=<UUID>` retorna `{items,nextCursor}`, com páginas de 30. Admin ou admin/gestor com `privacy.dpo` consultam/revisam; gestor sem a permissão não é revisor. A rota de detalhe aceita autor profissional ou revisor, com MFA. O detalhe administrativo contém somente `{grantId,patientId,professionalId,justification,grantedAt,expiresAt,status,review}`; `status` é `active|expired|revoked`. A revisão é `{id,reviewerUserId,outcome,notes,reviewedAt}` ou null; `outcome` é `approved|requires_follow_up|rejected`, `notes` obrigatórias (1–1000 caracteres), assim como a justificativa (1–1000). Os textos são cifrados em repouso e nunca entram em notificações/auditoria técnica. Não há conteúdo clínico nessas respostas.
+
+Uma revisão append-only por grant; repetição retorna 409. `rejected` encerra imediatamente a autorização, sem editar a concessão original. Aprovar não renova prazo. A validade é `[grantedAt,expiresAt)` e exige perfil/conta/sessão/MFA atuais em cada leitura. A lista administrativa omite justificativa/notas (acessíveis somente pelo detalhe auditado). Avisos essenciais transacionais `privacy.emergency_requested` e, na ausência de DPO, `privacy.dpo_missing` usam a outbox BE-006, sem paciente/justificativa no payload. Falha ao enfileirar impede a concessão; falha de transporte usa retry já existente. Leitura de conteúdo clínico permanece responsabilidade de BE-032, sempre registrando `emergency_access:<grantId>`.
+
 ### Terminologias, evolução e alertas
 
 | Método e rota | Requisição essencial | Sucesso | Erros / acesso | Origem |

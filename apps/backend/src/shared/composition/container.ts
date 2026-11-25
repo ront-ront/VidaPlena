@@ -1,9 +1,12 @@
+import { AuthorizeClinical } from '../../application/use-cases/authorize-clinical'
 import { FindRoomOptions } from '../../application/use-cases/find-room-options'
 import { ImportAppointments } from '../../application/use-cases/import-appointments'
 import { ManageCareLinks } from '../../application/use-cases/manage-care-links'
+import { ManageEmergencyAccess } from '../../application/use-cases/manage-emergency-access'
 import { CsvParseAppointmentParser } from '../../infrastructure/imports/appointment-csv-parser'
 import { PrismaAppointmentImportStore } from '../../infrastructure/persistence/prisma/appointment-import-store'
 import { PrismaCareLinkStore } from '../../infrastructure/persistence/prisma/care-link-store'
+import { PrismaEmergencyAccessStore } from '../../infrastructure/persistence/prisma/emergency-access-store'
 import 'reflect-metadata'
 import { hkdfSync } from 'node:crypto'
 import { hashSync } from 'bcryptjs'
@@ -118,6 +121,10 @@ import type { AppConfig } from '../config/environment'
 /** Tokens are owned by the composition root. The domain and ports never import TSyringe. */
 export const services = {
   manageCareLinks: Symbol('manageCareLinks'),
+  careLinkStore: Symbol('careLinkStore'),
+  emergencyAccessStore: Symbol('emergencyAccessStore'),
+  manageEmergencyAccess: Symbol('manageEmergencyAccess'),
+  authorizeClinical: Symbol('authorizeClinical'),
   config: Symbol('config'),
   database: Symbol('database'),
   audit: Symbol('audit'),
@@ -182,20 +189,52 @@ export function createServiceContainer(
   database: PrismaClient,
 ): DependencyContainer {
   const scoped = container.createChildContainer()
+  scoped.register<PrismaCareLinkStore>(services.careLinkStore, {
+    useFactory: (scope) =>
+      new PrismaCareLinkStore(
+        scope.resolve<PrismaClient>(services.database),
+        config.careLinkPolicy,
+        {
+          internalMinutes: config.internalIdleMinutes,
+          patientMinutes: config.patientIdleMinutes,
+        },
+        new AesSecretBox(config.encryptionKey, 'care-link'),
+      ),
+  })
   scoped.register<ManageCareLinks>(services.manageCareLinks, {
     useFactory: (scope) =>
       new ManageCareLinks(
-        new PrismaCareLinkStore(
-          scope.resolve<PrismaClient>(services.database),
-          config.careLinkPolicy,
-          {
-            internalMinutes: config.internalIdleMinutes,
-            patientMinutes: config.patientIdleMinutes,
-          },
-          new AesSecretBox(config.encryptionKey, 'care-link'),
-        ),
+        scope.resolve<PrismaCareLinkStore>(services.careLinkStore),
         scope.resolve<AuditWriter>(services.audit),
         config.careLinkPolicy,
+      ),
+  })
+  scoped.register<PrismaEmergencyAccessStore>(services.emergencyAccessStore, {
+    useFactory: (scope) =>
+      new PrismaEmergencyAccessStore(
+        scope.resolve<PrismaClient>(services.database),
+        scope.resolve<PrismaCareLinkStore>(services.careLinkStore),
+        new AesSecretBox(config.encryptionKey, 'emergency-access'),
+      ),
+  })
+  scoped.register<ManageEmergencyAccess>(services.manageEmergencyAccess, {
+    useFactory: (scope) =>
+      new ManageEmergencyAccess(
+        scope.resolve<PrismaEmergencyAccessStore>(
+          services.emergencyAccessStore,
+        ),
+        scope.resolve<AuditWriter>(services.audit),
+        config.emergencyAccessDurationMinutes,
+      ),
+  })
+  scoped.register<AuthorizeClinical>(services.authorizeClinical, {
+    useFactory: (scope) =>
+      new AuthorizeClinical(
+        scope.resolve<PrismaEmergencyAccessStore>(
+          services.emergencyAccessStore,
+        ),
+        scope.resolve<ManageCareLinks>(services.manageCareLinks),
+        scope.resolve<AuditWriter>(services.audit),
       ),
   })
   scoped.register<ImportAppointments>(services.importAppointments, {

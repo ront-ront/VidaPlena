@@ -56,6 +56,43 @@ export const consentAwareNotificationCheck: NotificationConsentCheck = async (
   message,
   now = new Date(),
 ) => {
+  if (
+    ['privacy.emergency_requested', 'privacy.dpo_missing'].includes(
+      message.templateKey,
+    )
+  ) {
+    if (
+      message.patientId ||
+      !message.aggregateId ||
+      !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(
+        message.aggregateId,
+      ) ||
+      message.aggregateVersion !== 1
+    )
+      return false
+    const grant = await tx.emergencyAccessGrant.findUnique({
+      where: { id: message.aggregateId },
+      select: { id: true },
+    })
+    if (!grant) return false
+    const user = await tx.user.findUnique({
+      where: { id: message.userId },
+      include: {
+        roles: { where: { revokedAt: null } },
+        permissions: {
+          where: { permissionCode: 'privacy.dpo', revokedAt: null },
+        },
+      },
+    })
+    if (user?.status !== 'active') return false
+    const admin = user.roles.some((r) => r.roleCode === 'admin')
+    return (
+      admin ||
+      (message.templateKey === 'privacy.emergency_requested' &&
+        user.permissions.length > 0 &&
+        user.roles.some((r) => r.roleCode === 'manager'))
+    )
+  }
   if (message.templateKey === 'patient.auto_booking_suspended') {
     if (!message.patientId || message.aggregateId !== message.patientId)
       return false

@@ -420,3 +420,7 @@ CareLink individual por consulta/profissional, com janela derivada de parâmetro
 Complemento P-56: reconciliação também ocorre no startup antes de expor rotas; falha impede inicialização clínica. CLI permite repetição explícita após atualização de política. Listagem própria paginada no banco,30 itens; busca de base é sempre limitada a um paciente. Eventos automáticos de vínculo são correlacionados ao AppointmentHistory, com suboperação interna auditada dentro da transação.
 
 P-56: mudança da janela da consulta revoga concessões derivadas antigas, além de cancelamento/troca de profissional; nova concessão exige revisão explícita de motivo/prazo.
+
+## P-57 — Concretização técnica da revisão de urgência (BE-031)
+
+Fila administrativa paginada e detalhe sem conteúdo clínico; revisão única append-only, resultado `approved|requires_follow_up|rejected`, notas obrigatórias cifradas. Rejeição encerra acesso imediatamente; aprovação nunca prorroga. Revisor é admin ou detentor atual de privacy.dpo (admin/gestor); gestor comum não recebe leitura. Outbox transacional BE-006, fallback ao admin se nenhum DPO, sem dados clínicos nas mensagens. Decisão técnica implementável dentro de RF-023; responsável periódico/texto definitivo aguardam a clínica/P-08, sem omitir a fila. Contrato único em shared/api-contracts.md.

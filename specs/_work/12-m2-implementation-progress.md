@@ -18,7 +18,7 @@ P-06: proposta provisória de acesso aprovada; P-11: entrada cega aprovada; P-13
 8. BE-042 documentos; BE-043 publicação/projeção própria.
 9. FE-021–029/040/041, seguindo dependências topológicas.
 
-Cada spec deve ser testada e registrada na matriz antes da próxima. Commits por spec ou grupo coeso já validado; nenhuma cobertura antecipada. Próximo trabalho BE-030 em implementação; demais pendentes.
+Cada spec deve ser testada e registrada na matriz antes da próxima. Commits por spec ou grupo coeso já validado; nenhuma cobertura antecipada. BE-030 fundação commitada em `2e9f6b3`; continuidade em BE-031 e demais specs pendentes.
 
 ## BE-030 — fundação verificada
 
@@ -27,3 +27,9 @@ Migration e sincronização/reconciliação CLI/startup implementadas, guard por
 Resultado:89/89 integrações de consumidores (sessão68409), revisão posterior10/10 em `/tmp/vidaplena-be030-audit-final-integration.log` (sessão72700),28/28 Node,2/2 Vitest e lint223. Primeiras falhas foram ambiente: porta do container mudou de32768 para32769 ao reiniciar; migração da fixture exige cwd apps/backend. Bateria inicial6/7 corrigiu expectativa MFA: sessão sem MFA é401 conforme contrato já existente. Nenhuma regra foi enfraquecida. Testes isolados criam/removem sua própria base `_test`; banco dev intocado.
 
 Leituras: constituição48, overview47, ordem150, BE-03039, BE-03138, schema807 linhas originais e booking-store477 linhas originais percorridos no disco. Contratos M2/acesso/valores usados diretamente. Nenhum tsc. Próxima spec BE-031; objetivo completo M2 permanece ativo.
+
+## BE-031 — urgência e revisão verificadas
+
+Novo guard AuthorizeClinical resolve urgência vigente ou CareLink no mesmo escopo transacional, com conta/perfil/papel/MFA frescos. Concessão + auditoria + outbox admin/DPO atômicas; ausência de DPO alerta admin, fila paginada e revisão única imutável sem leitura clínica administrativa. Rejeição encerra o grant, aprovação preserva prazo. Schema/migration e schemas Zod/OpenAPI, prazo configurável `emergency_access.duration_minutes`, justificativa/notas cifradas e notificações sem paciente/conteúdo. Detalhes P-57 no contrato compartilhado antes do código.
+
+22/22 integrações em `/tmp/vidaplena-be031-regression.log` (sessão17481, saída0),28/28 Node (`/tmp/vidaplena-be031-node.log`, sessão16542), lint231 e Prisma validate/generate aprovados. Inicial9/10 falhou só por teste referenciar metadata em vez de metadataSafe; corrigido e regressão passou. Uso real do guard por dados clínicos fica BE-032, sem aceitar cobertura antecipada. Próxima spec BE-032, objetivo integral25 specs mantido.

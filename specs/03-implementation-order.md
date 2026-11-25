@@ -137,7 +137,7 @@ flowchart LR
 
 - **M0:** P-05/P-12 aprovadas pelo usuário: TOTP, bloqueio e histórico parametrizados; publicação de termos por admin, confirmação presencial de telefone e cookie/Origin/CSRF. Ver registro em `04-open-questions.md`.
 - **M1:** BE-020 é a barreira transacional de sobreposição para profissional e sala. Confirmação, reagendamento, encaixe e importação da agenda passam por ela.
-- **M2:** BE-030 reconcilia consultas já confirmadas no M1 ao criar o vínculo clínico. BE-033/FE-029 aguardam decisão P-11 sobre quem pode lançar conteúdo clínico histórico.
+- **M2:** BE-030 reconcilia consultas já confirmadas no M1 ao criar o vínculo clínico. P-11 resolvida para implementação: BE-033/FE-029 usam entrada cega por admin/gestor; leitura/conferência/adendo são clínicos sob vínculo.
 - **M3:** o adaptador de assinatura dev e a solução de mídia P2P não demonstram validade jurídica nem E2E pleno. Ver limites em `04-open-questions.md`.
 - **M4:** RNF-006/007/024 exigem ensaio e infraestrutura de homologação/produção; relatório documental, por si, não prova metas operacionais.
 
@@ -148,3 +148,5 @@ O plano contém **96 IDs únicos** (54 BE, 42 FE). Cada dependência declarada a
 **Complemento M0/P-52 concluído em13/11/2026:** BE-011 e FE-042/007/039 corrigidas e verificadas.26/26 browser (APIs simuladas),5/5 integrações HTTP/PostgreSQL de consentimento,6/6 clienteHTTP e lint221/91 aprovados. Sem build/tsc/commit. FE-042 é complemento autorizado à ordem original; M1 permanece pausada após FE-017, com FE-018–020 pendentes.
 
 **Fechamento de implementação local M1 —24/11/2026:** retomada solicitada revogou a pausa histórica após FE-017. FE-018–020 e integração FE-015 concluídas, sem iniciar M2. Ver auditoria por spec/requisito, resultados e critérios de homologação ainda abertos em `_work/11-m1-completion-audit.md`. Nenhum staging/commit nesta continuação; solicitação posterior de commits ficou limitada ao índice, que estava vazio.
+
+**M2 em implementação —BE-031 (24/11/2026):** urgência com grant temporário cifrado, aviso admin/DPO transacional, revisão imutável e guard fresco por leitura.22/22 integrações BE-030/031/006 e28/28 Node aprovados; próximo BE-032 integra leitura clínica. Permanecem23 specs M2 ainda sem implementação, além das integrações de autoria BE-030 e leitura BE-031 registradas como parciais. M2 completa não declarada.

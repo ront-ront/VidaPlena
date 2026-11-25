@@ -81,6 +81,7 @@ import {
   waitlistQuery,
   waitlistResponse,
 } from './contracts/waitlist'
+import { emergencyAccessOpenApiPaths } from './emergency-access-openapi'
 
 const response = (schema: z.ZodType) => ({
   description: 'Resposta do catalogo',
@@ -116,6 +117,7 @@ const command = (
 })
 export const catalogOpenApiPaths = {
   ...careLinkOpenApiPaths,
+  ...emergencyAccessOpenApiPaths,
   '/imports/patients/preview': {
     post: {
       operationId: 'previewPatientImport',

@@ -71,6 +71,7 @@ export const environmentSchema = z
     REMINDER_WORKER_BATCH_SIZE: integer(50, 1, 100),
     APPOINTMENT_LATE_TOLERANCE_MINUTES: integer(15, 0, 1440),
     APPOINTMENT_NOSHOW_AFTER_MINUTES: integer(30, 0, 10080),
+    EMERGENCY_ACCESS_DURATION_MINUTES: integer(60, 1, 1440),
     ACCESS_LINK_PRE_HOURS: integer(24, 0, 8760),
     ACCESS_LINK_POST_DAYS: integer(30, 1, 3650),
     ACCESS_LINK_NOSHOW_DAYS: integer(1, 1, 365),
@@ -204,6 +205,7 @@ export const environmentSchema = z
       reminderWorkerBatchSize: env.REMINDER_WORKER_BATCH_SIZE,
       appointmentLateToleranceMinutes: env.APPOINTMENT_LATE_TOLERANCE_MINUTES,
       appointmentNoshowAfterMinutes: env.APPOINTMENT_NOSHOW_AFTER_MINUTES,
+      emergencyAccessDurationMinutes: env.EMERGENCY_ACCESS_DURATION_MINUTES,
       careLinkPolicy: {
         preHours: env.ACCESS_LINK_PRE_HOURS,
         postDays: env.ACCESS_LINK_POST_DAYS,

@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M2 Prontuário
-- **Status:** pendente
+- **Status:** implementada e verificada localmente; integração da leitura de prontuário em BE-032 pendente
 - **Depende de:** BE-030, BE-004, BE-006
 - **Requisitos cobertos:** RF-023, RN-007, RNF-015
 
@@ -22,17 +22,23 @@ Ler `specs/shared/api-contracts.md#m2` (urgência), `specs/shared/data-model.md#
 - Tela FE-028 apresenta responsabilidade e tempo; backend valida novamente em toda leitura. Regra de justificativa/expiração/auditoria nunca é configurável para desligar.
 
 ## 5. Critérios de aceite
-- [ ] Dada justificativa vazia ou papel não profissional, quando solicitar, então 400/403 e zero acesso.
+- [x] Dada justificativa vazia ou papel não profissional, quando solicitar, então 400/403 e zero acesso.
 - [ ] Dado grant válido, quando ler prontuário, então cada leitura registra grant/ator/origem e aviso é criado.
-- [ ] Dado prazo `emergency_access.duration_minutes` vencido, quando repetir leitura, então 404/negação auditada sem depender de botão de sair.
-- [ ] Dada revisão, quando registrar, então evento anterior continua imutável e resultado fica associado; admin/DPO não vê conteúdo clínico.
+- [x] Dado prazo `emergency_access.duration_minutes` vencido, quando repetir leitura, então 404/negação auditada sem depender de botão de sair.
+- [x] Dada revisão, quando registrar, então evento anterior continua imutável e resultado fica associado; admin/DPO não vê conteúdo clínico.
 
 ## 6. Testes esperados
 Justificativa, papel, expiração com relógio, requisição simultânea ao vencimento, aviso/falha, auditoria reforçada e revisão; lint.
 
 ## 7. Definition of Done
 - [ ] Exceção única ao vínculo, com prazo por chave e revogação automática.
-- [ ] Testes/lint passam; nenhum atalho para admin, sem `tsc`.
+- [x] Testes/lint passam; nenhum atalho para admin, sem `tsc`.
 
 ## 8. Suposições e pontos em aberto
 Pessoa responsável pela revisão periódica e texto do aviso dependem da clínica/P-08; a fila e os eventos não podem ser omitidos enquanto isso.
+
+## Evidência local —24/11/2026
+
+Concessões/revisões append-only no PostgreSQL, textos cifrados, avisos admin/DPO na mesma transação via BE-006, fila/detalhe administrativos sem conteúdo clínico, revisão única/rejeição imediata e guard compartilhado de leitura implementados. A revisão não altera o prazo. Contrato P-57 concretiza outcomes/paginação/notas. O aceite de leitura de prontuário e a exceção integral ao vínculo continuam abertos até BE-032 consumir o guard em rotas clínicas reais.
+
+22/22 integrações (10 BE-030,10 BE-031,2 BE-006),28/28 Node e lint231 aprovados. Evidência: `/tmp/vidaplena-be031-regression.log` (saída0). Testes cobrem prazo/concorrência, inativação/MFA/papel, auditoria, outbox atômica e retry, fila, revisão e mutações SQL proibidas. Teste inicial9/10 corrigido para ler `AuditEvent.metadataSafe`, sem alteração de política. Sem tsc/banco de desenvolvimento; produção segue dependente da validação clínica/jurídica já registrada.

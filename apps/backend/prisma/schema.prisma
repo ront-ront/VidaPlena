@@ -66,6 +66,7 @@ model User {
   decidedAbsences Absence[] @relation("AbsenceDecider")
   absenceRevisions AbsenceRevision[]
   grantedCareLinks CareLink[] @relation("CareLinkGrantor")
+  emergencyReviews EmergencyAccessReview[]
 
   @@index([status])
   auditEvents AuditEvent[]
@@ -125,6 +126,7 @@ model PatientProfile {
   autoBookingPolicyVersion Int @default(0)
   absences Absence[]
   careLinks CareLink[]
+  emergencyAccess EmergencyAccessGrant[]
   appointments Appointment[]
   waitlistEntries WaitlistEntry[]
   createdAt DateTime       @default(now()) @db.Timestamptz(3)
@@ -428,6 +430,7 @@ model ProfessionalProfile {
   user User @relation(fields:[userId],references:[id],onDelete:Restrict)
   specialties ProfessionalSpecialty[]
   careLinks CareLink[]
+  emergencyAccess EmergencyAccessGrant[]
   schedules ScheduleVersion[]
   reservations SlotReservation[]
   appointments Appointment[]
@@ -834,4 +837,29 @@ model CareLink {
   @@unique([sourceAppointmentId,professionalId])
   @@index([professionalId,patientId,status,startsAt,endsAt])
   @@index([parentLinkId])
+}
+
+model EmergencyAccessGrant {
+  id String @id @default(uuid()) @db.Uuid
+  patientId String @db.Uuid
+  professionalId String @db.Uuid
+  justificationEncrypted String
+  grantedAt DateTime @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+  patient PatientProfile @relation(fields:[patientId],references:[id],onDelete:Restrict)
+  professional ProfessionalProfile @relation(fields:[professionalId],references:[id],onDelete:Restrict)
+  review EmergencyAccessReview?
+  @@index([professionalId,patientId,expiresAt])
+  @@index([grantedAt,id])
+}
+
+model EmergencyAccessReview {
+  id String @id @default(uuid()) @db.Uuid
+  grantId String @unique @db.Uuid
+  reviewerUserId String @db.Uuid
+  outcome String
+  notesEncrypted String
+  reviewedAt DateTime @db.Timestamptz(3)
+  grant EmergencyAccessGrant @relation(fields:[grantId],references:[id],onDelete:Restrict)
+  reviewer User @relation(fields:[reviewerUserId],references:[id],onDelete:Restrict)
 }
