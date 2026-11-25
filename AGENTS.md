@@ -34,6 +34,7 @@
 | Testes de idempotência do agendamento frontend | `yarn workspace vida-plena-frontend test:booking` |
 | Testes funcionais frontend | `yarn workspace vida-plena-frontend test:e2e` (Playwright/Firefox; servidor isolado na porta 3400, APIs simuladas) |
 | Testes HTTP novos | `yarn workspace vida-plena-backend test:vitest` |
+| Reconciliar vínculos da agenda | `yarn workspace vida-plena-backend care-links:reconcile` (automático no startup; repetição idempotente) |
 | Ciclo de backup operacional | `yarn workspace vida-plena-backend backup:cycle full` ou `backup:cycle incremental` (ambiente protegido; runbook em `apps/backend/ops/backup/README.md`) |
 | Restauração de arquivos | `yarn workspace vida-plena-backend backup:files restore <repo> <diretório-vazio>` |
 

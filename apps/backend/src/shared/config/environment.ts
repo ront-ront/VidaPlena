@@ -71,6 +71,13 @@ export const environmentSchema = z
     REMINDER_WORKER_BATCH_SIZE: integer(50, 1, 100),
     APPOINTMENT_LATE_TOLERANCE_MINUTES: integer(15, 0, 1440),
     APPOINTMENT_NOSHOW_AFTER_MINUTES: integer(30, 0, 10080),
+    ACCESS_LINK_PRE_HOURS: integer(24, 0, 8760),
+    ACCESS_LINK_POST_DAYS: integer(30, 1, 3650),
+    ACCESS_LINK_NOSHOW_DAYS: integer(1, 1, 365),
+    ACCESS_SHARED_CASE_ENABLED: z
+      .enum(['true', 'false'])
+      .default('true')
+      .transform((value) => value === 'true'),
     IMPORT_MAX_FILE_MB: integer(5, 1, 100),
     IMPORT_MAX_ROWS: integer(500, 1, 10000),
     IMPORT_PREVIEW_TTL_MINUTES: integer(60, 1, 10080),
@@ -197,6 +204,13 @@ export const environmentSchema = z
       reminderWorkerBatchSize: env.REMINDER_WORKER_BATCH_SIZE,
       appointmentLateToleranceMinutes: env.APPOINTMENT_LATE_TOLERANCE_MINUTES,
       appointmentNoshowAfterMinutes: env.APPOINTMENT_NOSHOW_AFTER_MINUTES,
+      careLinkPolicy: {
+        preHours: env.ACCESS_LINK_PRE_HOURS,
+        postDays: env.ACCESS_LINK_POST_DAYS,
+        noShowDays: env.ACCESS_LINK_NOSHOW_DAYS,
+        sharedCaseEnabled: env.ACCESS_SHARED_CASE_ENABLED,
+        timeZone: env.CLINIC_TIME_ZONE,
+      },
       importMaxFileMb: env.IMPORT_MAX_FILE_MB,
       importMaxRows: env.IMPORT_MAX_ROWS,
       importPreviewTtlMinutes: env.IMPORT_PREVIEW_TTL_MINUTES,

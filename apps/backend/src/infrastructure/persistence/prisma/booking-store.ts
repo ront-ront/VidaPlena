@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { ApplicationError } from '../../../application/errors/application-error'
 import type {
   AppointmentRecord,
@@ -5,6 +6,7 @@ import type {
   BookingTransaction,
 } from '../../../application/ports/booking'
 import { appointmentSummary } from '../../../application/ports/booking'
+import type { CareLinkPolicy } from '../../../domain/rules/care-link'
 import type {
   Appointment,
   AttendanceResponse,
@@ -15,6 +17,7 @@ import { readBookingRestriction } from './absence-policy'
 import { readPrincipal } from './access-store'
 import { enqueueAppointmentNotification } from './appointment-notifications'
 import { PrismaAuditWriter } from './audit-writer'
+import { syncAppointmentCareLink } from './care-link-store'
 import { dataConsentState } from './consent-state'
 import {
   lockAppointmentDelivery,
@@ -75,6 +78,7 @@ export type BookingPersistencePolicy = {
   internalMinutes: number
   patientMinutes: number
   reminderScheduleHours: number[]
+  careLinks?: CareLinkPolicy
 }
 export function bookingTransaction(
   tx: Prisma.TransactionClient,
@@ -412,7 +416,7 @@ export function bookingTransaction(
       }
     },
     history: async (row, actor, action, previous, reason, origin) => {
-      await tx.appointmentHistory.create({
+      const history = await tx.appointmentHistory.create({
         data: {
           appointmentId: row.id,
           action,
@@ -423,6 +427,13 @@ export function bookingTransaction(
           next: appointmentSummary(row),
         },
       })
+      if (policy.careLinks)
+        await syncAppointmentCareLink(tx, row, policy.careLinks, actor, {
+          requestId: randomUUID(),
+          actorRoles: actor.roles,
+          originClient: 'appointment_hook',
+          authorizationBasis: `appointment_history:${history.id}`,
+        })
     },
     notify: (row, type, requestId, previousProfessionalId) =>
       enqueueAppointmentNotification(

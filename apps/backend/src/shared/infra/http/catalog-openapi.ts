@@ -1,4 +1,5 @@
 import type { z } from 'zod'
+import { careLinkOpenApiPaths } from './care-link-openapi'
 import {
   absenceBody,
   absenceCorrectionBody,
@@ -114,6 +115,7 @@ const command = (
   responses: { [patch ? '200' : '201']: response(result), ...errors },
 })
 export const catalogOpenApiPaths = {
+  ...careLinkOpenApiPaths,
   '/imports/patients/preview': {
     post: {
       operationId: 'previewPatientImport',

@@ -23,10 +23,10 @@ O admin pode consultar metadados de auditoria, sem payload clínico. A própria 
 ## Vínculo assistencial (Q-21)
 
 - Entidade `CareLink`: profissional, paciente, origem (consulta/compartilhamento/substituição), início, fim, status, justificativa e quem concedeu. Confirmação da consulta cria vínculo individual; cancelamento antes do atendimento o encerra. No-show preserva janela própria. Novo atendimento renova; após expiração, autor mantém leitura de evoluções de sua autoria.
-- Janela anterior, posterior e no-show: `access.link_pre_hours`, `access.link_post_days`, `access.link_noshow_days`. Sem defaults aprovados; a spec BE-030 fica pendente para implementação até decisão. O mesmo vale para `access.shared_case_enabled`.
+- Janela anterior, posterior e no-show: `access.link_pre_hours`, `access.link_post_days`, `access.link_noshow_days`. Defaults provisórios aprovados para implementação em24/11/2026 constam de `parameters.md`; validação clínica pré-produção continua pendente.
 - Profissional responsável pode compartilhar caso com outro profissional quando parâmetro permitir, com escopo/tempo/justificativa e auditoria. Gestor pode conceder substituição temporária justificada, sem receber acesso clínico próprio. Nenhum profissional herda vínculo automaticamente de outro.
 - Sem vínculo, somente RF-023: justificativa obrigatória, expiração por `emergency_access.duration_minutes`, notificação ao admin/DPO e revisão. Toda leitura grava usuário, paciente, recurso, vínculo ou urgência, hora e origem.
-- O histórico entre especialidades só se abre sob vínculo ativo; os campos concretos ainda aguardam validação clínica (P-06). A UI não deve antecipar leitura adicional.
+- O histórico entre especialidades só se abre sob vínculo ativo; a pré-consulta permite identificação e alertas críticos; durante/pós, histórico finalizado de evoluções, diagnósticos, condutas, exames e documentos. Rascunhos só do autor. Política provisória aprovada para implementação em24/11/2026; validação clínica pré-produção P-06 permanece.
 
 ## Projeção do portal (decisão técnica Q-03)
 

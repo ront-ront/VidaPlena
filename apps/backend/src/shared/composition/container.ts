@@ -1,7 +1,9 @@
 import { FindRoomOptions } from '../../application/use-cases/find-room-options'
 import { ImportAppointments } from '../../application/use-cases/import-appointments'
+import { ManageCareLinks } from '../../application/use-cases/manage-care-links'
 import { CsvParseAppointmentParser } from '../../infrastructure/imports/appointment-csv-parser'
 import { PrismaAppointmentImportStore } from '../../infrastructure/persistence/prisma/appointment-import-store'
+import { PrismaCareLinkStore } from '../../infrastructure/persistence/prisma/care-link-store'
 import 'reflect-metadata'
 import { hkdfSync } from 'node:crypto'
 import { hashSync } from 'bcryptjs'
@@ -115,6 +117,7 @@ import type { AppConfig } from '../config/environment'
 
 /** Tokens are owned by the composition root. The domain and ports never import TSyringe. */
 export const services = {
+  manageCareLinks: Symbol('manageCareLinks'),
   config: Symbol('config'),
   database: Symbol('database'),
   audit: Symbol('audit'),
@@ -179,6 +182,22 @@ export function createServiceContainer(
   database: PrismaClient,
 ): DependencyContainer {
   const scoped = container.createChildContainer()
+  scoped.register<ManageCareLinks>(services.manageCareLinks, {
+    useFactory: (scope) =>
+      new ManageCareLinks(
+        new PrismaCareLinkStore(
+          scope.resolve<PrismaClient>(services.database),
+          config.careLinkPolicy,
+          {
+            internalMinutes: config.internalIdleMinutes,
+            patientMinutes: config.patientIdleMinutes,
+          },
+          new AesSecretBox(config.encryptionKey, 'care-link'),
+        ),
+        scope.resolve<AuditWriter>(services.audit),
+        config.careLinkPolicy,
+      ),
+  })
   scoped.register<ImportAppointments>(services.importAppointments, {
     useFactory: (scope) =>
       new ImportAppointments(
@@ -192,6 +211,7 @@ export function createServiceContainer(
             internalMinutes: config.internalIdleMinutes,
             patientMinutes: config.patientIdleMinutes,
             reminderScheduleHours: config.reminderScheduleHoursBefore,
+            careLinks: config.careLinkPolicy,
           },
         ),
         new CsvParseAppointmentParser(),
@@ -241,6 +261,7 @@ export function createServiceContainer(
             internalMinutes: config.internalIdleMinutes,
             patientMinutes: config.patientIdleMinutes,
             reminderScheduleHours: config.reminderScheduleHoursBefore,
+            careLinks: config.careLinkPolicy,
           },
           new AesSecretBox(config.encryptionKey, 'absence'),
         ),
@@ -263,6 +284,7 @@ export function createServiceContainer(
             internalMinutes: config.internalIdleMinutes,
             patientMinutes: config.patientIdleMinutes,
             reminderScheduleHours: config.reminderScheduleHoursBefore,
+            careLinks: config.careLinkPolicy,
           },
           config.appointmentNoshowAfterMinutes,
         ),
@@ -307,6 +329,7 @@ export function createServiceContainer(
           internalMinutes: config.internalIdleMinutes,
           patientMinutes: config.patientIdleMinutes,
           reminderScheduleHours: config.reminderScheduleHoursBefore,
+          careLinks: config.careLinkPolicy,
         },
       )
     },
@@ -356,6 +379,7 @@ export function createServiceContainer(
           internalMinutes: options.internalIdleMinutes,
           patientMinutes: options.patientIdleMinutes,
           reminderScheduleHours: options.reminderScheduleHoursBefore,
+          careLinks: options.careLinkPolicy,
         },
       )
     },

@@ -256,3 +256,11 @@ A cobertura documental está completa. Ao implementar, atualizar por requisito s
 **FE-019 implementada localmente —24/11/2026:**9/9 Firefox,7/7 cliente HTTP e lint98 aprovados. Importação demonstrativa usa contrato real, sem criar acesso digital. Resta FE-020 e auditoria final M1.
 
 **Fechamento local de implementação M1 —24/11/2026:**25/25 specs com código implementado (BE-016–029, FE-010–020); ações de FE-015 integradas.160/160 integrações HTTP/PostgreSQL com saída0,26/26 Node,2/2 Vitest;124/124 Firefox na regressão e52/52 na revisão posterior (conjuntos sobrepostos); cliente7/7, nonce3/3, fuso3/3, lint backend213/front100 e build Next aprovados.85/85 IDs do inventário aparecem na matriz, referências conferidas nos96 metadados, grafo sem ciclo e template preservado. Auditoria detalhada dos29 IDs que participam de M1 e157 itens de aceite/DoD em `_work/11-m1-completion-audit.md`. Não equivale a homologação de produção: RNF-001/004 com participantes/leitor de tela, RNF-009/010 em carga BE-051 e jurídico/parâmetros/dados reais seguem pendentes. RF-016 tem só importação administrativa M1; prontuário continua M2. Nenhuma spec de implementação M1 ficou sem código; as pendências de validação permanecem visíveis, sem marcar cobertura global como plena. Sem staging/commit/tsc nesta continuação.
+
+## Cobertura implementada de M2 (em andamento)
+
+| Spec | Requisitos | Evidência | Limite |
+| --- | --- | --- | --- |
+| BE-030 | RN-007/RF-016/RNF-012 parcial | CareLink/guard, reconciliação CLI/startup, sincronização da agenda e concessões;89/89 consumidores e10/10 revisão,28/28 Node,2/2 Vitest e lint | Autoria própria em evolução concreta integra BE-035/036; prontuário BE-032 ainda pendente; P-06 validação clínica pré-produção |
+
+P-06/P-11 resolvidas para implementação conforme respostas de24/11/2026; P-13 limitado a testes simples de desenvolvimento. Não afirmar cobertura global M2 por entrega de fundação; objetivo integral continua25 specs.

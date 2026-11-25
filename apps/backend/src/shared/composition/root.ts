@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { Router } from 'express'
 import type { AccessStore } from '../../application/ports/access-store'
 import type { AuditWriter } from '../../application/ports/audit-writer'
@@ -22,6 +23,7 @@ import type { ImportPatients } from '../../application/use-cases/import-patients
 import type { ListMyAppointments } from '../../application/use-cases/list-my-appointments'
 import type { ManageAbsences } from '../../application/use-cases/manage-absences'
 import type { ManageArrivals } from '../../application/use-cases/manage-arrivals'
+import type { ManageCareLinks } from '../../application/use-cases/manage-care-links'
 import type { ManageCatalog } from '../../application/use-cases/manage-catalog'
 import type { ManageConsent } from '../../application/use-cases/manage-consent'
 import type { ManageFiles } from '../../application/use-cases/manage-files'
@@ -49,6 +51,7 @@ import { createApp } from '../infra/http/app'
 import { createAppointmentRouter } from '../infra/http/appointment-router'
 import { createAuthRouter } from '../infra/http/auth-router'
 import { createAvailabilityRouter } from '../infra/http/availability-router'
+import { createCareLinkRouter } from '../infra/http/care-link-router'
 import { createCatalogRouter } from '../infra/http/catalog-router'
 import { createConsentRouter } from '../infra/http/consent-router'
 import { maintenanceBody } from '../infra/http/contracts/maintenance'
@@ -115,8 +118,29 @@ export async function composeBackendApplication(config: AppConfig) {
       alertsEnabled: config.opsAlertsEnabled,
       logLevel: config.opsLogLevel,
     })
+    try {
+      const { count } = await scope
+        .resolve<ManageCareLinks>(services.manageCareLinks)
+        .reconcile({
+          requestId: randomUUID(),
+          actorRoles: [],
+          originClient: 'startup',
+          authorizationBasis: 'care_link_reconciliation',
+        })
+      telemetry.jobResult('care_link_reconcile', 'succeeded', count)
+    } catch (error) {
+      telemetry.jobResult('care_link_reconcile', 'failed', 0)
+      throw error
+    }
     const routes = Router()
     registerApiDocumentation(routes)
+    routes.use(
+      createCareLinkRouter(
+        tokens,
+        authorize,
+        scope.resolve<ManageCareLinks>(services.manageCareLinks),
+      ),
+    )
     routes.use(
       createImportRouter(
         tokens,

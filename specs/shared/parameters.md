@@ -74,10 +74,10 @@ Todos os defaults deste quadro foram autorizados como **provisórios e aguardand
 | `recording.retention_days` | 30 | Q-11 | Jurídico/clínica; provisório |
 | `recording.delete_after_revocation_days` | — | Q-11 | Jurídico/responsável técnico; pendente P-03 |
 | `backup.revoked_content_rotation_days` | — | Q-11 | Jurídico/operações; pendente P-03 |
-| `access.link_pre_hours` | — | Q-21 | Clínica/responsável técnico; pendente P-06 |
-| `access.link_post_days` | — | Q-21 | Clínica/responsável técnico; pendente P-06 |
-| `access.link_noshow_days` | — | Q-21 | Clínica/responsável técnico; pendente P-06 |
-| `access.shared_case_enabled` | — | Q-21 | Clínica/responsável técnico; pendente P-06 |
+| `access.link_pre_hours` | 24 | Q-21 | Default provisório aprovado para implementação em24/11/2026; validação clínica pré-produção pendente P-06 |
+| `access.link_post_days` | 30 | Q-21 | Default provisório aprovado para implementação em24/11/2026; validação clínica pré-produção pendente P-06 |
+| `access.link_noshow_days` | 1 | Q-21 | Default provisório aprovado para implementação em24/11/2026; validação clínica pré-produção pendente P-06 |
+| `access.shared_case_enabled` | true | Q-21 | Default provisório aprovado para implementação em24/11/2026; validação clínica pré-produção pendente P-06 |
 
 Validar MIME/assinatura real do arquivo, não apenas extensão; nomes internos aleatórios e autorização/auditoria por download são regras invariantes, não parâmetros. DevMalwareScanner registra `skipped_dev` e é bloqueado em produção. Paciente não acessa gravação na V1 até decisão P-09.
 

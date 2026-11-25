@@ -65,6 +65,7 @@ model User {
   recordedAbsences Absence[] @relation("AbsenceRecorder")
   decidedAbsences Absence[] @relation("AbsenceDecider")
   absenceRevisions AbsenceRevision[]
+  grantedCareLinks CareLink[] @relation("CareLinkGrantor")
 
   @@index([status])
   auditEvents AuditEvent[]
@@ -123,6 +124,7 @@ model PatientProfile {
   autoBookingSuspendedUntil DateTime? @db.Timestamptz(3)
   autoBookingPolicyVersion Int @default(0)
   absences Absence[]
+  careLinks CareLink[]
   appointments Appointment[]
   waitlistEntries WaitlistEntry[]
   createdAt DateTime       @default(now()) @db.Timestamptz(3)
@@ -425,6 +427,7 @@ model ProfessionalProfile {
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
   user User @relation(fields:[userId],references:[id],onDelete:Restrict)
   specialties ProfessionalSpecialty[]
+  careLinks CareLink[]
   schedules ScheduleVersion[]
   reservations SlotReservation[]
   appointments Appointment[]
@@ -565,6 +568,7 @@ model Appointment {
   reminders ReminderJob[]
   attendanceResponses AttendanceResponse[]
   checkIns CheckIn[]
+  careLinks CareLink[]
   absence Absence?
   importIdentity ImportIdentity?
   importRows ImportRow[]
@@ -804,4 +808,30 @@ model ImportCommand {
   inputHash String
   actor User @relation(fields:[actorId],references:[id],onDelete:Restrict)
   batch ImportBatch @relation(fields:[batchId],references:[id],onDelete:Restrict)
+}
+
+model CareLink {
+  id String @id @default(uuid()) @db.Uuid
+  patientId String @db.Uuid
+  professionalId String @db.Uuid
+  source String
+  sourceAppointmentId String? @db.Uuid
+  appointmentVersion Int?
+  parentLinkId String? @db.Uuid
+  startsAt DateTime @db.Timestamptz(3)
+  endsAt DateTime @db.Timestamptz(3)
+  status String @default("active")
+  grantedBy String? @db.Uuid
+  reasonEncrypted String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  revokedAt DateTime? @db.Timestamptz(3)
+  patient PatientProfile @relation(fields:[patientId],references:[id],onDelete:Restrict)
+  professional ProfessionalProfile @relation(fields:[professionalId],references:[id],onDelete:Restrict)
+  appointment Appointment? @relation(fields:[sourceAppointmentId],references:[id],onDelete:Restrict)
+  grantor User? @relation("CareLinkGrantor",fields:[grantedBy],references:[id],onDelete:Restrict)
+  parent CareLink? @relation("DerivedCareLink",fields:[parentLinkId],references:[id],onDelete:Restrict)
+  children CareLink[] @relation("DerivedCareLink")
+  @@unique([sourceAppointmentId,professionalId])
+  @@index([professionalId,patientId,status,startsAt,endsAt])
+  @@index([parentLinkId])
 }

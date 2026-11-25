@@ -17,6 +17,7 @@
     "db:migrate": "prisma migrate deploy",
     "db:validate": "prisma validate",
     "test:integration": "node --import tsx --test --test-concurrency=1 tests/integration/*.test.ts",
+    "care-links:reconcile": "tsx src/shared/infra/cli/care-links.ts reconcile",
     "db:seed": "tsx src/shared/infra/cli/accounts.ts seed",
     "accounts:review": "tsx src/shared/infra/cli/accounts.ts review",
     "test:vitest": "vitest run --config vitest.config.mts",
