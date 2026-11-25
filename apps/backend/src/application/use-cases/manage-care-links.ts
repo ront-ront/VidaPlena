@@ -67,12 +67,19 @@ export class ManageCareLinks {
     tx: CareLinkTransaction,
     actor: Principal,
     patientId: string,
+    appointmentId?: string,
   ): Promise<ClinicalBasis> {
     const { professional } = await this.actor(tx, actor)
     if (!professional) throw new ApplicationError('FORBIDDEN')
     const now = this.now(),
       links = await tx.links(professional.id, patientId)
     const candidates = links.flatMap((row) => {
+      if (
+        appointmentId &&
+        (row.source !== 'appointment' ||
+          row.sourceAppointmentId !== appointmentId)
+      )
+        return []
       const phase = this.phase(row, now)
       return phase
         ? [

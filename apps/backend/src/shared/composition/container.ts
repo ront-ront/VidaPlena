@@ -3,6 +3,7 @@ import { FindRoomOptions } from '../../application/use-cases/find-room-options'
 import { ImportAppointments } from '../../application/use-cases/import-appointments'
 import { ManageCareLinks } from '../../application/use-cases/manage-care-links'
 import { ManageEmergencyAccess } from '../../application/use-cases/manage-emergency-access'
+import { ManageEvolutionDrafts } from '../../application/use-cases/manage-evolution-drafts'
 import { ManageImportedHistory } from '../../application/use-cases/manage-imported-history'
 import { ManageTerminologies } from '../../application/use-cases/manage-terminologies'
 import { ReadClinicalRecord } from '../../application/use-cases/read-clinical-record'
@@ -12,8 +13,10 @@ import { PrismaAppointmentImportStore } from '../../infrastructure/persistence/p
 import { PrismaCareLinkStore } from '../../infrastructure/persistence/prisma/care-link-store'
 import { PrismaClinicalRecordStore } from '../../infrastructure/persistence/prisma/clinical-record-store'
 import { PrismaEmergencyAccessStore } from '../../infrastructure/persistence/prisma/emergency-access-store'
+import { PrismaEvolutionDraftStore } from '../../infrastructure/persistence/prisma/evolution-draft-store'
 import { PrismaImportedHistoryStore } from '../../infrastructure/persistence/prisma/imported-history-store'
 import { PrismaTerminologyStore } from '../../infrastructure/persistence/prisma/terminology-store'
+import { HmacCommandFingerprint } from '../../infrastructure/security/command-fingerprint'
 import 'reflect-metadata'
 import { hkdfSync } from 'node:crypto'
 import { hashSync } from 'bcryptjs'
@@ -132,6 +135,8 @@ export const services = {
   clinicalRecordStore: Symbol('clinicalRecordStore'),
   importedHistoryStore: Symbol('importedHistoryStore'),
   terminologyStore: Symbol('terminologyStore'),
+  evolutionDraftStore: Symbol('evolutionDraftStore'),
+  manageEvolutionDrafts: Symbol('manageEvolutionDrafts'),
   manageTerminologies: Symbol('manageTerminologies'),
   manageImportedHistory: Symbol('manageImportedHistory'),
   readClinicalRecord: Symbol('readClinicalRecord'),
@@ -304,6 +309,25 @@ export function createServiceContainer(
         scope.resolve<PrismaTerminologyStore>(services.terminologyStore),
         scope.resolve<AuditWriter>(services.audit),
         config.environment,
+      ),
+  })
+  scoped.register<PrismaEvolutionDraftStore>(services.evolutionDraftStore, {
+    useFactory: (scope) =>
+      new PrismaEvolutionDraftStore(
+        scope.resolve<PrismaClient>(services.database),
+        scope.resolve<PrismaClinicalRecordStore>(services.clinicalRecordStore),
+        scope.resolve<PrismaTerminologyStore>(services.terminologyStore),
+        new AesSecretBox(config.encryptionKey, 'clinical-evolution'),
+      ),
+  })
+  scoped.register<ManageEvolutionDrafts>(services.manageEvolutionDrafts, {
+    useFactory: (scope) =>
+      new ManageEvolutionDrafts(
+        scope.resolve<PrismaEvolutionDraftStore>(services.evolutionDraftStore),
+        scope.resolve<ManageCareLinks>(services.manageCareLinks),
+        scope.resolve<ManageTerminologies>(services.manageTerminologies),
+        new HmacCommandFingerprint(config.encryptionKey),
+        scope.resolve<AuditWriter>(services.audit),
       ),
   })
   scoped.register<ImportAppointments>(services.importAppointments, {

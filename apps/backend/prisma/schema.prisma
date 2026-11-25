@@ -68,6 +68,7 @@ model User {
   grantedCareLinks CareLink[] @relation("CareLinkGrantor")
   emergencyReviews EmergencyAccessReview[]
   importedClinicalHistories ImportedHistory[]
+  evolutionDraftCommands EvolutionDraftCommand[]
 
   @@index([status])
   auditEvents AuditEvent[]
@@ -437,6 +438,7 @@ model ProfessionalProfile {
   emergencyAccess EmergencyAccessGrant[]
   clinicalEncounters ClinicalEncounter[]
   importedHistoryChecks ImportedHistoryCheck[]
+  clinicalEvolutions ClinicalEvolution[]
   importedHistoryAddenda ImportedHistoryAddendum[]
   timelineEntries ClinicalTimelineEntry[]
   schedules ScheduleVersion[]
@@ -893,6 +895,7 @@ model ClinicalEncounter {
   endedAt DateTime? @db.Timestamptz(3)
   status String @default("in_progress")
   appointment Appointment @relation(fields:[appointmentId],references:[id],onDelete:Restrict)
+  evolution ClinicalEvolution?
   record ClinicalRecord @relation(fields:[recordId],references:[id],onDelete:Restrict)
   professional ProfessionalProfile @relation(fields:[professionalId],references:[id],onDelete:Restrict)
   @@index([recordId,status,startedAt,id])
@@ -989,4 +992,33 @@ model ProcedureCode {
   catalog TerminologyCatalog @relation(fields:[catalogId],references:[id],onDelete:Restrict)
   @@unique([catalogId,code])
   @@index([catalogId,active,code,id])
+}
+
+model ClinicalEvolution {
+  id String @id @default(uuid()) @db.Uuid
+  encounterId String @unique @db.Uuid
+  authorProfessionalId String @db.Uuid
+  status String @default("draft")
+  payloadEncrypted String
+  draftVersion Int @default(1)
+  savedAt DateTime @db.Timestamptz(3)
+  createdAt DateTime @db.Timestamptz(3)
+  finalizedAt DateTime? @db.Timestamptz(3)
+  contentHash String?
+  encounter ClinicalEncounter @relation(fields:[encounterId],references:[id],onDelete:Restrict)
+  author ProfessionalProfile @relation(fields:[authorProfessionalId],references:[id],onDelete:Restrict)
+  commands EvolutionDraftCommand[]
+  @@index([authorProfessionalId,status,finalizedAt,id])
+}
+model EvolutionDraftCommand {
+  requestKey String @id @db.Uuid
+  actorId String @db.Uuid
+  evolutionId String @db.Uuid
+  inputFingerprint String
+  resultVersion Int
+  resultSavedAt DateTime @db.Timestamptz(3)
+  createdAt DateTime @db.Timestamptz(3)
+  actor User @relation(fields:[actorId],references:[id],onDelete:Restrict)
+  evolution ClinicalEvolution @relation(fields:[evolutionId],references:[id],onDelete:Restrict)
+  @@index([evolutionId,resultVersion])
 }

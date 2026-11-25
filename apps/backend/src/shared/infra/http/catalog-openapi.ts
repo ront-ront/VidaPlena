@@ -83,6 +83,7 @@ import {
   waitlistResponse,
 } from './contracts/waitlist'
 import { emergencyAccessOpenApiPaths } from './emergency-access-openapi'
+import { evolutionDraftOpenApiPaths } from './evolution-draft-openapi'
 import { importedHistoryOpenApiPaths } from './imported-history-openapi'
 import { terminologyOpenApiPaths } from './terminology-openapi'
 
@@ -120,6 +121,7 @@ const command = (
 })
 export const catalogOpenApiPaths = {
   ...careLinkOpenApiPaths,
+  ...evolutionDraftOpenApiPaths,
   ...terminologyOpenApiPaths,
   ...importedHistoryOpenApiPaths,
   ...clinicalRecordOpenApiPaths,

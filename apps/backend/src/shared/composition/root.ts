@@ -27,6 +27,7 @@ import type { ManageCareLinks } from '../../application/use-cases/manage-care-li
 import type { ManageCatalog } from '../../application/use-cases/manage-catalog'
 import type { ManageConsent } from '../../application/use-cases/manage-consent'
 import type { ManageEmergencyAccess } from '../../application/use-cases/manage-emergency-access'
+import type { ManageEvolutionDrafts } from '../../application/use-cases/manage-evolution-drafts'
 import type { ManageFiles } from '../../application/use-cases/manage-files'
 import type { ManageImportedHistory } from '../../application/use-cases/manage-imported-history'
 import type { ManageMaintenance } from '../../application/use-cases/manage-maintenance'
@@ -61,6 +62,7 @@ import { createClinicalRecordRouter } from '../infra/http/clinical-record-router
 import { createConsentRouter } from '../infra/http/consent-router'
 import { maintenanceBody } from '../infra/http/contracts/maintenance'
 import { createEmergencyAccessRouter } from '../infra/http/emergency-access-router'
+import { createEvolutionDraftRouter } from '../infra/http/evolution-draft-router'
 import { createFileRouter } from '../infra/http/file-router'
 import { createImportRouter } from '../infra/http/import-router'
 import { createImportedHistoryRouter } from '../infra/http/imported-history-router'
@@ -142,6 +144,13 @@ export async function composeBackendApplication(config: AppConfig) {
     }
     const routes = Router()
     registerApiDocumentation(routes)
+    routes.use(
+      createEvolutionDraftRouter(
+        tokens,
+        authorize,
+        scope.resolve<ManageEvolutionDrafts>(services.manageEvolutionDrafts),
+      ),
+    )
     routes.use(
       createTerminologyRouter(
         tokens,

@@ -22,9 +22,9 @@ Ler `specs/shared/data-model.md#m2`, `specs/shared/api-contracts.md#m2` (Termino
 - Mapas estruturais FHIR R4/TISS de `data-model.md` são referência futura; nenhuma API de integração operacional é criada.
 
 ## 5. Critérios de aceite
-- [ ] Dado código CID-10 válido, quando selecionar, então código/descrição/versão são persistidos no diagnóstico.
+- [x] Dado código CID-10 válido, quando selecionar, então código/descrição/versão são persistidos no diagnóstico.
 - [ ] Dado TUSS ausente em atendimento particular, quando registrar procedimento, então fluxo permitido; código informado inválido é recusado.
-- [ ] Dada atualização do catálogo, quando ler registro anterior, então descrição/versão originais continuam visíveis.
+- [x] Dada atualização do catálogo, quando ler registro anterior, então descrição/versão originais continuam visíveis.
 - [x] Dada busca sem resultado, quando consultar, então coleção vazia sem inventar código; nenhuma rota FHIR/TISS operacional é exposta.
 
 ## 6. Testes esperados
@@ -44,3 +44,5 @@ Catálogos e entradas versionados imutáveis, seleção ativa atômica, loader C
 49/49 integrações BE-030–034 (`/tmp/vidaplena-be034-regression.log`, sessão35455, saída0),28/28 Node (`/tmp/vidaplena-be034-node.log`, sessão4245),2/2 Vitest (`/tmp/vidaplena-be034-vitest.log`, sessão92288) e lint260 incluindo fixtures/manifest aprovados. Prisma validate/generate e diff aprovados. CLI inicialmente falhou com configuração local misturada ao ambiente do teste; teste passou a usar DOTENV_CONFIG_PATH=/dev/null e configuração explícita, sem ler o .env privado. Diagnóstico da CLI expõe apenas código/nomes de campos, sem valores.
 
 Os três primeiros aceites ficam abertos na parte de persistência/leitura do diagnóstico/procedimento concreto até BE-035/040. Helper de snapshot/versão/invalidade e TUSS opcional foi testado em transação real; não confundir esse teste com gravação clínica já implementada. P-13 oficial permanece pendente. Dependências BE-004/030 explicitadas para reuso do escopo de identidade/perfil/auditoria, sem exigir vínculo de paciente para catálogo público aos profissionais.
+
+**Integração CID em BE-035 —25/11/2026:** snapshot realmente persistido no payload clínico cifrado, recuperado por GET e mantido após atualização de descrição/versão no catálogo; seleção explícita obsoleta rejeitada.42/42 regressão aprovada. Parte TUSS/procedimento ainda BE-040 e conteúdo oficial P-13 segue pendente; demo não é código médico válido.

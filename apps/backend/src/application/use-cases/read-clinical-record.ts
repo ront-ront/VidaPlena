@@ -157,7 +157,12 @@ export class ReadClinicalRecord {
         const appointment = await tx.clinicalAppointment(appointmentId)
         if (!appointment) throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
         // An emergency grant never authorizes creating an arbitrary encounter.
-        const basis = await this.links.basis(tx, actor, appointment.patientId),
+        const basis = await this.links.basis(
+            tx,
+            actor,
+            appointment.patientId,
+            appointmentId,
+          ),
           now = this.now()
         if (
           appointment.professionalId !== basis.professionalId ||

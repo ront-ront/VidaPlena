@@ -26,6 +26,12 @@ export class ApplicationError extends Error {
     readonly code: ErrorCode,
     readonly details?: Array<{ field: string; reason: string }>,
     readonly context?: {
+      draftConflict?: {
+        evolutionId: string
+        currentDraftVersion: number
+        savedAt: string
+        status: 'draft' | 'finalized'
+      }
       importReport?: ImportReport
       affectedAppointments?: Array<{
         id: string

@@ -99,3 +99,7 @@ Admin/gestor enviam multipart para `/v1/clinical/records/:patientId/imported-his
 ### Catálogos demonstrativos de desenvolvimento (BE-034)
 
 Após aplicar migrations, execute `yarn workspace vida-plena-backend terminologies:demo` na raiz para carregar CID/TUSS sintéticos versionados. `terminologies:load <arquivo.json>` carrega arquivo local no mesmo formato das fixtures. Repetir não duplica; mudar descrição/código exige nova versão. Busca profissional/MFA: `/v1/terminologies/cid10?q=diagnostico` e `/v1/terminologies/tuss`. Respostas têm source/demo e snapshots guardam versão. DEV-* não são códigos médicos oficiais. Carga e uso de demo são bloqueados em staging/production; fonte oficial/licença/validação seguem P-13. Não há integração FHIR/TISS ou carga externa automática. Medicamentos integram BE-039.
+
+### Rascunho de evolução (BE-035)
+
+Após iniciar encontro próprio, POST `/v1/clinical/encounters/:id/evolutions/draft` cria draft cifrado. GET na mesma rota recupera por encontro; GET `/v1/clinical/evolutions/:id` recupera draft próprio. PATCH `/v1/clinical/evolutions/:id/draft` exige expectedDraftVersion e header Idempotency-Key UUID; repetir exatamente a mesma operação não avança duas vezes.409 traz draftConflict sem conteúdo clínico. Seleções CID usam code/version e viram snapshots; dados de demonstração são explicitamente demo. Escrever exige vínculo da própria consulta em atendimento, ler draft exige autoria e vínculo fora da pré-consulta. Urgência não abre rascunhos. Finalização/adendos são BE-036; autosave de interface é FE-022.

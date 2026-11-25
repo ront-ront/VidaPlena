@@ -91,6 +91,14 @@ export const errorResponse = z.object({
       .array(z.object({ field: z.string(), reason: z.string() }))
       .optional(),
     requestId: idSchema,
+    draftConflict: z
+      .object({
+        evolutionId: idSchema,
+        currentDraftVersion: z.number().int().positive(),
+        savedAt: z.iso.datetime(),
+        status: z.enum(['draft', 'finalized']),
+      })
+      .optional(),
     affectedAppointments: z
       .array(
         z.object({
