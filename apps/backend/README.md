@@ -91,3 +91,7 @@ Profissional autenticado/MFA solicita `POST /v1/clinical/emergency-access` com p
 ### Leitura de prontuário e início de atendimento (BE-032)
 
 `GET /v1/clinical/records/:patientId` e `/timeline` exigem vínculo vigente ou urgência; pré-consulta restringe histórico. `POST /v1/clinical/encounters` com appointmentId inicia explicitamente consulta própria dentro do horário previsto e preserva reserva; repetir retorna o mesmo encontro. Não inicia por GET. Timeline usa cursor retornado pela API, filtros from/to/specialtyId/type e páginas30; consultas M1 concluídas/importadas permanecem identificadas. Alertas integram BE-037 e itens clínicos integram suas specs M2. p95 é ensaiado em BE-051, não comprovado pela paginação local.
+
+### Histórico importado cego (BE-033)
+
+Admin/gestor enviam multipart para `/v1/clinical/records/:patientId/imported-history`: parte data JSON (origin, originalDate?, originalAuthor?) antes da parte file (PDF/JPG/PNG). Recebem recibo sem link/conteúdo. Profissional com vínculo fora da pré-consulta consulta `/v1/clinical/imported-history/:id`, registra `/check` com JSON vazio ou `/addenda` com reason/correctionText. Urgência permite leitura/download, sem conferir/aditar. Arquivo original e registros são imutáveis; não há assinatura retroativa. Downloads BE-013 revalidam acesso e auditam o vínculo/grant. O job histórico `consent_evidence_reconcile` também limpa arquivos ImportedHistory provisórios antigos sem registro associado, por file.orphan_reconcile_minutes. Arquivo vinculado nunca entra nessa limpeza.

@@ -31,7 +31,7 @@ Campos obrigatórios: `external_id`, `patient_cpf`, `professional_external_id`, 
 
 ## Histórico clínico manual
 
-Q-19 atribui o lançamento a admin/gestor, mas RN-007 nega acesso clínico a esses papéis. **P-11 bloqueia a definição do fluxo e de sua permissão** até decidir se haverá upload cego de conteúdo/metadados ou concessão excepcional limitada. O registro planejado terá paciente, data original conhecida, origem, autor original se conhecido, importador, data de importação e arquivo opcional; profissional vinculado poderá marcar “conferido por”. O item ficará identificado como importado, imutável, não assinado, com correção por adendo. Nenhuma spec pode conceder leitura clínica a admin/gestor por inferência deste parágrafo.
+P-11 resolvida pelo usuário: admin/gestor fazem entrada cega de metadados e arquivo, sem leitura/download do conteúdo armazenado. Profissional vinculado lê, confere e registra adendos. Contrato multipart e campos em `api-contracts.md#histórico-importado-manual`; arquivo obrigatório na concretização P-59, sem contentReference remoto. Origem/data/importador visíveis na timeline; histórico imutável e não assinado, sem criar conta ou notificar. Conferência é evidência append-only distinta do original; adendo nunca o substitui.
 
 ## Critérios de validação do lote
 

@@ -66,7 +66,11 @@ export interface FileAccessPolicy {
       linkedResourceType: string
     },
   ): Promise<boolean>
-  canDownload(actor: Principal, file: FileRecord): Promise<boolean>
+  canDownload(
+    actor: Principal,
+    file: FileRecord,
+    context?: AuditContext,
+  ): Promise<boolean | { authorizationBasis: string }>
 }
 export interface FileDownloadTokens {
   issue(input: {

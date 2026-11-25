@@ -28,6 +28,7 @@ import type { ManageCatalog } from '../../application/use-cases/manage-catalog'
 import type { ManageConsent } from '../../application/use-cases/manage-consent'
 import type { ManageEmergencyAccess } from '../../application/use-cases/manage-emergency-access'
 import type { ManageFiles } from '../../application/use-cases/manage-files'
+import type { ManageImportedHistory } from '../../application/use-cases/manage-imported-history'
 import type { ManageMaintenance } from '../../application/use-cases/manage-maintenance'
 import type { ManageRooms } from '../../application/use-cases/manage-rooms'
 import type { ManageSchedule } from '../../application/use-cases/manage-schedule'
@@ -61,6 +62,7 @@ import { maintenanceBody } from '../infra/http/contracts/maintenance'
 import { createEmergencyAccessRouter } from '../infra/http/emergency-access-router'
 import { createFileRouter } from '../infra/http/file-router'
 import { createImportRouter } from '../infra/http/import-router'
+import { createImportedHistoryRouter } from '../infra/http/imported-history-router'
 import {
   accessGuard,
   auditContext,
@@ -138,6 +140,15 @@ export async function composeBackendApplication(config: AppConfig) {
     }
     const routes = Router()
     registerApiDocumentation(routes)
+    routes.use(
+      createImportedHistoryRouter(
+        tokens,
+        authorize,
+        scope.resolve<ManageImportedHistory>(services.manageImportedHistory),
+        scope.resolve<ManageFiles>(services.manageFiles),
+        config.fileAttachmentMaxMb * 1024 * 1024,
+      ),
+    )
     routes.use(
       createClinicalRecordRouter(
         tokens,

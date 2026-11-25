@@ -3,12 +3,15 @@ import { FindRoomOptions } from '../../application/use-cases/find-room-options'
 import { ImportAppointments } from '../../application/use-cases/import-appointments'
 import { ManageCareLinks } from '../../application/use-cases/manage-care-links'
 import { ManageEmergencyAccess } from '../../application/use-cases/manage-emergency-access'
+import { ManageImportedHistory } from '../../application/use-cases/manage-imported-history'
 import { ReadClinicalRecord } from '../../application/use-cases/read-clinical-record'
+import { ClinicalFilePolicy } from '../../infrastructure/files/clinical-file-policy'
 import { CsvParseAppointmentParser } from '../../infrastructure/imports/appointment-csv-parser'
 import { PrismaAppointmentImportStore } from '../../infrastructure/persistence/prisma/appointment-import-store'
 import { PrismaCareLinkStore } from '../../infrastructure/persistence/prisma/care-link-store'
 import { PrismaClinicalRecordStore } from '../../infrastructure/persistence/prisma/clinical-record-store'
 import { PrismaEmergencyAccessStore } from '../../infrastructure/persistence/prisma/emergency-access-store'
+import { PrismaImportedHistoryStore } from '../../infrastructure/persistence/prisma/imported-history-store'
 import 'reflect-metadata'
 import { hkdfSync } from 'node:crypto'
 import { hashSync } from 'bcryptjs'
@@ -125,6 +128,8 @@ export const services = {
   manageCareLinks: Symbol('manageCareLinks'),
   careLinkStore: Symbol('careLinkStore'),
   clinicalRecordStore: Symbol('clinicalRecordStore'),
+  importedHistoryStore: Symbol('importedHistoryStore'),
+  manageImportedHistory: Symbol('manageImportedHistory'),
   readClinicalRecord: Symbol('readClinicalRecord'),
   emergencyAccessStore: Symbol('emergencyAccessStore'),
   manageEmergencyAccess: Symbol('manageEmergencyAccess'),
@@ -259,6 +264,27 @@ export function createServiceContainer(
         scope.resolve<AuthorizeClinical>(services.authorizeClinical),
         scope.resolve<ManageCareLinks>(services.manageCareLinks),
         scope.resolve<AuditWriter>(services.audit),
+      ),
+  })
+  scoped.register<PrismaImportedHistoryStore>(services.importedHistoryStore, {
+    useFactory: (scope) =>
+      new PrismaImportedHistoryStore(
+        scope.resolve<PrismaClient>(services.database),
+        scope.resolve<PrismaClinicalRecordStore>(services.clinicalRecordStore),
+        new AesSecretBox(config.encryptionKey, 'imported-history'),
+        config.environment,
+      ),
+  })
+  scoped.register<ManageImportedHistory>(services.manageImportedHistory, {
+    useFactory: (scope) =>
+      new ManageImportedHistory(
+        scope.resolve<PrismaImportedHistoryStore>(
+          services.importedHistoryStore,
+        ),
+        scope.resolve<AuthorizeClinical>(services.authorizeClinical),
+        scope.resolve<ManageCareLinks>(services.manageCareLinks),
+        scope.resolve<AuditWriter>(services.audit),
+        config.clinicTimeZone,
       ),
   })
   scoped.register<ImportAppointments>(services.importAppointments, {
@@ -745,9 +771,16 @@ export function createServiceContainer(
   })
   scoped.register<FileAccessPolicy>(services.filePolicy, {
     useFactory: (scope) =>
-      new ConsentEvidenceFilePolicy(
+      new ClinicalFilePolicy(
         scope.resolve<PrismaClient>(services.database),
-        scope.resolve<AppConfig>(services.config).environment,
+        scope.resolve<PrismaClinicalRecordStore>(services.clinicalRecordStore),
+        scope.resolve<AuthorizeClinical>(services.authorizeClinical),
+        scope.resolve<AuditWriter>(services.audit),
+        new ConsentEvidenceFilePolicy(
+          scope.resolve<PrismaClient>(services.database),
+          config.environment,
+        ),
+        config.environment,
       ),
   })
   scoped.register<FileDownloadTokens>(services.fileTokens, {

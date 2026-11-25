@@ -95,13 +95,21 @@ export class ManageFiles {
 
   async discardUnlinked(fileId: string) {
     const file = await this.repository.get(fileId)
-    if (file?.linkedResourceType !== 'ConsentEvent') return
+    if (
+      !file ||
+      !['ConsentEvent', 'ImportedHistory'].includes(file.linkedResourceType)
+    )
+      return
     if (await this.repository.discardUnlinked(fileId))
       await this.storage.remove(file.category, file.storageKey)
   }
 
   async downloadLink(actor: Principal, fileId: string, context: AuditContext) {
-    const file = await this.requireReadable(actor, fileId)
+    const { file, authorizationBasis } = await this.requireReadable(
+      actor,
+      fileId,
+      context,
+    )
     const expiresAt = new Date(
       this.now().getTime() + this.limits.signedUrlTtlSeconds * 1000,
     )
@@ -116,6 +124,7 @@ export class ManageFiles {
       actorUserId: actor.userId,
       actorRoles: actor.roles,
       action: 'file.link_issued',
+      authorizationBasis: authorizationBasis ?? context.authorizationBasis,
       resourceType: 'FileObject',
       resourceId: fileId,
       subjectPatientId: file.ownerPatientId ?? undefined,
@@ -128,13 +137,18 @@ export class ManageFiles {
     if (!proof) throw new ApplicationError('TOKEN_EXPIRED')
     if (proof.userId !== actor.userId || proof.sessionId !== actor.sessionId)
       throw new ApplicationError('FORBIDDEN')
-    const file = await this.requireReadable(actor, proof.fileId)
+    const { file, authorizationBasis } = await this.requireReadable(
+      actor,
+      proof.fileId,
+      context,
+    )
     const stream = await this.storage.read(file.category, file.storageKey)
     await this.repository.audit.append({
       ...context,
       actorUserId: actor.userId,
       actorRoles: actor.roles,
       action: 'file.downloaded',
+      authorizationBasis: authorizationBasis ?? context.authorizationBasis,
       resourceType: 'FileObject',
       resourceId: file.id,
       subjectPatientId: file.ownerPatientId ?? undefined,
@@ -142,15 +156,23 @@ export class ManageFiles {
     return { stream, contentType: file.contentTypeDetected, size: file.size }
   }
 
-  private async requireReadable(actor: Principal, fileId: string) {
+  private async requireReadable(
+    actor: Principal,
+    fileId: string,
+    context: AuditContext,
+  ) {
     const file = await this.repository.get(fileId)
-    if (
-      !file ||
-      file.revokedAt ||
-      !(await this.policy.canDownload(actor, file))
-    )
+    if (!file || file.revokedAt)
       throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
-    return file
+    const permission = await this.policy.canDownload(actor, file, context)
+    if (!permission) throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
+    return {
+      file,
+      authorizationBasis:
+        typeof permission === 'object'
+          ? permission.authorizationBasis
+          : undefined,
+    }
   }
 }
 

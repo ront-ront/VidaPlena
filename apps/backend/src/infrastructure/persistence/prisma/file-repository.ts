@@ -94,8 +94,13 @@ export class PrismaFileRepository implements FileRepository {
     const result = await this.db.fileObject.deleteMany({
       where: {
         id,
-        linkedResourceType: 'ConsentEvent',
-        consentEvidence: { is: null },
+        OR: [
+          { linkedResourceType: 'ConsentEvent', consentEvidence: { is: null } },
+          {
+            linkedResourceType: 'ImportedHistory',
+            importedHistory: { is: null },
+          },
+        ],
       },
     })
     return result.count === 1

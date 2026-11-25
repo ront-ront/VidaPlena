@@ -13,9 +13,14 @@ export class ConsentEvidenceReconciler {
     const cutoff = new Date(this.now().getTime() - this.staleMinutes * 60_000)
     const orphans = await this.db.fileObject.findMany({
       where: {
-        linkedResourceType: 'ConsentEvent',
         createdAt: { lt: cutoff },
-        consentEvidence: { is: null },
+        OR: [
+          { linkedResourceType: 'ConsentEvent', consentEvidence: { is: null } },
+          {
+            linkedResourceType: 'ImportedHistory',
+            importedHistory: { is: null },
+          },
+        ],
       },
       select: { id: true },
       take: 100,

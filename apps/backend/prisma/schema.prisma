@@ -67,6 +67,7 @@ model User {
   absenceRevisions AbsenceRevision[]
   grantedCareLinks CareLink[] @relation("CareLinkGrantor")
   emergencyReviews EmergencyAccessReview[]
+  importedClinicalHistories ImportedHistory[]
 
   @@index([status])
   auditEvents AuditEvent[]
@@ -314,6 +315,7 @@ model FileObject {
   ownerPatient PatientProfile? @relation(fields:[ownerPatientId],references:[id],onDelete:Restrict)
   uploader User? @relation(fields:[uploadedBy],references:[id],onDelete:Restrict)
   consentEvidence ConsentEvent?
+  importedHistory ImportedHistory?
   @@index([ownerPatientId,createdAt])
   @@index([linkedResourceType,linkedResourceId,revokedAt])
 }
@@ -434,6 +436,8 @@ model ProfessionalProfile {
   careLinks CareLink[]
   emergencyAccess EmergencyAccessGrant[]
   clinicalEncounters ClinicalEncounter[]
+  importedHistoryChecks ImportedHistoryCheck[]
+  importedHistoryAddenda ImportedHistoryAddendum[]
   timelineEntries ClinicalTimelineEntry[]
   schedules ScheduleVersion[]
   reservations SlotReservation[]
@@ -877,6 +881,7 @@ model ClinicalRecord {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   patient PatientProfile @relation(fields:[patientId],references:[id],onDelete:Restrict)
   encounters ClinicalEncounter[]
+  importedHistories ImportedHistory[]
   timelineEntries ClinicalTimelineEntry[]
 }
 model ClinicalEncounter {
@@ -908,4 +913,38 @@ model ClinicalTimelineEntry {
   specialty Specialty? @relation(fields:[specialtyId],references:[id],onDelete:Restrict)
   @@unique([type,resourceId])
   @@index([recordId,occurredAt,id])
+}
+
+model ImportedHistory {
+  id String @id @db.Uuid
+  recordId String @db.Uuid
+  fileId String @unique @db.Uuid
+  metadataEncrypted String
+  originalDate DateTime? @db.Date
+  importedBy String @db.Uuid
+  importedAt DateTime @db.Timestamptz(3)
+  record ClinicalRecord @relation(fields:[recordId],references:[id],onDelete:Restrict)
+  file FileObject @relation(fields:[fileId],references:[id],onDelete:Restrict)
+  importer User @relation(fields:[importedBy],references:[id],onDelete:Restrict)
+  check ImportedHistoryCheck?
+  addenda ImportedHistoryAddendum[]
+  @@index([recordId,importedAt,id])
+}
+model ImportedHistoryCheck {
+  id String @id @default(uuid()) @db.Uuid
+  historyId String @unique @db.Uuid
+  professionalId String @db.Uuid
+  checkedAt DateTime @db.Timestamptz(3)
+  history ImportedHistory @relation(fields:[historyId],references:[id],onDelete:Restrict)
+  professional ProfessionalProfile @relation(fields:[professionalId],references:[id],onDelete:Restrict)
+}
+model ImportedHistoryAddendum {
+  id String @id @default(uuid()) @db.Uuid
+  historyId String @db.Uuid
+  professionalId String @db.Uuid
+  contentEncrypted String
+  createdAt DateTime @db.Timestamptz(3)
+  history ImportedHistory @relation(fields:[historyId],references:[id],onDelete:Restrict)
+  professional ProfessionalProfile @relation(fields:[professionalId],references:[id],onDelete:Restrict)
+  @@index([historyId,createdAt,id])
 }
