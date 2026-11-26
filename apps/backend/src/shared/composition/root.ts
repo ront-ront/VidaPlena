@@ -32,6 +32,7 @@ import type { ManageConsent } from '../../application/use-cases/manage-consent'
 import type { ManageDocumentTypes } from '../../application/use-cases/manage-document-types'
 import type { ManageEmergencyAccess } from '../../application/use-cases/manage-emergency-access'
 import type { ManageEvolutionDrafts } from '../../application/use-cases/manage-evolution-drafts'
+import type { ManageExamResults } from '../../application/use-cases/manage-exam-results'
 import type { ManageFiles } from '../../application/use-cases/manage-files'
 import type { ManageImportedHistory } from '../../application/use-cases/manage-imported-history'
 import type { ManageMaintenance } from '../../application/use-cases/manage-maintenance'
@@ -73,6 +74,7 @@ import { maintenanceBody } from '../infra/http/contracts/maintenance'
 import { createEmergencyAccessRouter } from '../infra/http/emergency-access-router'
 import { createEvolutionDraftRouter } from '../infra/http/evolution-draft-router'
 import { createExamOrderRouter } from '../infra/http/exam-order-router'
+import { createExamResultRouter } from '../infra/http/exam-result-router'
 import { createFileRouter } from '../infra/http/file-router'
 import { createImportRouter } from '../infra/http/import-router'
 import { createImportedHistoryRouter } from '../infra/http/imported-history-router'
@@ -155,6 +157,15 @@ export async function composeBackendApplication(config: AppConfig) {
     }
     const routes = Router()
     registerApiDocumentation(routes)
+    routes.use(
+      createExamResultRouter(
+        tokens,
+        authorize,
+        scope.resolve<ManageExamResults>(services.manageExamResults),
+        scope.resolve<ManageFiles>(services.manageFiles),
+        config.fileResultMaxMb * 1024 * 1024,
+      ),
+    )
     routes.use(
       createExamOrderRouter(
         tokens,

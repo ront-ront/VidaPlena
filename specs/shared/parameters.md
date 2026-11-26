@@ -78,7 +78,7 @@ Todos os defaults deste quadro foram autorizados como **provisórios e aguardand
 | `file.recording_max_minutes` | 60 | Q-17 | Equipe técnica; aguardando decisão |
 | `file.max_per_record` | 10 | Q-17 | Equipe técnica; aguardando decisão |
 | `file.signed_url_ttl_seconds` | 120 | Q-17 | Equipe técnica; aguardando decisão |
-| `file.orphan_reconcile_minutes` | 60 | BE-011, evidência presencial | Equipe técnica; padrão operacional provisório para limpar upload sem ConsentEvent após interrupção |
+| `file.orphan_reconcile_minutes` | 60 | BE-011/033/041, evidência/histórico/resultado | Equipe técnica; padrão operacional provisório para limpar upload sem associação após interrupção |
 | `recording.retention_days` | 30 | Q-11 | Jurídico/clínica; provisório |
 | `recording.delete_after_revocation_days` | — | Q-11 | Jurídico/responsável técnico; pendente P-03 |
 | `backup.revoked_content_rotation_days` | — | Q-11 | Jurídico/operações; pendente P-03 |

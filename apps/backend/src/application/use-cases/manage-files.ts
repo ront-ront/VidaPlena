@@ -97,7 +97,9 @@ export class ManageFiles {
     const file = await this.repository.get(fileId)
     if (
       !file ||
-      !['ConsentEvent', 'ImportedHistory'].includes(file.linkedResourceType)
+      !['ConsentEvent', 'ImportedHistory', 'ExamResult'].includes(
+        file.linkedResourceType,
+      )
     )
       return
     if (await this.repository.discardUnlinked(fileId))

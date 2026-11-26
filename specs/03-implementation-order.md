@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | M0 — Fundação | Ambiente, identidade, cadastro, consentimento, autorização, auditoria, arquivos e base operacional. | 26/26 specs redigidas (incluindo FE-042 complementar) e escopo implementável de M0 concluído localmente; API, front, worker e PostgreSQL integrados; 24/24 integrações, 20/20 testes Node, 2/2 Vitest, 3/3 front API, lint e build aprovados. Portões jurídicos/operacionais P-01/P-03/P-07/P-08 e revisão manual de acessibilidade permanecem antes de produção; arquivo genérico P-20 só ativa com recurso M2/M3. |
 | M1 — Agenda | Catálogo, grade, salas, reserva concorrente, consultas, lista de espera, lembretes, recepção e CSV. |25/25 specs com implementação local concluída em24/11/2026 (14 BE e11 FE).160/160 integrações HTTP/PostgreSQL,26/26 Node,2/2 Vitest; regressão Firefox124/124 e revisão posterior52/52; cliente7/7, nonce3/3, fuso3/3, lint do escopo e build aprovados. Ensaios RNF-001/004 com pessoas/leitor de tela, carga formal BE-051, jurídico e homologação permanecem explicitamente pendentes. Auditoria em `_work/11-m1-completion-audit.md`; nenhuma implementação M2 iniciada. |
-| M2 — Prontuário | Vínculo, histórico, evolução/adendo, alertas, documentos, acesso de urgência e projeção do paciente. | Retomada pelo usuário em25/11/2026; BE-030–040 com escopo atual verificado. Restam BE-041–043 e11 FE. Exames/PDF/fila integrados; jurídico/catálogos reais/produção permanecem pendentes. |
+| M2 — Prontuário | Vínculo, histórico, evolução/adendo, alertas, documentos, acesso de urgência e projeção do paciente. | Retomada pelo usuário em25/11/2026; BE-030–041 com escopo atual verificado. Restam BE-042/043 e11 FE. Exames/PDF/fila integrados; jurídico/catálogos reais/produção permanecem pendentes. |
 | M3 — Teleconsulta | Termo, vídeo P2P, arquivos e gravação revogável. | 11/11 specs redigidas; RNF-014 parcial e portões P-03/P-04/P-10 pendentes. |
 | M4 — Gestão | Indicadores, relatórios, auditoria consultável e ensaios de desempenho. | 9/9 specs redigidas; produção depende de P-07/P-14. |
 
@@ -98,7 +98,7 @@ flowchart LR
 | 60 | M2 | [BE-038](backend/BE-038-catalogo-assinatura.md) | Catálogo documental e SignatureProvider | back | BE-013, BE-034, BE-004, BE-032 | Fundação implementada;13/13 específicas,53/53 regressão,31/31 Node,2/2 Vitest e lint; consumidores seguintes |
 | 61 | M2 | [BE-039](backend/BE-039-prescricao.md) | Prescrição e verificação de alergia | back | BE-037, BE-038, BE-036 | Backend demonstrativo verificado;14/14 específicas,110/110 regressão e4/4 M0; publicação BE-043 pendente |
 | 62 | M2 | [BE-040](backend/BE-040-pedidos-exames.md) | Pedidos de exames assinados | back | BE-038, BE-034, BE-036 | Backend demonstrativo verificado;8/8 específicas,17/17 revisão,4/4 M0 e lint; resultado BE-041/publicação BE-043 pendentes |
-| 63 | M2 | [BE-041](backend/BE-041-resultados-exames.md) | Anexo de resultados e aviso ao profissional | back | BE-040, BE-013, BE-006 | Redigida |
+| 63 | M2 | [BE-041](backend/BE-041-resultados-exames.md) | Anexo de resultados e aviso ao profissional | back | BE-040, BE-013, BE-006 | Implementada localmente;13/13 específicas,44/44 regressão,4/4 M0 e lint | |
 | 64 | M2 | [BE-042](backend/BE-042-documentos-clinicos.md) | Atestados e demais documentos clínicos | back | BE-038, BE-036 | Redigida |
 | 65 | M2 | [BE-043](backend/BE-043-projecao-paciente.md) | Projeção autorizada do histórico do paciente | back | BE-032, BE-039, BE-041, BE-042, BE-012 | Redigida |
 | 66 | M2 | [FE-021](frontend/FE-021-prontuario-timeline.md) | Agenda clínica, cabeçalho e timeline do prontuário | front | FE-003, BE-030, BE-032, BE-037 | Redigida |
@@ -166,3 +166,5 @@ O plano contém **96 IDs únicos** (54 BE, 42 FE). Cada dependência declarada a
 **M2 —BE-038 fundação verificada (25/11/2026):** catálogo/engine/assinatura dev, anulação e verificação pública aprovados em13/13 específicas,53/53 regressão,31/31 Node,2/2 Vitest e lint297.16 specs sem código (BE-039–043 e11 FE). Templates/validação concreta/PDF integram BE-039/040/042; P-02 permanece antes de produção. Próxima BE-039.
 
 **M2 —BE-039 backend verificado (25/11/2026):** prescrição/reuso/medicamentos dev, ciência de alergia e PDF cifrado/imutável aprovados em14/14 específicas,110/110 regressão,4/4 arquivos/consentimento M0,31/31 Node,2/2 Vitest e lint314.15 specs sem implementação (BE-040–043 e11 FE); publicação do paciente integra BE-043. Próxima BE-040, sem M3.
+
+**M2 —BE-041 verificada (26/11/2026):** upload cego/próprio/dependente, resultado/pedido/retenção/auditoria/outbox atômicos e download clínico revalidado;13/13 específicas,44/44 regressão,4/4 M0,31/31 Node,2/2 Vitest e lint331.13 specs permanecem sem fechamento (BE-042/043 e11 FE). Próxima BE-042; M2 inteira continua ativa.

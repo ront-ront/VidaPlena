@@ -15,6 +15,7 @@ export class ConsentEvidenceReconciler {
       where: {
         createdAt: { lt: cutoff },
         OR: [
+          { linkedResourceType: 'ExamResult', examResult: { is: null } },
           { linkedResourceType: 'ConsentEvent', consentEvidence: { is: null } },
           {
             linkedResourceType: 'ImportedHistory',

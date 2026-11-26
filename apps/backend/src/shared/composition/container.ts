@@ -15,6 +15,7 @@ import { ManageClinicalEvolutions } from '../../application/use-cases/manage-cli
 import { ManageDocumentTypes } from '../../application/use-cases/manage-document-types'
 import { ManageEmergencyAccess } from '../../application/use-cases/manage-emergency-access'
 import { ManageEvolutionDrafts } from '../../application/use-cases/manage-evolution-drafts'
+import { ManageExamResults } from '../../application/use-cases/manage-exam-results'
 import { ManageImportedHistory } from '../../application/use-cases/manage-imported-history'
 import { ManageMedications } from '../../application/use-cases/manage-medications'
 import { ManageTerminologies } from '../../application/use-cases/manage-terminologies'
@@ -31,6 +32,7 @@ import { LocalDocumentArtifactWriter } from '../../infrastructure/documents/docu
 import { ClinicalFilePolicy } from '../../infrastructure/files/clinical-file-policy'
 import { DocumentFilePolicy } from '../../infrastructure/files/document-file-policy'
 import { EvolutionFilePolicy } from '../../infrastructure/files/evolution-file-policy'
+import { ExamResultFilePolicy } from '../../infrastructure/files/exam-result-file-policy'
 import { CsvParseAppointmentParser } from '../../infrastructure/imports/appointment-csv-parser'
 import { PrismaAppointmentImportStore } from '../../infrastructure/persistence/prisma/appointment-import-store'
 import { PrismaCareLinkStore } from '../../infrastructure/persistence/prisma/care-link-store'
@@ -41,6 +43,7 @@ import { PrismaClinicalRecordStore } from '../../infrastructure/persistence/pris
 import { PrismaEmergencyAccessStore } from '../../infrastructure/persistence/prisma/emergency-access-store'
 import { PrismaEvolutionDraftStore } from '../../infrastructure/persistence/prisma/evolution-draft-store'
 import { PrismaExamOrderStore } from '../../infrastructure/persistence/prisma/exam-order-store'
+import { PrismaExamResultStore } from '../../infrastructure/persistence/prisma/exam-result-store'
 import { PrismaImportedHistoryStore } from '../../infrastructure/persistence/prisma/imported-history-store'
 import { PrismaMedicationStore } from '../../infrastructure/persistence/prisma/medication-store'
 import { PrismaTerminologyStore } from '../../infrastructure/persistence/prisma/terminology-store'
@@ -158,6 +161,8 @@ import type { AppConfig } from '../config/environment'
 
 /** Tokens are owned by the composition root. The domain and ports never import TSyringe. */
 export const services = {
+  examResultStore: Symbol('examResultStore'),
+  manageExamResults: Symbol('manageExamResults'),
   manageCareLinks: Symbol('manageCareLinks'),
   careLinkStore: Symbol('careLinkStore'),
   clinicalRecordStore: Symbol('clinicalRecordStore'),
@@ -408,6 +413,23 @@ export function createServiceContainer(
         scope.resolve<AuthorizeClinical>(services.authorizeClinical),
         scope.resolve<AuditWriter>(services.audit),
         config.examPendingResultAlertDays,
+      ),
+  })
+  scoped.register<PrismaExamResultStore>(services.examResultStore, {
+    useFactory: (scope) =>
+      new PrismaExamResultStore(
+        scope.resolve<PrismaClient>(services.database),
+        scope.resolve<PrismaClinicalRecordStore>(services.clinicalRecordStore),
+        config.environment,
+      ),
+  })
+  scoped.register<ManageExamResults>(services.manageExamResults, {
+    useFactory: (scope) =>
+      new ManageExamResults(
+        scope.resolve<PrismaExamResultStore>(services.examResultStore),
+        scope.resolve<AuthorizeClinical>(services.authorizeClinical),
+        scope.resolve<AuditWriter>(services.audit),
+        config.clinicalRetentionYears,
       ),
   })
   scoped.register<ManageDocumentTypes>(services.manageDocumentTypes, {
@@ -1012,23 +1034,27 @@ export function createServiceContainer(
   })
   scoped.register<FileAccessPolicy>(services.filePolicy, {
     useFactory: (scope) =>
-      new DocumentFilePolicy(
-        scope.resolve<ManageClinicalDocuments>(
-          services.manageClinicalDocuments,
-        ),
-        new EvolutionFilePolicy(
-          scope.resolve<ManageClinicalEvolutions>(
-            services.manageClinicalEvolutions,
+      new ExamResultFilePolicy(
+        scope.resolve<ManageExamResults>(services.manageExamResults),
+        new DocumentFilePolicy(
+          scope.resolve<ManageClinicalDocuments>(
+            services.manageClinicalDocuments,
           ),
-          new ClinicalFilePolicy(
-            scope.resolve<PrismaClient>(services.database),
-            scope.resolve<PrismaClinicalRecordStore>(
-              services.clinicalRecordStore,
+          new EvolutionFilePolicy(
+            scope.resolve<ManageClinicalEvolutions>(
+              services.manageClinicalEvolutions,
             ),
-            scope.resolve<AuthorizeClinical>(services.authorizeClinical),
-            scope.resolve<AuditWriter>(services.audit),
-            new ConsentEvidenceFilePolicy(
+            new ClinicalFilePolicy(
               scope.resolve<PrismaClient>(services.database),
+              scope.resolve<PrismaClinicalRecordStore>(
+                services.clinicalRecordStore,
+              ),
+              scope.resolve<AuthorizeClinical>(services.authorizeClinical),
+              scope.resolve<AuditWriter>(services.audit),
+              new ConsentEvidenceFilePolicy(
+                scope.resolve<PrismaClient>(services.database),
+                config.environment,
+              ),
               config.environment,
             ),
             config.environment,

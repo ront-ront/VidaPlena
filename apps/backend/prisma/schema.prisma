@@ -68,6 +68,7 @@ model User {
   grantedCareLinks CareLink[] @relation("CareLinkGrantor")
   emergencyReviews EmergencyAccessReview[]
   importedClinicalHistories ImportedHistory[]
+  submittedExamResults ExamResult[]
   documentTypeChanges DocumentTypeVersion[]
   evolutionDraftCommands EvolutionDraftCommand[]
 
@@ -319,6 +320,7 @@ model FileObject {
   uploader User? @relation(fields:[uploadedBy],references:[id],onDelete:Restrict)
   consentEvidence ConsentEvent?
   importedHistory ImportedHistory?
+  examResult ExamResult?
   @@index([ownerPatientId,createdAt])
   @@index([linkedResourceType,linkedResourceId,revokedAt])
 }
@@ -894,6 +896,7 @@ model ClinicalRecord {
   importedHistories ImportedHistory[]
   documents ClinicalDocument[]
   retentionEvents ClinicalRetentionEvent[]
+  examResults ExamResult[]
   timelineEntries ClinicalTimelineEntry[]
 }
 model ClinicalEncounter {
@@ -1051,13 +1054,15 @@ model EvolutionAddendum {
 model ClinicalRetentionEvent {
   id String @id @default(uuid()) @db.Uuid
   recordId String @db.Uuid
-  encounterId String @unique @db.Uuid
+  encounterId String? @unique @db.Uuid
+  examResultId String? @unique @db.Uuid
   anchorAt DateTime @db.Timestamptz(3)
   retentionYears Int
   retainUntil DateTime @db.Timestamptz(3)
   createdAt DateTime @db.Timestamptz(3)
   record ClinicalRecord @relation(fields:[recordId],references:[id],onDelete:Restrict)
-  encounter ClinicalEncounter @relation(fields:[encounterId],references:[id],onDelete:Restrict)
+  encounter ClinicalEncounter? @relation(fields:[encounterId],references:[id],onDelete:Restrict)
+  examResult ExamResult? @relation(fields:[examResultId],references:[id],onDelete:Restrict)
   @@index([recordId,retainUntil])
 }
 
@@ -1202,4 +1207,22 @@ model ExamOrder {
   createdAt DateTime @db.Timestamptz(3)
   resultReceivedAt DateTime? @db.Timestamptz(3)
   document ClinicalDocument @relation(fields:[documentId],references:[id],onDelete:Restrict)
+  results ExamResult[]
+}
+
+model ExamResult {
+  id String @id @default(uuid()) @db.Uuid
+  recordId String @db.Uuid
+  orderId String? @db.Uuid
+  fileId String @unique @db.Uuid
+  submittedBy String @db.Uuid
+  receivedAt DateTime @db.Timestamptz(3)
+  origin String
+  record ClinicalRecord @relation(fields:[recordId],references:[id],onDelete:Restrict)
+  order ExamOrder? @relation(fields:[orderId],references:[id],onDelete:Restrict)
+  file FileObject @relation(fields:[fileId],references:[id],onDelete:Restrict)
+  submitter User @relation(fields:[submittedBy],references:[id],onDelete:Restrict)
+  retentionEvent ClinicalRetentionEvent?
+  @@index([recordId,receivedAt,id])
+  @@index([orderId,receivedAt,id])
 }

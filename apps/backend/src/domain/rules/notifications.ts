@@ -1,4 +1,5 @@
 export const notificationTemplates = [
+  'exam.result_received',
   'privacy.emergency_requested',
   'privacy.dpo_missing',
   'account.invited',
@@ -74,6 +75,8 @@ export function deliveryPolicy(
 
 export function safeNotificationText(template: NotificationTemplate): string {
   const texts: Record<NotificationTemplate, string> = {
+    'exam.result_received':
+      'Um resultado de exame foi recebido. Consulte o prontuário pelo sistema.',
     'privacy.emergency_requested':
       'Há um acesso de urgência aguardando revisão na fila administrativa.',
     'privacy.dpo_missing':

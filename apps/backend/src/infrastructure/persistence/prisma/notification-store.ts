@@ -56,6 +56,56 @@ export const consentAwareNotificationCheck: NotificationConsentCheck = async (
   message,
   now = new Date(),
 ) => {
+  if (message.templateKey === 'exam.result_received') {
+    if (
+      !message.patientId ||
+      !message.aggregateId ||
+      message.aggregateVersion !== 1 ||
+      !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(
+        message.aggregateId,
+      )
+    )
+      return false
+    const result = await tx.examResult.findUnique({
+      where: { id: message.aggregateId },
+      include: {
+        record: true,
+        order: {
+          include: {
+            document: {
+              include: {
+                author: {
+                  include: {
+                    user: {
+                      include: {
+                        roles: {
+                          where: { roleCode: 'professional', revokedAt: null },
+                        },
+                      },
+                    },
+                  },
+                },
+                voidEvent: true,
+              },
+            },
+          },
+        },
+      },
+    })
+    const d = result?.order?.document
+    return (
+      !!result &&
+      result.record.patientId === message.patientId &&
+      !!d &&
+      !d.voidEvent &&
+      ['issued_dev', 'issued_valid'].includes(d.status) &&
+      d.author.userId === message.userId &&
+      d.author.active &&
+      d.author.user.status === 'active' &&
+      d.author.user.roles.length > 0 &&
+      (await dataConsentState(tx, message.patientId, now)) === 'active'
+    )
+  }
   if (
     ['privacy.emergency_requested', 'privacy.dpo_missing'].includes(
       message.templateKey,

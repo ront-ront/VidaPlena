@@ -173,3 +173,7 @@ MedicationCatalog/MedicationEntry/MedicationSelection versionam dados sintético
 ### BE-040 — índice de pedidos de exame (P-66)
 
 ExamOrder: id UUID, documentId único/FK ClinicalDocument, createdAt e resultReceivedAt? (projeção de recebimento BE-041). Solicitação/paciente/autor/data emitida e payload de exames/indicação/TUSS têm fonte única no documento/registro; sem duplicar conteúdo clínico em colunas abertas. Identidade/pedido emitido imutáveis e sem exclusão. Nesta spec recebimento é null; BE-041 habilita atualização apenas junto ao registro de resultado real. Índice de documentos por autor/status/issuedAt/id apoia fila paginada.
+
+### BE-041 — resultado recebido (P-68)
+
+ExamResult: id, recordId, orderId?, fileId único, submittedBy, receivedAt e origin ordered|external. Um original imutável por resultado, vários resultados possíveis por pedido; FileObject de categoria result fica imutável ao associar. Trigger valida paciente/record/pedido emitido não anulado, origem, ator e binding/tipo de arquivo. ExamOrder mantém primeira data recebida, que só pode ser gravada junto a resultado real; sem atualizar identidade/payload do documento. ClinicalRetentionEvent passa a aceitar encounterId ou examResultId, exatamente uma origem, preservando âncoras anteriores e invariantes append-only. Resultado cria timeline/auditoria/outbox/retenção no mesmo tx; upload provisório sem associação só pode ser removido pela compensação/reconciliação.

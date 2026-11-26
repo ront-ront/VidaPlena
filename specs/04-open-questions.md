@@ -466,3 +466,7 @@ Q-08 operacionalizada por privateVisit explícito do profissional no payload do 
 ## P-67 — reenvio de convite de paciente (25/11/2026)
 
 Plano aprovado e correção M0 implementada: admin/recepção com MFA reenviam convite pela busca de CPF, apenas conta própria patient/invited e consentimento vigente. Não amplia permissão de convites internos; utiliza prazo auth.invite_link_hours, transação/outbox e invalidação anteriores. Sem SMTP, novo cadastro ou alteração de e-mail. Dependente/assistido sem conta própria não recebe nova conta; conta ativa usa recuperação. Texto de ativação distingue paciente/interno e captura do token é idempotente em dev. Evidências em `_work/13-patient-invitation-resend.md`. M2 permanece pausada a pedido do usuário; BE-040 em andamento preservada.
+
+## P-68 — recebimento de resultados (BE-041)
+
+Concretização técnica RF-020 no contrato compartilhado, sem mudar a projeção Q-03. Um original imutável por resultado, múltiplos por pedido, primeira data de recebimento e âncora de retenção por arquivo. Recepção só envia cegamente; paciente só próprio/dependente, leitura posterior pelo portal depende BE-043. Suposição conservadora Q-09/P-01: consentimento de dados vigente para novo upload assistido ou digital e revalidação antes de aviso ao solicitante; conteúdo já recebido permanece sob retenção/acesso clínico. Não presumir aprovação de outra base legal para upload após revogação. Parâmetros/formatos P-09 e parecer jurídico continuam antes de produção.

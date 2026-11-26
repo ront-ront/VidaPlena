@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M2 Prontuário
-- **Status:** pendente
+- **Status:** implementada localmente; validações P-01/P-09 pré-produção pendentes
 - **Depende de:** BE-040, BE-013, BE-006
 - **Requisitos cobertos:** RF-020, RN-012
 
@@ -22,17 +22,19 @@ Ler `specs/shared/api-contracts.md#m2` (exam-results), `specs/shared/data-model.
 - Pedido pendente perde status de pendente após resultado válido, sem apagar registro de alerta anterior.
 
 ## 5. Critérios de aceite
-- [ ] Dado arquivo acima de `file.result_max_mb`, tipo inválido ou extensão falsificada, quando enviar, então 422 e nenhum resultado acessível.
-- [ ] Dado `orderId` de outro paciente, quando enviar, então 403/404 e nenhum vínculo indevido.
-- [ ] Dada recepção que enviou resultado, quando tentar baixar conteúdo depois, então acesso negado e auditado.
-- [ ] Dado resultado sem pedido, quando consultar histórico autorizado, então “origem externa” aparece; com pedido, profissional solicitante recebe aviso seguro.
+- [x] Dado arquivo acima de `file.result_max_mb`, tipo inválido ou extensão falsificada, quando enviar, então 422 e nenhum resultado acessível.
+- [x] Dado `orderId` de outro paciente, quando enviar, então 403/404 e nenhum vínculo indevido.
+- [x] Dada recepção que enviou resultado, quando tentar baixar conteúdo depois, então acesso negado e auditado.
+- [x] Dado resultado sem pedido, quando consultar histórico autorizado, então “origem externa” aparece; com pedido, profissional solicitante recebe aviso seguro.
 
 ## 6. Testes esperados
 Arquivo falso/tamanho, associação/externo, IDOR, acesso cego da recepção, notificação e auditoria de download/retention; lint.
 
 ## 7. Definition of Done
-- [ ] Usa FileStorage M0 sem rota estática, origem explícita e aviso mínimo.
-- [ ] Testes/lint passam; prontuário preservado, sem `tsc`.
+- [x] Usa FileStorage M0 sem rota estática, origem explícita e aviso mínimo.
+- [x] Testes/lint passam; prontuário preservado, sem `tsc`.
 
 ## 8. Suposições e pontos em aberto
 Limites finais de arquivo e suporte DICOM permanecem P-09. A política de publicação de resultados ao paciente segue Q-03/BE-043.
+
+Evidências locais em26/11/2026:13/13 integrações específicas HTTP/PostgreSQL;44/44 regressão documental/clínica/notificações e4/4 arquivos/consentimento M0;31/31 Node,2/2 Vitest e lint331. Contrato P-68; produção/scanner real e projeção BE-043 permanecem distintos. Detalhes em `../_work/12-m2-implementation-progress.md`.

@@ -87,6 +87,7 @@ import {
 } from './contracts/waitlist'
 import { emergencyAccessOpenApiPaths } from './emergency-access-openapi'
 import { evolutionDraftOpenApiPaths } from './evolution-draft-openapi'
+import { examResultOpenApiPaths } from './exam-result-openapi'
 import { importedHistoryOpenApiPaths } from './imported-history-openapi'
 import { terminologyOpenApiPaths } from './terminology-openapi'
 
@@ -128,6 +129,7 @@ export const catalogOpenApiPaths = {
   ...clinicalEvolutionOpenApiPaths,
   ...terminologyOpenApiPaths,
   ...importedHistoryOpenApiPaths,
+  ...examResultOpenApiPaths,
   ...clinicalRecordOpenApiPaths,
   ...clinicalAlertOpenApiPaths,
   ...clinicalDocumentOpenApiPaths,
