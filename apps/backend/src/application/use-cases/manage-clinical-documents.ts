@@ -22,6 +22,9 @@ import { textDocumentCodes } from '../validation/text-document'
 import { type AuthorizeClinical, clinicalBasisId } from './authorize-clinical'
 import type { ManageCareLinks } from './manage-care-links'
 export class ManageClinicalDocuments {
+  assertIntegrity(document: ClinicalDocument) {
+    this.checked(document)
+  }
   constructor(
     private readonly store: ClinicalDocumentStore,
     private readonly links: ManageCareLinks,

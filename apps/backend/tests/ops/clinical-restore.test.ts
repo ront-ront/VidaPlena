@@ -13,7 +13,7 @@ import {
 import { composeBackendApplication } from '../../src/shared/composition/root'
 import { createClinicalFixture } from '../support/m2-clinical'
 
-test('BE-036: dump/restore preserva evolução, adendo, retenção e proteção contra exclusão', async () => {
+test('BE-036/043: restore preserva evolução, adendo, retenção e publicação sem ressuscitar revogada', async () => {
   const f = await createClinicalFixture(),
     container = process.env.TEST_POSTGRES_CONTAINER
   let restored: ReturnType<typeof createPrismaClient> | undefined,
@@ -58,6 +58,39 @@ test('BE-036: dump/restore preserva evolução, adendo, retenção e proteção 
     const hold = await f.db.clinicalRetentionEvent.findUniqueOrThrow({
       where: { encounterId: visit.encounterId },
     })
+    const publicationBody = {
+      patientId: visit.patientId,
+      resourceType: 'ClinicalEvolution',
+      resourceId: draft.evolutionId,
+      visibilityKind: 'orientation',
+      reviewedForPatient: true,
+      projection: { text: 'Orientação fictícia preservada no backup' },
+    }
+    const withdrawn = (
+      await request(f.app)
+        .post('/v1/clinical/publications')
+        .set('Authorization', auth)
+        .send(publicationBody)
+        .expect(201)
+    ).body
+    await request(f.app)
+      .post(`/v1/clinical/publications/${withdrawn.publicationId}/revoke`)
+      .set('Authorization', auth)
+      .send({ reason: 'Revisão fictícia antes do backup' })
+      .expect(200)
+    const current = (
+      await request(f.app)
+        .post('/v1/clinical/publications')
+        .set('Authorization', auth)
+        .send(publicationBody)
+        .expect(201)
+    ).body
+    const historyBefore = (
+      await request(f.app)
+        .get(`/v1/me/clinical-history?patientId=${visit.patientId}`)
+        .set('Authorization', visit.patient.token)
+        .expect(200)
+    ).body
     const sourceUrl = new URL(f.config.databaseUrl),
       username = decodeURIComponent(sourceUrl.username)
     const dump = container
@@ -123,6 +156,26 @@ test('BE-036: dump/restore preserva evolução, adendo, retenção e proteção 
         .expect(200)
     ).body
     assert.deepEqual(after, before)
+    const historyAfter = (
+      await request(runtime.app)
+        .get(`/v1/me/clinical-history?patientId=${visit.patientId}`)
+        .set('Authorization', visit.patient.token)
+        .expect(200)
+    ).body
+    assert.deepEqual(historyAfter, historyBefore)
+    assert.equal(historyAfter.items.length, 1)
+    assert.equal(historyAfter.items[0].id, current.publicationId)
+    assert.ok(
+      (
+        await restored.patientPublication.findUniqueOrThrow({
+          where: { id: withdrawn.publicationId },
+        })
+      ).revokedAt,
+    )
+    await request(runtime.app)
+      .get(`/v1/me/clinical-documents/${withdrawn.publicationId}`)
+      .set('Authorization', visit.patient.token)
+      .expect(404)
     assert.deepEqual(
       await restored.clinicalRetentionEvent.findUniqueOrThrow({
         where: { encounterId: visit.encounterId },

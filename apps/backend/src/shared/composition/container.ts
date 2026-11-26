@@ -18,6 +18,7 @@ import { ManageEvolutionDrafts } from '../../application/use-cases/manage-evolut
 import { ManageExamResults } from '../../application/use-cases/manage-exam-results'
 import { ManageImportedHistory } from '../../application/use-cases/manage-imported-history'
 import { ManageMedications } from '../../application/use-cases/manage-medications'
+import { ManagePatientPublications } from '../../application/use-cases/manage-patient-publications'
 import { ManageTerminologies } from '../../application/use-cases/manage-terminologies'
 import { PrescriptionPolicy } from '../../application/use-cases/prescription-policy'
 import { ReadClinicalRecord } from '../../application/use-cases/read-clinical-record'
@@ -35,6 +36,7 @@ import { ClinicalFilePolicy } from '../../infrastructure/files/clinical-file-pol
 import { DocumentFilePolicy } from '../../infrastructure/files/document-file-policy'
 import { EvolutionFilePolicy } from '../../infrastructure/files/evolution-file-policy'
 import { ExamResultFilePolicy } from '../../infrastructure/files/exam-result-file-policy'
+import { PatientPublicationFilePolicy } from '../../infrastructure/files/patient-publication-file-policy'
 import { CsvParseAppointmentParser } from '../../infrastructure/imports/appointment-csv-parser'
 import { PrismaAppointmentImportStore } from '../../infrastructure/persistence/prisma/appointment-import-store'
 import { PrismaCareLinkStore } from '../../infrastructure/persistence/prisma/care-link-store'
@@ -48,6 +50,7 @@ import { PrismaExamOrderStore } from '../../infrastructure/persistence/prisma/ex
 import { PrismaExamResultStore } from '../../infrastructure/persistence/prisma/exam-result-store'
 import { PrismaImportedHistoryStore } from '../../infrastructure/persistence/prisma/imported-history-store'
 import { PrismaMedicationStore } from '../../infrastructure/persistence/prisma/medication-store'
+import { PrismaPatientPublicationStore } from '../../infrastructure/persistence/prisma/patient-publication-store'
 import { PrismaTerminologyStore } from '../../infrastructure/persistence/prisma/terminology-store'
 import { HmacCommandFingerprint } from '../../infrastructure/security/command-fingerprint'
 import 'reflect-metadata'
@@ -163,6 +166,8 @@ import type { AppConfig } from '../config/environment'
 
 /** Tokens are owned by the composition root. The domain and ports never import TSyringe. */
 export const services = {
+  patientPublicationStore: Symbol('patientPublicationStore'),
+  managePatientPublications: Symbol('managePatientPublications'),
   examResultStore: Symbol('examResultStore'),
   manageExamResults: Symbol('manageExamResults'),
   manageCareLinks: Symbol('manageCareLinks'),
@@ -474,6 +479,39 @@ export function createServiceContainer(
         scope.resolve<AuditWriter>(services.audit),
       ),
   })
+  scoped.register<PrismaPatientPublicationStore>(
+    services.patientPublicationStore,
+    {
+      useFactory: (scope) =>
+        new PrismaPatientPublicationStore(
+          scope.resolve<PrismaClient>(services.database),
+          scope.resolve<PrismaClinicalDocumentStore>(
+            services.clinicalDocumentStore,
+          ),
+          scope.resolve<PrismaClinicalEvolutionStore>(
+            services.clinicalEvolutionStore,
+          ),
+          scope.resolve<PrismaExamResultStore>(services.examResultStore),
+          new AesSecretBox(config.encryptionKey, 'patient-publication'),
+        ),
+    },
+  )
+  scoped.register<ManagePatientPublications>(
+    services.managePatientPublications,
+    {
+      useFactory: (scope) =>
+        new ManagePatientPublications(
+          scope.resolve<PrismaPatientPublicationStore>(
+            services.patientPublicationStore,
+          ),
+          scope.resolve<ManageCareLinks>(services.manageCareLinks),
+          scope.resolve<ManageClinicalDocuments>(
+            services.manageClinicalDocuments,
+          ),
+          scope.resolve<AuditWriter>(services.audit),
+        ),
+    },
+  )
   scoped.register<PrismaImportedHistoryStore>(services.importedHistoryStore, {
     useFactory: (scope) =>
       new PrismaImportedHistoryStore(
@@ -1041,25 +1079,31 @@ export function createServiceContainer(
   })
   scoped.register<FileAccessPolicy>(services.filePolicy, {
     useFactory: (scope) =>
-      new ExamResultFilePolicy(
-        scope.resolve<ManageExamResults>(services.manageExamResults),
-        new DocumentFilePolicy(
-          scope.resolve<ManageClinicalDocuments>(
-            services.manageClinicalDocuments,
-          ),
-          new EvolutionFilePolicy(
-            scope.resolve<ManageClinicalEvolutions>(
-              services.manageClinicalEvolutions,
+      new PatientPublicationFilePolicy(
+        scope.resolve<ManagePatientPublications>(
+          services.managePatientPublications,
+        ),
+        new ExamResultFilePolicy(
+          scope.resolve<ManageExamResults>(services.manageExamResults),
+          new DocumentFilePolicy(
+            scope.resolve<ManageClinicalDocuments>(
+              services.manageClinicalDocuments,
             ),
-            new ClinicalFilePolicy(
-              scope.resolve<PrismaClient>(services.database),
-              scope.resolve<PrismaClinicalRecordStore>(
-                services.clinicalRecordStore,
+            new EvolutionFilePolicy(
+              scope.resolve<ManageClinicalEvolutions>(
+                services.manageClinicalEvolutions,
               ),
-              scope.resolve<AuthorizeClinical>(services.authorizeClinical),
-              scope.resolve<AuditWriter>(services.audit),
-              new ConsentEvidenceFilePolicy(
+              new ClinicalFilePolicy(
                 scope.resolve<PrismaClient>(services.database),
+                scope.resolve<PrismaClinicalRecordStore>(
+                  services.clinicalRecordStore,
+                ),
+                scope.resolve<AuthorizeClinical>(services.authorizeClinical),
+                scope.resolve<AuditWriter>(services.audit),
+                new ConsentEvidenceFilePolicy(
+                  scope.resolve<PrismaClient>(services.database),
+                  config.environment,
+                ),
                 config.environment,
               ),
               config.environment,

@@ -474,3 +474,7 @@ Concretização técnica RF-020 no contrato compartilhado, sem mudar a projeçã
 ## P-69 — modelos demonstrativos e atendimento concluído (BE-042)
 
 RF-021 permite encontro concluído: corrigir a restrição genérica P-64 para certificate/declaration/report/referral somente, com autoria e vínculo da consulta vigente. Payload/contexto/período/limites técnicos no contrato; body clínico sempre escrito pelo profissional, sem modelos médicos inventados. Template1 demonstra fluxo acadêmico e não equivale a modelo aprovado. Retenção própria por emissão e original preservado após anulação. Responsável técnico/jurídico deve validar modelos, níveis e conselhos antes de produção (P-02).
+
+## P-70 — allowlist do portal e publicação (BE-043)
+
+Concretização delegada Q-03 no contrato único: documentos/resultados só após revisão explícita; orientação/resumo têm texto próprio separado de notas internas. CID só de evolução finalizada, selecionado e confirmado explicitamente pelo profissional; não há inferência de confirmação clínica a partir de hipótese. Publicação por autor clínico vinculado (resultado por profissional vinculado); revogação pelo publicador, sem apagar fonte. Exceções legais de responsável/maioridade, após revogação e validação dos campos clínicos permanecem P-01/P-06. Exportação RF-005 é fluxo separado e não é automaticamente ampliada para todo o prontuário.

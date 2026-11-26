@@ -181,3 +181,7 @@ ExamResult: id, recordId, orderId?, fileId único, submittedBy, receivedAt e ori
 ### BE-042 — documentos textuais (P-69)
 
 Quatro tipos textuais compartilham ClinicalDocument e payload cifrado versionado, sem nova tabela de conteúdo. Período opcional é explicitado pelo autor; identificação/contexto são dados mínimos do registro/atendimento. PDF imutável integra os hashes do envelope v2 existente. ClinicalRetentionEvent recebe clinicalDocumentId único/FK e passa a exigir exatamente uma entre três origens; âncora de documento corresponde à emissão. Não altera envelopes já emitidos ou retenções de encontros/resultados.
+
+### BE-043 — publicação explícita do portal (P-70)
+
+PatientPublication referencia patientId, resourceType/resourceId e visibilityKind; guarda publishedByProfessionalId, publishedAt, occurredAt, timelineType, specialtyId?, modality?, projectionEncrypted?, importedOriginEncrypted? e revogação (revokedAt?, revokedByProfessionalId?, revocationReasonEncrypted?). Fonte e projeção são imutáveis; só acrescenta revogação completa, sem DELETE/TRUNCATE. Índice único parcial de publicação ativa por recurso/visibilidade; nova publicação após revogação usa novo ID. Check de combinação/tipo/fonte/sujeito; ClinicalRecord/arquivos/originais clínicos permanecem retidos. Conteúdo clínico original não é serializado para o portal. ConfirmedSummary é projeção de snapshots CID selecionados e confirmação explícita, nunca do campo de hipóteses.

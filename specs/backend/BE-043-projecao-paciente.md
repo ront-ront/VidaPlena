@@ -2,7 +2,7 @@
 
 - **Software:** back
 - **Milestone:** M2 Prontuário
-- **Status:** pendente
+- **Status:** implementada localmente; validações P-01/P-06 pré-produção pendentes
 - **Depende de:** BE-032, BE-039, BE-041, BE-042, BE-012
 - **Requisitos cobertos:** RF-022, RN-007, RNF-016
 
@@ -22,17 +22,19 @@ Ler `specs/shared/access-policy.md` (Projeção do portal), `specs/shared/api-co
 - Documento `issued_dev` aparece com selo “sem validade jurídica”, status de anulação e sem aparência de receita/atestado juridicamente válido. Cada leitura/download gera auditoria, arquivo segue BE-013.
 
 ## 5. Critérios de aceite
-- [ ] Dado recurso clínico não publicado, quando paciente consultar, então ele não aparece; ID direto retorna 404.
-- [ ] Dado resumo com hipótese não confirmada, quando tentar publicar, então 400 e nenhum diagnóstico é divulgado.
-- [ ] Dado dependente sem vínculo ou consentimento revogado, quando abrir histórico, então acesso negado, inclusive por URL manipulada.
-- [ ] Dado documento dev/anulado, quando publicado, então estado jurídico/anulação aparecem e cada download é auditado.
+- [x] Dado recurso clínico não publicado, quando paciente consultar, então ele não aparece; ID direto retorna 404.
+- [x] Dado resumo com hipótese não confirmada, quando tentar publicar, então 400 e nenhum diagnóstico é divulgado.
+- [x] Dado dependente sem vínculo ou consentimento revogado, quando abrir histórico, então acesso negado, inclusive por URL manipulada.
+- [x] Dado documento dev/anulado, quando publicado, então estado jurídico/anulação aparecem e cada download é auditado.
 
 ## 6. Testes esperados
 Projeção positiva/negativa por tipo, rascunho/hipótese, IDOR/dependente, revogação, status dev/anulação, paginação e auditoria; lint.
 
 ## 7. Definition of Done
-- [ ] Resposta é allowlist de campos, não serialização do prontuário interno.
-- [ ] Testes/lint passam; direito de acesso formal preservado, sem `tsc`.
+- [x] Resposta é allowlist de campos, não serialização do prontuário interno.
+- [x] Testes/lint passam; direito de acesso formal preservado, sem `tsc`.
 
 ## 8. Suposições e pontos em aberto
 Exceções de sigilo/maioridade de dependentes e forma de atender pedido após revogação aguardam jurídico P-01. A decisão de projeção comum é técnica delegada Q-03.
+
+Evidências em26/11/2026:10/10 específicas, regressão backend M2+arquivos/consentimento/solicitações155/155,31/31 Node,2/2 Vitest, lint344 e restore clínico/publicações1/1. Contrato P-70; projeção/direito formal separados. Detalhes em `../_work/12-m2-implementation-progress.md`.

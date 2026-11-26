@@ -116,6 +116,7 @@ model UserPermissionGrant {
 }
 
 model PatientProfile {
+  publications PatientPublication[]
   id        String         @id @default(uuid()) @db.Uuid
   userId    String?        @unique @db.Uuid
   fullName  String
@@ -407,6 +408,7 @@ enum AppointmentModality {
 }
 
 model Specialty {
+  publications PatientPublication[]
   timelineEntries ClinicalTimelineEntry[]
   id String @id @default(uuid()) @db.Uuid
   code String @unique
@@ -426,6 +428,8 @@ model Specialty {
 }
 
 model ProfessionalProfile {
+  publications PatientPublication[] @relation("PublicationAuthor")
+  revokedPublications PatientPublication[] @relation("PublicationRevoker")
   id String @id @default(uuid()) @db.Uuid
   userId String @unique @db.Uuid
   councilType String
@@ -1228,4 +1232,29 @@ model ExamResult {
   retentionEvent ClinicalRetentionEvent?
   @@index([recordId,receivedAt,id])
   @@index([orderId,receivedAt,id])
+}
+
+model PatientPublication {
+  id String @id @default(uuid()) @db.Uuid
+  patientId String @db.Uuid
+  resourceType String
+  resourceId String @db.Uuid
+  visibilityKind String
+  publishedByProfessionalId String @db.Uuid
+  publishedAt DateTime @db.Timestamptz(3)
+  occurredAt DateTime @db.Timestamptz(3)
+  timelineType String
+  specialtyId String? @db.Uuid
+  modality String?
+  projectionEncrypted String?
+  importedOriginEncrypted String?
+  revokedAt DateTime? @db.Timestamptz(3)
+  revokedByProfessionalId String? @db.Uuid
+  revocationReasonEncrypted String?
+  patient PatientProfile @relation(fields:[patientId],references:[id],onDelete:Restrict)
+  author ProfessionalProfile @relation("PublicationAuthor",fields:[publishedByProfessionalId],references:[id],onDelete:Restrict)
+  revoker ProfessionalProfile? @relation("PublicationRevoker",fields:[revokedByProfessionalId],references:[id],onDelete:Restrict)
+  specialty Specialty? @relation(fields:[specialtyId],references:[id],onDelete:Restrict)
+  @@index([patientId,occurredAt,id])
+  @@index([resourceType,resourceId,visibilityKind])
 }

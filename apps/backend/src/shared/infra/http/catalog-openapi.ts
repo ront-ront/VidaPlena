@@ -89,6 +89,7 @@ import { emergencyAccessOpenApiPaths } from './emergency-access-openapi'
 import { evolutionDraftOpenApiPaths } from './evolution-draft-openapi'
 import { examResultOpenApiPaths } from './exam-result-openapi'
 import { importedHistoryOpenApiPaths } from './imported-history-openapi'
+import { patientPublicationOpenApiPaths } from './patient-publication-openapi'
 import { terminologyOpenApiPaths } from './terminology-openapi'
 
 const response = (schema: z.ZodType) => ({
@@ -129,6 +130,7 @@ export const catalogOpenApiPaths = {
   ...clinicalEvolutionOpenApiPaths,
   ...terminologyOpenApiPaths,
   ...importedHistoryOpenApiPaths,
+  ...patientPublicationOpenApiPaths,
   ...examResultOpenApiPaths,
   ...clinicalRecordOpenApiPaths,
   ...clinicalAlertOpenApiPaths,

@@ -37,6 +37,7 @@ import type { ManageFiles } from '../../application/use-cases/manage-files'
 import type { ManageImportedHistory } from '../../application/use-cases/manage-imported-history'
 import type { ManageMaintenance } from '../../application/use-cases/manage-maintenance'
 import type { ManageMedications } from '../../application/use-cases/manage-medications'
+import type { ManagePatientPublications } from '../../application/use-cases/manage-patient-publications'
 import type { ManageRooms } from '../../application/use-cases/manage-rooms'
 import type { ManageSchedule } from '../../application/use-cases/manage-schedule'
 import type { ManageSubjectRequests } from '../../application/use-cases/manage-subject-requests'
@@ -88,6 +89,7 @@ import { createNotificationRouter } from '../infra/http/notification-router'
 import { registerApiDocumentation } from '../infra/http/openapi'
 import { createOperationalRouter } from '../infra/http/operational-router'
 import { parseInput } from '../infra/http/parse-input'
+import { createPatientPublicationRouter } from '../infra/http/patient-publication-router'
 import { createPatientRouter } from '../infra/http/patient-router'
 import { createProvisioningRouter } from '../infra/http/provisioning-router'
 import { createRecoveryRouter } from '../infra/http/recovery-router'
@@ -157,6 +159,15 @@ export async function composeBackendApplication(config: AppConfig) {
     }
     const routes = Router()
     registerApiDocumentation(routes)
+    routes.use(
+      createPatientPublicationRouter(
+        tokens,
+        authorize,
+        scope.resolve<ManagePatientPublications>(
+          services.managePatientPublications,
+        ),
+      ),
+    )
     routes.use(
       createExamResultRouter(
         tokens,
