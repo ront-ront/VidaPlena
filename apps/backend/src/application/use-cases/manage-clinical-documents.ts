@@ -1,3 +1,4 @@
+import { Temporal } from '@js-temporal/polyfill'
 import { mayAccess, type Principal } from '../../domain/rules/access'
 import { ApplicationError } from '../errors/application-error'
 import { ClinicalIntegrityError } from '../errors/clinical-integrity-error'
@@ -17,6 +18,7 @@ import type {
   DocumentSigner,
   SignatureProvider,
 } from '../ports/signature-provider'
+import { textDocumentCodes } from '../validation/text-document'
 import { type AuthorizeClinical, clinicalBasisId } from './authorize-clinical'
 import type { ManageCareLinks } from './manage-care-links'
 export class ManageClinicalDocuments {
@@ -31,6 +33,7 @@ export class ManageClinicalDocuments {
     private readonly policies: DocumentPolicies,
     private readonly artifacts: DocumentArtifactWriter | null = null,
     private readonly now = () => new Date(),
+    private readonly retentionYears = 20,
   ) {}
   private async run<T>(
     actor: Principal | null,
@@ -81,6 +84,7 @@ export class ManageClinicalDocuments {
     tx: ClinicalDocumentTransaction,
     actor: Principal,
     encounterId: string,
+    typeCode?: DocumentTypeCode,
   ) {
     const initial = await tx.documentEncounter(encounterId)
     if (!initial) throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
@@ -96,11 +100,17 @@ export class ManageClinicalDocuments {
     )
     if (basis.professionalId !== encounter.professionalId)
       throw new ApplicationError('FORBIDDEN')
-    if (
-      basis.phase !== 'during' ||
-      encounter.status !== 'in_progress' ||
-      encounter.appointmentStatus !== 'in_service'
-    )
+    const current =
+      basis.phase === 'during' &&
+      encounter.status === 'in_progress' &&
+      encounter.appointmentStatus === 'in_service'
+    const completed =
+      !!typeCode &&
+      this.policy(typeCode).allowCompletedEncounter &&
+      basis.phase === 'post' &&
+      encounter.status === 'completed' &&
+      encounter.appointmentStatus === 'completed'
+    if (!current && !completed)
       throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
     return { basis, encounter }
   }
@@ -111,7 +121,12 @@ export class ManageClinicalDocuments {
   ) {
     const subject = await tx.documentSubject(id)
     if (!subject) throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
-    const access = await this.writer(tx, actor, subject.encounterId)
+    const access = await this.writer(
+      tx,
+      actor,
+      subject.encounterId,
+      subject.typeCode,
+    )
     await tx.lockDocument(id)
     const row = await tx.document(id)
     if (!row) throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
@@ -258,6 +273,66 @@ export class ManageClinicalDocuments {
         : null,
     }
   }
+  context(
+    actor: Principal,
+    encounterId: string,
+    typeCode: DocumentTypeCode,
+    context: AuditContext,
+  ) {
+    return this.run(actor, encounterId, context, async (tx) => {
+      const { basis, encounter } = await this.writer(
+        tx,
+        actor,
+        encounterId,
+        typeCode,
+      )
+      const type = await tx.documentType(typeCode)
+      if (!type?.active) throw new ApplicationError('VALIDATION_ERROR')
+      const initialPayload = this.policy(typeCode).validate(
+        { templateVersion: type.templateVersion, body: '' },
+        type.templateVersion,
+      )
+      const patient = await tx.identification(encounter.patientId),
+        record = await tx.record(encounter.patientId),
+        signer = await tx.documentSigner(encounter.professionalId)
+      if (!patient || !signer)
+        throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
+      await tx.audit.append({
+        ...context,
+        actorUserId: actor.userId,
+        actorRoles: actor.roles,
+        action: 'document.context_read',
+        resourceType: 'ClinicalEncounter',
+        resourceId: encounterId,
+        subjectPatientId: encounter.patientId,
+        authorizationBasis: clinicalBasisId(basis),
+      })
+      return {
+        patient,
+        recordNumber: record.recordNumber,
+        encounter: {
+          id: encounter.id,
+          status: encounter.status,
+          appointmentId: encounter.appointmentId,
+          specialtyId: encounter.specialtyId,
+          modality: encounter.modality,
+          startedAt: encounter.startedAt.toISOString(),
+          endedAt: encounter.endedAt?.toISOString() ?? null,
+          appointmentStartsAt: encounter.appointmentStartsAt.toISOString(),
+          appointmentEndsAt: encounter.appointmentEndsAt.toISOString(),
+        },
+        signer,
+        type: {
+          code: type.code,
+          label: type.label,
+          version: type.version,
+          templateVersion: type.templateVersion,
+          requiredSignatureLevel: type.requiredSignatureLevel,
+        },
+        initialPayload,
+      }
+    })
+  }
   createDraft(
     actor: Principal,
     encounterId: string,
@@ -266,7 +341,12 @@ export class ManageClinicalDocuments {
     context: AuditContext,
   ) {
     return this.run(actor, encounterId, context, async (tx) => {
-      const { basis, encounter } = await this.writer(tx, actor, encounterId),
+      const { basis, encounter } = await this.writer(
+          tx,
+          actor,
+          encounterId,
+          typeCode,
+        ),
         type = await tx.documentType(typeCode)
       if (!type?.active) throw new ApplicationError('VALIDATION_ERROR')
       const policy = this.policy(typeCode),
@@ -303,8 +383,13 @@ export class ManageClinicalDocuments {
     context: AuditContext,
   ) {
     return this.run(actor, sourceDocumentId, context, async (tx) => {
-      const { basis, encounter } = await this.writer(tx, actor, encounterId),
-        subject = await tx.documentSubject(sourceDocumentId)
+      const subject = await tx.documentSubject(sourceDocumentId)
+      const { basis, encounter } = await this.writer(
+        tx,
+        actor,
+        encounterId,
+        subject?.typeCode,
+      )
       if (
         !subject ||
         subject.patientId !== encounter.patientId ||
@@ -464,6 +549,16 @@ export class ManageClinicalDocuments {
           status: signature.legalValidity ? 'issued_valid' : 'issued_dev',
         }),
       )
+      if (textDocumentCodes.some((code) => code === type.code)) {
+        const retainUntil = new Date(
+          Number(
+            Temporal.Instant.from(now.toISOString())
+              .toZonedDateTimeISO('UTC')
+              .add({ years: this.retentionYears }).epochMilliseconds,
+          ),
+        )
+        await tx.retainDocument(next, now, this.retentionYears, retainUntil)
+      }
       await tx.appendTimeline({
         recordId: row.recordId,
         resourceId: row.id,

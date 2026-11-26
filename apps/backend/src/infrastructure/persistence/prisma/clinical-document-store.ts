@@ -5,6 +5,7 @@ import type {
   ClinicalDocument,
   ClinicalDocumentStore,
   ClinicalDocumentTransaction,
+  DocumentTypeCode,
   DocumentTypeVersion,
 } from '../../../application/ports/clinical-documents'
 import type { SecretBox } from '../../../application/ports/secret-box'
@@ -239,6 +240,7 @@ export class PrismaClinicalDocumentStore implements ClinicalDocumentStore {
             encounterId: true,
             authorProfessionalId: true,
             status: true,
+            typeVersion: { select: { type: { select: { code: true } } } },
             record: { select: { patientId: true } },
           },
         })
@@ -249,6 +251,7 @@ export class PrismaClinicalDocumentStore implements ClinicalDocumentStore {
               authorProfessionalId: row.authorProfessionalId,
               patientId: row.record.patientId,
               status: row.status as ClinicalDocument['status'],
+              typeCode: row.typeVersion.type.code as DocumentTypeCode,
             }
           : null
       },
@@ -266,7 +269,13 @@ export class PrismaClinicalDocumentStore implements ClinicalDocumentStore {
           include: {
             record: { select: { patientId: true } },
             appointment: {
-              select: { status: true, specialtyId: true, modality: true },
+              select: {
+                status: true,
+                specialtyId: true,
+                modality: true,
+                startsAt: true,
+                endsAt: true,
+              },
             },
           },
         })
@@ -281,6 +290,10 @@ export class PrismaClinicalDocumentStore implements ClinicalDocumentStore {
               appointmentStatus: row.appointment.status,
               specialtyId: row.appointment.specialtyId,
               modality: row.appointment.modality,
+              startedAt: row.startedAt,
+              endedAt: row.endedAt,
+              appointmentStartsAt: row.appointment.startsAt,
+              appointmentEndsAt: row.appointment.endsAt,
             }
           : null
       },
@@ -303,6 +316,23 @@ export class PrismaClinicalDocumentStore implements ClinicalDocumentStore {
       },
       lockDocument: async (id) => {
         await tx.$queryRaw`SELECT "id" FROM "ClinicalDocument" WHERE "id"=${id}::uuid FOR UPDATE`
+      },
+      retainDocument: async (
+        document,
+        anchorAt,
+        retentionYears,
+        retainUntil,
+      ) => {
+        await tx.clinicalRetentionEvent.create({
+          data: {
+            recordId: document.recordId,
+            clinicalDocumentId: document.id,
+            anchorAt,
+            retentionYears,
+            retainUntil,
+            createdAt: anchorAt,
+          },
+        })
       },
       createDocument: async (
         encounter,

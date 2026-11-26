@@ -21,6 +21,7 @@ import {
   documentReuseBody,
   parsePublicDocumentPayload,
 } from './contracts/prescriptions'
+import { documentContextQuery } from './contracts/text-documents'
 import { accessGuard, auditContext, principalOf } from './middleware/access'
 import { parseInput } from './parse-input'
 export function createClinicalDocumentRouter(
@@ -33,6 +34,21 @@ export function createClinicalDocumentRouter(
   verifyLimit: number,
 ) {
   const router = Router()
+  router.get(
+    '/clinical/encounters/:id/document-context',
+    accessGuard(tokens, authorize, 'clinical_actor'),
+    async (req, res) => {
+      res.setHeader('Cache-Control', 'no-store')
+      res.json(
+        await documents.context(
+          principalOf(res),
+          parseInput(documentParams, req.params).id,
+          parseInput(documentContextQuery, req.query).typeCode,
+          auditContext(req, res),
+        ),
+      )
+    },
+  )
   router.post(
     '/clinical/encounters/:id/documents/drafts',
     accessGuard(tokens, authorize, 'clinical_actor'),

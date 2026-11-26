@@ -3,6 +3,10 @@ import { ApplicationError } from '../../../../application/errors/application-err
 import { documentTypeCodes } from '../../../../application/ports/clinical-documents'
 import { examOrderInputSchema } from '../../../../application/validation/exam-order'
 import { prescriptionInputSchema } from '../../../../application/validation/prescription'
+import {
+  textDocumentCodes,
+  textDocumentSchema,
+} from '../../../../application/validation/text-document'
 import { parseInput } from '../parse-input'
 export const documentDraftBody = z
   .object({ typeCode: z.enum(documentTypeCodes), payload: z.unknown() })
@@ -21,6 +25,8 @@ export function parsePublicDocumentPayload(typeCode: string, payload: unknown) {
     return parseInput(prescriptionInputSchema, payload)
   if (typeCode === 'exam_order')
     return parseInput(examOrderInputSchema, payload)
+  if (textDocumentCodes.some((c) => c === typeCode))
+    return parseInput(textDocumentSchema, payload)
   throw new ApplicationError('SERVICE_UNAVAILABLE')
 }
 export const medicationListResponse = z.object({

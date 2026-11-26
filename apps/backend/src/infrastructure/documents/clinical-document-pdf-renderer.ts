@@ -3,10 +3,17 @@ import { resolve } from 'node:path'
 import fontkit from '@pdf-lib/fontkit'
 import { PDFDocument, type PDFPage, rgb } from 'pdf-lib'
 import { ApplicationError } from '../../application/errors/application-error'
-import type { ClinicalDocument } from '../../application/ports/clinical-documents'
+import type {
+  ClinicalDocument,
+  DocumentEncounter,
+} from '../../application/ports/clinical-documents'
 import type { DocumentSigner } from '../../application/ports/signature-provider'
 import { parseExamOrder } from '../../application/validation/exam-order'
 import { parsePrescription } from '../../application/validation/prescription'
+import {
+  parseTextDocument,
+  textDocumentCodes,
+} from '../../application/validation/text-document'
 
 export class ClinicalDocumentPdfRenderer {
   private fontBytes: Promise<Buffer> | undefined
@@ -20,6 +27,7 @@ export class ClinicalDocumentPdfRenderer {
       issuedAt: Date
       verificationCode: string
       developmentOnly: boolean
+      encounter?: DocumentEncounter
     },
   ) {
     if (!input.developmentOnly)
@@ -32,11 +40,16 @@ export class ClinicalDocumentPdfRenderer {
       document.type.code === 'exam_order'
         ? parseExamOrder(document.payload)
         : null
-    if (!prescription && !examOrder)
+    const textDocument = textDocumentCodes.some((c) => c === document.type.code)
+      ? parseTextDocument(document.payload)
+      : null
+    if (!prescription && !examOrder && !textDocument)
       throw new ApplicationError('SERVICE_UNAVAILABLE')
     const title = prescription
       ? 'Prescrição demonstrativa'
-      : 'Pedido de exames demonstrativo'
+      : examOrder
+        ? 'Pedido de exames demonstrativo'
+        : `${document.type.label} demonstrativo`
     const pdf = await PDFDocument.create()
     pdf.registerFontkit(fontkit)
     this.fontBytes ??= readFile(
@@ -51,6 +64,8 @@ export class ClinicalDocumentPdfRenderer {
       input.signer.council.type,
       input.signer.council.region,
       input.signer.council.number,
+      document.type.label,
+      textDocument?.body ?? '',
       ...(prescription?.items ?? []).flatMap((i) => [
         i.name ?? '',
         i.activeSubstance ?? '',
@@ -78,7 +93,7 @@ export class ClinicalDocumentPdfRenderer {
     )
       throw new ApplicationError('VALIDATION_ERROR', [
         {
-          field: prescription ? 'items' : 'exams',
+          field: prescription ? 'items' : examOrder ? 'exams' : 'body',
           reason:
             'Há caracteres sem suporte no PDF. Revise o texto; o rascunho permanece preservado.',
         },
@@ -152,6 +167,20 @@ export class ClinicalDocumentPdfRenderer {
       for (const line of wrap(`Paciente: ${patient.name}`, 11)) draw(line)
       draw(`Nascimento: ${patient.birthDate} | Prontuário: ${recordNumber}`, 9)
       draw(`Emissão: ${input.issuedAt.toISOString()}`, 9)
+      if (textDocument && input.encounter) {
+        draw(`Atendimento: ${input.encounter.id}`, 9)
+        draw(`Início: ${input.encounter.startedAt.toISOString()}`, 9)
+        draw(
+          input.encounter.endedAt
+            ? `Conclusão: ${input.encounter.endedAt.toISOString()}`
+            : 'Atendimento em andamento',
+          9,
+        )
+        draw(
+          `Modelo: ${document.type.code} v${document.type.templateVersion}`,
+          9,
+        )
+      }
       draw(`Verificação: ${input.verificationCode}`, 9)
       y -= 12
       page.drawText('sem validade jurídica — documento demonstrativo', {
@@ -169,6 +198,15 @@ export class ClinicalDocumentPdfRenderer {
       }
     }
     newPage()
+    if (textDocument) {
+      if (textDocument.period)
+        paragraph(
+          `Período informado (UTC): ${textDocument.period.startsAt} a ${textDocument.period.endsAt}`,
+          10,
+        )
+      paragraph(textDocument.body)
+      y -= 12
+    }
     for (const [index, item] of (prescription?.items ?? []).entries()) {
       paragraph(`${index + 1}. ${item.name ?? 'Medicamento manual'}`)
       if (item.activeSubstance)

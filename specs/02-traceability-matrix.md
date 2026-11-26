@@ -269,16 +269,18 @@ A cobertura documental está completa. Ao implementar, atualizar por requisito s
 | BE-035 | RF-017/RNF-008 parcial | Draft cifrado, recuperação, versão/nonce/HMAC, snapshot CID e guard da consulta;42/42 regressão,12/12 específicos,28/28 Node e lint266 | Temporizador/UX FE-022; finalização/adendo BE-036 integrados; dados oficiais P-13 |
 | BE-036 | RF-017/RN-008/RN-012/RNF-005 parcial | Finalização/adendo/retenção e integridade de arquivos,12/12 específicas,120/120 regressão, restore lógico1/1,28/28 Node,2/2 Vitest e lint | P-62 validação clínica, P-02 assinatura legal e P-07 operação produtiva pendentes; não é assinatura ICP-Brasil |
 | BE-037 | RF-018/RN-007 parcial | Alertas/eventos imutáveis cifrados, confirmação/desativação e header;82/82 regressão,10/10 revisão específica,28/28 Node,2/2 Vitest e lint285 | Associação/ciência BE-039 integrada; UI FE-023 pendente; vocabulário/validação clínica P-13 |
-| BE-038 | RN-009/RNF-017 parcial | Catálogo/versões, engine documental cifrado/imutável, provider dev/disabled e verificação pública limitada;13/13 específicas,53/53 regressão,31/31 Node,2/2 Vitest e lint297 | Prescrição/PDF BE-039 integrados; BE-040/042 e publicação BE-043 pendentes; assinatura ICP-Brasil/prod P-02 não atendida pela simulação |
+| BE-038 | RN-009/RNF-017 parcial | Catálogo/versões, engine documental cifrado/imutável, provider dev/disabled e verificação pública limitada;13/13 específicas,53/53 regressão,31/31 Node,2/2 Vitest e lint297 | Prescrição/PDF BE-039 integrados; BE-040/042 integrados; publicação BE-043 pendente; assinatura ICP-Brasil/prod P-02 não atendida pela simulação |
 | BE-039 | RF-019/RN-009 parcial | Medicamentos dev versionados, draft/reuso, conferência/ciência e PDF cifrado/imutável;14/14 específicas,110/110 regressão,4/4 M0,31/31 Node,2/2 Vitest e lint314 | Publicação/visualização BE-043/FE-024/027 pendentes; catálogo real/controlados/provedor qualificado P-02/P-13 ainda bloqueiam produção |
 | BE-040 | RF-020/RN-009 parcial | Pedido particular/TUSS versionado, ExamOrder/PDF cifrado e fila autorizada;8/8 específicas no lote17/17,4/4 M0,31/31 Node,2/2 Vitest e lint322 | Resultados BE-041 integrados; publicação BE-043 e UI FE-025 pendentes; assinatura dev não encerra P-02/P-13 |
 
 | BE-041 | RF-020/RN-012 parcial | Resultados próprios/dependentes/assistidos cifrados, pedido/primeiro recebimento atômicos, retenção imutável, aviso seguro e acesso clínico;13/13 específicas,44/44 regressão,4/4 M0,31/31 Node,2/2 Vitest e lint331 | Projeção BE-043/UI FE-025/040 pendentes; jurídico P-01/P-09 e scanner real antes de produção |
 
+| BE-042 | RF-021/RN-009/RN-012 parcial | Quatro modelos textuais/contexto, emissão durante/após consulta, PDF e retenção imutáveis, anulação/substituto e código seguro;9/9 específicas,13/13 revisão e47/47 consumidores,31/31 Node,2/2 Vitest e lint335 | Modelos reais/níveis/provedor P-02 e publicação BE-043/UI FE-026 pendentes |
+
 P-06/P-11 resolvidas para implementação conforme respostas de24/11/2026; P-13 limitado a testes simples de desenvolvimento. Não afirmar cobertura global M2 por entrega de fundação; objetivo integral continua25 specs.
 
 
-BE-030 fecha critério de autoria com evolução real após expiração; prontuário integral continua negado. Evidências sobrepostas não são somadas.13 specs M2 ainda sem fechamento (BE-042/043 e11 FE). Retomada autorizada em25/11/2026; lote antigo117/118 teve timeout de upload corrigido em a07b131 e revisão17/17+4/4 aprovada, sem nova alegação full118/118.
+BE-030 fecha critério de autoria com evolução real após expiração; prontuário integral continua negado. Evidências sobrepostas não são somadas.12 specs M2 ainda sem fechamento (BE-043 e11 FE). Retomada autorizada em25/11/2026; lote antigo117/118 teve timeout de upload corrigido em a07b131 e revisão17/17+4/4 aprovada, sem nova alegação full118/118.
 
 ## Correção M0 — reenvio de convite de paciente (25/11/2026)
 

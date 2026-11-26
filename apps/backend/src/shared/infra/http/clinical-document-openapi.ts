@@ -24,6 +24,10 @@ import {
   medicationListResponse,
 } from './contracts/prescriptions'
 import { terminologyQuery } from './contracts/terminologies'
+import {
+  documentContextQuery,
+  documentContextResponse,
+} from './contracts/text-documents'
 
 const response = (schema: z.ZodType) => ({
   description: 'Documento clínico',
@@ -41,6 +45,15 @@ const common = {
   requestParams: { path: documentParams },
 }
 export const clinicalDocumentOpenApiPaths = {
+  '/clinical/encounters/{id}/document-context': {
+    get: {
+      operationId: 'readClinicalDocumentContext',
+      tags: ['Clinico'],
+      security: [{ bearerAuth: [] }],
+      requestParams: { path: documentParams, query: documentContextQuery },
+      responses: { '200': response(documentContextResponse), ...errors },
+    },
+  },
   '/clinical/exam-orders/pending': {
     get: {
       tags: common.tags,

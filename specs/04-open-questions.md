@@ -470,3 +470,7 @@ Plano aprovado e correção M0 implementada: admin/recepção com MFA reenviam c
 ## P-68 — recebimento de resultados (BE-041)
 
 Concretização técnica RF-020 no contrato compartilhado, sem mudar a projeção Q-03. Um original imutável por resultado, múltiplos por pedido, primeira data de recebimento e âncora de retenção por arquivo. Recepção só envia cegamente; paciente só próprio/dependente, leitura posterior pelo portal depende BE-043. Suposição conservadora Q-09/P-01: consentimento de dados vigente para novo upload assistido ou digital e revalidação antes de aviso ao solicitante; conteúdo já recebido permanece sob retenção/acesso clínico. Não presumir aprovação de outra base legal para upload após revogação. Parâmetros/formatos P-09 e parecer jurídico continuam antes de produção.
+
+## P-69 — modelos demonstrativos e atendimento concluído (BE-042)
+
+RF-021 permite encontro concluído: corrigir a restrição genérica P-64 para certificate/declaration/report/referral somente, com autoria e vínculo da consulta vigente. Payload/contexto/período/limites técnicos no contrato; body clínico sempre escrito pelo profissional, sem modelos médicos inventados. Template1 demonstra fluxo acadêmico e não equivale a modelo aprovado. Retenção própria por emissão e original preservado após anulação. Responsável técnico/jurídico deve validar modelos, níveis e conselhos antes de produção (P-02).

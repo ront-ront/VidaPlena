@@ -1056,6 +1056,7 @@ model ClinicalRetentionEvent {
   recordId String @db.Uuid
   encounterId String? @unique @db.Uuid
   examResultId String? @unique @db.Uuid
+  clinicalDocumentId String? @unique @db.Uuid
   anchorAt DateTime @db.Timestamptz(3)
   retentionYears Int
   retainUntil DateTime @db.Timestamptz(3)
@@ -1063,6 +1064,7 @@ model ClinicalRetentionEvent {
   record ClinicalRecord @relation(fields:[recordId],references:[id],onDelete:Restrict)
   encounter ClinicalEncounter? @relation(fields:[encounterId],references:[id],onDelete:Restrict)
   examResult ExamResult? @relation(fields:[examResultId],references:[id],onDelete:Restrict)
+  clinicalDocument ClinicalDocument? @relation(fields:[clinicalDocumentId],references:[id],onDelete:Restrict)
   @@index([recordId,retainUntil])
 }
 
@@ -1141,6 +1143,7 @@ model ClinicalDocument {
   copies ClinicalDocument[] @relation("DocumentCopy")
   prescriptionAcknowledgements PrescriptionAllergyAcknowledgement[]
   examOrder ExamOrder?
+  retentionEvent ClinicalRetentionEvent?
   voidEvent ClinicalDocumentVoid? @relation("VoidedDocument")
   replaces ClinicalDocumentVoid[] @relation("ReplacementDocument")
   @@index([recordId,status,createdAt,id])

@@ -258,7 +258,10 @@ test('BE-038: provider ausente e policy ausente mantêm draft; payload inválido
   await issue(d.documentId, 1, engine(new DisabledSignatureProvider())).expect(
     503,
   )
-  await request(f.app)
+  // BE-042 now registers real text policies; exercise an explicitly absent policy.
+  await request(
+    app(engine(new DevSignatureProvider('test'), { get: () => null })),
+  )
     .post(`/v1/clinical/documents/${d.documentId}/issue`)
     .set('Authorization', f.professionalAccounts[0].token)
     .send({ expectedVersion: 1 })

@@ -177,3 +177,7 @@ ExamOrder: id UUID, documentId único/FK ClinicalDocument, createdAt e resultRec
 ### BE-041 — resultado recebido (P-68)
 
 ExamResult: id, recordId, orderId?, fileId único, submittedBy, receivedAt e origin ordered|external. Um original imutável por resultado, vários resultados possíveis por pedido; FileObject de categoria result fica imutável ao associar. Trigger valida paciente/record/pedido emitido não anulado, origem, ator e binding/tipo de arquivo. ExamOrder mantém primeira data recebida, que só pode ser gravada junto a resultado real; sem atualizar identidade/payload do documento. ClinicalRetentionEvent passa a aceitar encounterId ou examResultId, exatamente uma origem, preservando âncoras anteriores e invariantes append-only. Resultado cria timeline/auditoria/outbox/retenção no mesmo tx; upload provisório sem associação só pode ser removido pela compensação/reconciliação.
+
+### BE-042 — documentos textuais (P-69)
+
+Quatro tipos textuais compartilham ClinicalDocument e payload cifrado versionado, sem nova tabela de conteúdo. Período opcional é explicitado pelo autor; identificação/contexto são dados mínimos do registro/atendimento. PDF imutável integra os hashes do envelope v2 existente. ClinicalRetentionEvent recebe clinicalDocumentId único/FK e passa a exigir exatamente uma entre três origens; âncora de documento corresponde à emissão. Não altera envelopes já emitidos ou retenções de encontros/resultados.

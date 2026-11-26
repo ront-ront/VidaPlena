@@ -71,7 +71,7 @@ export type ClinicalDocument = {
 export type DocumentSubject = Pick<
   ClinicalDocument,
   'id' | 'patientId' | 'encounterId' | 'authorProfessionalId' | 'status'
->
+> & { typeCode: DocumentTypeCode }
 export type DocumentEncounter = {
   id: string
   recordId: string
@@ -82,12 +82,22 @@ export type DocumentEncounter = {
   appointmentStatus: string
   specialtyId: string
   modality: 'onsite' | 'remote'
+  startedAt: Date
+  endedAt: Date | null
+  appointmentStartsAt: Date
+  appointmentEndsAt: Date
 }
 export interface ClinicalDocumentTransaction
   extends ClinicalRecordTransaction,
     MedicationTransaction,
     TerminologyTransaction {
   registerExamOrder(documentId: string, now: Date): Promise<void>
+  retainDocument(
+    document: ClinicalDocument,
+    now: Date,
+    years: number,
+    retainUntil: Date,
+  ): Promise<void>
   documentTypes(): Promise<
     { type: DocumentTypeVersion; history: DocumentTypeVersion[] }[]
   >
@@ -163,6 +173,7 @@ export interface ClinicalDocumentStore {
   ): Promise<T>
 }
 export interface DocumentContentPolicy {
+  readonly allowCompletedEncounter?: boolean
   validate(payload: unknown, templateVersion: string): unknown
   prepare?(
     tx: ClinicalDocumentTransaction,

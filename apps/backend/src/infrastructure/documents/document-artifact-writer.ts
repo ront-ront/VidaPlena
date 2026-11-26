@@ -6,6 +6,7 @@ import type {
   FileStorage,
   MalwareScanner,
 } from '../../application/ports/files'
+import { textDocumentCodes } from '../../application/validation/text-document'
 import type { ClinicalDocumentPdfRenderer } from './clinical-document-pdf-renderer'
 export class LocalDocumentArtifactWriter implements DocumentArtifactWriter {
   constructor(
@@ -19,16 +20,25 @@ export class LocalDocumentArtifactWriter implements DocumentArtifactWriter {
   async stage(
     ...[tx, document, input]: Parameters<DocumentArtifactWriter['stage']>
   ) {
-    if (!['prescription', 'exam_order'].includes(document.type.code))
+    const textual = textDocumentCodes.some((c) => c === document.type.code)
+    if (
+      !textual &&
+      !['prescription', 'exam_order'].includes(document.type.code)
+    )
       return null
     const patient = await tx.identification(document.patientId),
       record = await tx.record(document.patientId)
     if (!patient) throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
+    const encounter = textual
+      ? await tx.documentEncounter(document.encounterId)
+      : undefined
+    if (textual && !encounter)
+      throw new ApplicationError('NOT_FOUND_OR_FORBIDDEN')
     const bytes = await this.renderer.render(
       document,
       patient,
       record.recordNumber,
-      input,
+      { ...input, encounter: encounter ?? undefined },
     )
     const stored = await this.storage.write(
       'attachment',

@@ -22,6 +22,8 @@ import { ManageTerminologies } from '../../application/use-cases/manage-terminol
 import { PrescriptionPolicy } from '../../application/use-cases/prescription-policy'
 import { ReadClinicalRecord } from '../../application/use-cases/read-clinical-record'
 import { ReadPendingExamOrders } from '../../application/use-cases/read-pending-exam-orders'
+import { TextDocumentPolicy } from '../../application/use-cases/text-document-policy'
+import { textDocumentCodes } from '../../application/validation/text-document'
 import { JcsCanonicalDocuments } from '../../infrastructure/documents/canonical-documents'
 import { ClinicalDocumentPdfRenderer } from '../../infrastructure/documents/clinical-document-pdf-renderer'
 import {
@@ -350,13 +352,16 @@ export function createServiceContainer(
         scope.resolve<ManageTerminologies>(services.manageTerminologies),
         scope.resolve<CanonicalDocuments>(services.canonicalDocuments),
       )
+      const textDocuments = new TextDocumentPolicy()
       return {
         get: (code) =>
           code === 'prescription'
             ? prescription
             : code === 'exam_order'
               ? exams
-              : null,
+              : textDocumentCodes.some((c) => c === code)
+                ? textDocuments
+                : null,
       }
     },
   })
@@ -456,6 +461,8 @@ export function createServiceContainer(
         scope.resolve<OpaqueTokens>(services.opaqueTokens),
         scope.resolve<DocumentPolicies>(services.documentPolicies),
         scope.resolve<DocumentArtifactWriter>(services.documentArtifactWriter),
+        undefined,
+        config.clinicalRetentionYears,
       ),
   })
   scoped.register<ReadClinicalRecord>(services.readClinicalRecord, {
