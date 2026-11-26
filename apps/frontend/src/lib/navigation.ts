@@ -13,6 +13,7 @@ export type NavigationDestination = {
 
 // Include a destination in availableRoutes only after its page is implemented.
 export const navigationDestinations: readonly NavigationDestination[] = [
+  { href: '/clinico/agenda', label: 'Agenda clínica', roles: ['professional'] },
   {
     href: '/importacoes/agenda',
     label: 'Importar agenda',
@@ -83,6 +84,8 @@ export function isCurrentDestination(pathname: string, href: string): boolean {
 }
 
 export function destinationForPath(pathname: string) {
+  if (pathname === '/prontuarios' || pathname.startsWith('/prontuarios/'))
+    return navigationDestinations.find((d) => d.href === '/clinico/agenda')
   if (/^\/recepcao\/pacientes\/[0-9a-f-]{36}\/consentimento$/i.test(pathname))
     return navigationDestinations.find(
       ({ href }) => href === '/recepcao/pacientes/novo',
